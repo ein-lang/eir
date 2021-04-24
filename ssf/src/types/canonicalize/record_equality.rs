@@ -1,56 +1,50 @@
 use crate::types::*;
 
-pub struct TypeEqualityChecker<'a> {
-    pairs: Vec<(&'a Record, &'a Record)>,
+pub fn equal_records(one: &Record, other: &Record, parents: &[&Record]) -> bool {
+    equal_records_with_pairs(
+        one,
+        other,
+        &parents
+            .iter()
+            .copied()
+            .zip(parents.iter().copied())
+            .collect::<Vec<_>>(),
+    )
 }
 
-impl<'a> TypeEqualityChecker<'a> {
-    pub fn new(types: &'a [&'a Record]) -> Self {
-        Self {
-            pairs: types.iter().cloned().zip(types.iter().cloned()).collect(),
-        }
+fn equal_records_with_pairs(one: &Record, other: &Record, pairs: &[(&Record, &Record)]) -> bool {
+    pairs.contains(&(one, other)) || {
+        let pairs = [(one, other)]
+            .iter()
+            .chain(pairs)
+            .copied()
+            .collect::<Vec<_>>();
+
+        one.elements().len() == other.elements().len()
+            && one.is_boxed() == other.is_boxed()
+            && one
+                .elements()
+                .iter()
+                .zip(other.elements())
+                .all(|(one, other)| equal_with_pairs(one, other, &pairs))
     }
+}
 
-    pub fn equal_records(&self, one: &Record, other: &Record) -> bool {
-        self.pairs.contains(&(one, other)) || {
-            let checker = self.push_pair(one, other);
+fn equal_with_pairs(one: &Type, other: &Type, pairs: &[(&Record, &Record)]) -> bool {
+    let equal = |one, other| equal_with_pairs(one, other, pairs);
+    let equal_records = |one, other| equal_records_with_pairs(one, other, pairs);
 
-            one.elements().len() == other.elements().len()
-                && one.is_boxed() == other.is_boxed()
-                && one
-                    .elements()
-                    .iter()
-                    .zip(other.elements())
-                    .all(|(one, other)| checker.equal(one, other))
+    match (one, other) {
+        (Type::Function(one), Type::Function(other)) => {
+            equal(one.argument(), other.argument()) && equal(one.result(), other.result())
         }
-    }
-
-    fn equal(&self, one: &Type, other: &Type) -> bool {
-        match (one, other) {
-            (Type::Function(one), Type::Function(other)) => {
-                self.equal(one.argument(), other.argument())
-                    && self.equal(one.result(), other.result())
-            }
-            (Type::Primitive(one), Type::Primitive(other)) => one == other,
-            (Type::Record(one), Type::Record(other)) => self.equal_records(one, other),
-            (Type::Index(index), Type::Record(other)) => {
-                self.equal_records(self.pairs[*index].0, other)
-            }
-            (Type::Record(other), Type::Index(index)) => {
-                self.equal_records(other, self.pairs[*index].1)
-            }
-            (Type::Index(one), Type::Index(other)) => {
-                self.equal_records(self.pairs[*one].0, self.pairs[*other].1)
-            }
-            (Type::Variant, Type::Variant) => true,
-            (_, _) => false,
-        }
-    }
-
-    fn push_pair(&'a self, one: &'a Record, other: &'a Record) -> Self {
-        Self {
-            pairs: [(one, other)].iter().chain(&self.pairs).copied().collect(),
-        }
+        (Type::Primitive(one), Type::Primitive(other)) => one == other,
+        (Type::Record(one), Type::Record(other)) => equal_records_with_pairs(one, other, pairs),
+        (Type::Index(index), Type::Record(record)) => equal_records(pairs[*index].0, record),
+        (Type::Record(record), Type::Index(index)) => equal_records(record, pairs[*index].1),
+        (Type::Index(one), Type::Index(other)) => equal_records(pairs[*one].0, pairs[*other].1),
+        (Type::Variant, Type::Variant) => true,
+        (_, _) => false,
     }
 }
 

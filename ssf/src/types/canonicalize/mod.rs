@@ -1,11 +1,45 @@
-mod type_canonicalizer;
-mod type_equality_checker;
+mod record_equality;
 
-use crate::types::Type;
-use type_canonicalizer::TypeCanonicalizer;
+use crate::types::*;
+use record_equality::equal_records;
 
 pub(crate) fn canonicalize(type_: &Type) -> Type {
-    TypeCanonicalizer::new().canonicalize(type_)
+    canonicalize_with_records(type_, &[])
+}
+
+fn canonicalize_with_records(type_: &Type, records: &[&Record]) -> Type {
+    let canonicalize = |type_| canonicalize_with_records(type_, records);
+
+    match type_ {
+        Type::Function(function) => Function::new(
+            canonicalize(function.argument()),
+            canonicalize(function.result()),
+        )
+        .into(),
+        Type::Record(record) => {
+            for (index, parent_type) in records.iter().enumerate() {
+                if equal_records(record, parent_type, records) {
+                    return Type::Index(index);
+                }
+            }
+
+            let records = vec![record]
+                .into_iter()
+                .chain(records.iter().copied())
+                .collect::<Vec<_>>();
+
+            Record::new(
+                record
+                    .elements()
+                    .iter()
+                    .map(|element| canonicalize_with_records(element, &records))
+                    .collect(),
+                record.is_boxed(),
+            )
+            .into()
+        }
+        _ => type_.clone(),
+    }
 }
 
 #[cfg(test)]
