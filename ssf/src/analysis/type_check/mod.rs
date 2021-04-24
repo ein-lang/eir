@@ -70,10 +70,6 @@ fn check_expression(
 
             lhs_type
         }
-        Expression::BitCast(bit_cast) => {
-            check_expression(bit_cast.expression(), variables)?;
-            bit_cast.type_().clone()
-        }
         Expression::Case(case) => check_case(case, variables)?,
         Expression::ComparisonOperation(operation) => {
             let lhs_type = check_expression(operation.lhs(), variables)?;
@@ -904,23 +900,6 @@ mod tests {
                 Ok(())
             );
         }
-    }
-
-    #[test]
-    fn check_bit_cast() {
-        let module = Module::new(
-            vec![],
-            vec![],
-            vec![],
-            vec![Definition::with_environment(
-                "f",
-                vec![],
-                vec![Argument::new("x", types::Primitive::Float64)],
-                BitCast::new(42, types::Primitive::Float64),
-                types::Primitive::Float64,
-            )],
-        );
-        assert_eq!(check_types(&module), Ok(()));
     }
 
     #[test]

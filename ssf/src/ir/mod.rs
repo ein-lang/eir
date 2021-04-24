@@ -1,7 +1,6 @@
 mod argument;
 mod arithmetic_operation;
 mod arithmetic_operator;
-mod bit_cast;
 mod calling_convention;
 mod case;
 mod comparison_operation;
@@ -27,7 +26,6 @@ mod variant_case;
 pub use argument::*;
 pub use arithmetic_operation::*;
 pub use arithmetic_operator::*;
-pub use bit_cast::*;
 pub use calling_convention::*;
 pub use case::*;
 pub use comparison_operation::*;

@@ -1,5 +1,4 @@
 use super::arithmetic_operation::ArithmeticOperation;
-use super::bit_cast::BitCast;
 use super::case::Case;
 use super::comparison_operation::ComparisonOperation;
 use super::function_application::FunctionApplication;
@@ -17,7 +16,6 @@ use std::collections::{HashMap, HashSet};
 #[derive(Clone, Debug, PartialEq)]
 pub enum Expression {
     ArithmeticOperation(ArithmeticOperation),
-    BitCast(BitCast),
     Case(Case),
     ComparisonOperation(ComparisonOperation),
     FunctionApplication(FunctionApplication),
@@ -40,7 +38,6 @@ impl Expression {
     pub(crate) fn find_variables(&self) -> HashSet<String> {
         match self {
             Self::ArithmeticOperation(operation) => operation.find_variables(),
-            Self::BitCast(bit_cast) => bit_cast.find_variables(),
             Self::Case(case) => case.find_variables(),
             Self::ComparisonOperation(operation) => operation.find_variables(),
             Self::Record(record) => record.find_variables(),
@@ -58,7 +55,6 @@ impl Expression {
     pub(crate) fn infer_environment(&self, variables: &HashMap<String, Type>) -> Self {
         match self {
             Self::ArithmeticOperation(operation) => operation.infer_environment(variables).into(),
-            Self::BitCast(bit_cast) => bit_cast.infer_environment(variables).into(),
             Self::Case(case) => case.infer_environment(variables).into(),
             Self::ComparisonOperation(operation) => operation.infer_environment(variables).into(),
             Self::Record(record) => record.infer_environment(variables).into(),
@@ -75,7 +71,6 @@ impl Expression {
     pub(crate) fn convert_types(&self, convert: &impl Fn(&Type) -> Type) -> Self {
         match self {
             Self::ArithmeticOperation(operation) => operation.convert_types(convert).into(),
-            Self::BitCast(bit_cast) => bit_cast.convert_types(convert).into(),
             Self::Case(case) => case.convert_types(convert).into(),
             Self::ComparisonOperation(operation) => operation.convert_types(convert).into(),
             Self::Record(record) => record.convert_types(convert).into(),
@@ -99,12 +94,6 @@ impl From<VariantCase> for Expression {
 impl From<ArithmeticOperation> for Expression {
     fn from(operation: ArithmeticOperation) -> Self {
         Self::ArithmeticOperation(operation)
-    }
-}
-
-impl From<BitCast> for Expression {
-    fn from(bit_cast: BitCast) -> Self {
-        Self::BitCast(bit_cast)
     }
 }
 
