@@ -45,7 +45,6 @@ fn canonicalize_with_records(type_: &Type, records: &[&Record]) -> Type {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::*;
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -57,181 +56,184 @@ mod tests {
                 Function::new(Primitive::Float64, Primitive::Float64).into(),
             ),
             (
-                Algebraic::new(vec![Constructor::boxed(vec![Primitive::Float64.into()])]).into(),
-                Algebraic::new(vec![Constructor::boxed(vec![Primitive::Float64.into()])]).into(),
+                Record::new(vec![Primitive::Float64.into()], true).into(),
+                Record::new(vec![Primitive::Float64.into()], true).into(),
             ),
             (
-                Algebraic::new(vec![Constructor::boxed(vec![Algebraic::new(vec![
-                    Constructor::boxed(vec![Type::Index(0)]),
-                ])
-                .into()])])
-                .into(),
-                Algebraic::new(vec![Constructor::boxed(vec![Type::Index(0)])]).into(),
+                Record::new(vec![Record::new(vec![Type::Index(0)], true).into()], true).into(),
+                Record::new(vec![Type::Index(0)], true).into(),
             ),
             (
-                Algebraic::new(vec![Constructor::boxed(vec![Algebraic::new(vec![
-                    Constructor::boxed(vec![Type::Index(1)]),
-                ])
-                .into()])])
-                .into(),
-                Algebraic::new(vec![Constructor::boxed(vec![Type::Index(0)])]).into(),
+                Record::new(vec![Record::new(vec![Type::Index(1)], true).into()], true).into(),
+                Record::new(vec![Type::Index(0)], true).into(),
             ),
             (
-                Algebraic::new(vec![Constructor::boxed(vec![Function::new(
-                    Primitive::Float64,
-                    Algebraic::new(vec![Constructor::boxed(vec![Function::new(
+                Record::new(
+                    vec![Function::new(
                         Primitive::Float64,
-                        Type::Index(0),
+                        Record::new(
+                            vec![Function::new(Primitive::Float64, Type::Index(0)).into()],
+                            true,
+                        ),
                     )
-                    .into()])]),
+                    .into()],
+                    true,
                 )
-                .into()])])
                 .into(),
-                Algebraic::new(vec![Constructor::boxed(vec![Function::new(
-                    Primitive::Float64,
-                    Type::Index(0),
+                Record::new(
+                    vec![Function::new(Primitive::Float64, Type::Index(0)).into()],
+                    true,
                 )
-                .into()])])
                 .into(),
             ),
             (
-                Algebraic::new(vec![Constructor::boxed(vec![Function::new(
-                    Primitive::Float64,
-                    Algebraic::new(vec![Constructor::boxed(vec![Function::new(
+                Record::new(
+                    vec![Function::new(
                         Primitive::Float64,
-                        Type::Index(1),
+                        Record::new(
+                            vec![Function::new(Primitive::Float64, Type::Index(1)).into()],
+                            true,
+                        ),
                     )
-                    .into()])]),
+                    .into()],
+                    true,
                 )
-                .into()])])
                 .into(),
-                Algebraic::new(vec![Constructor::boxed(vec![Function::new(
-                    Primitive::Float64,
-                    Type::Index(0),
+                Record::new(
+                    vec![Function::new(Primitive::Float64, Type::Index(0)).into()],
+                    true,
                 )
-                .into()])])
                 .into(),
             ),
             (
-                Algebraic::new(vec![Constructor::boxed(vec![Algebraic::new(vec![
-                    Constructor::unboxed(vec![Algebraic::new(vec![Constructor::boxed(vec![
-                        Type::Index(2),
-                    ])])
-                    .into()]),
-                ])
-                .into()])])
-                .into(),
-                Algebraic::new(vec![Constructor::boxed(vec![Algebraic::new(vec![
-                    Constructor::unboxed(vec![Algebraic::new(vec![Constructor::boxed(vec![
-                        Type::Index(2),
-                    ])])
-                    .into()]),
-                ])
-                .into()])])
-                .into(),
-            ),
-            (
-                Algebraic::new(vec![Constructor::boxed(vec![Algebraic::new(vec![
-                    Constructor::unboxed(vec![Algebraic::new(vec![Constructor::boxed(vec![
-                        Algebraic::new(vec![Constructor::boxed(vec![Algebraic::new(vec![
-                            Constructor::unboxed(vec![Algebraic::new(vec![Constructor::boxed(
-                                vec![Type::Index(2)],
-                            )])
-                            .into()]),
-                        ])
-                        .into()])])
-                        .into(),
-                    ])])
-                    .into()]),
-                ])
-                .into()])])
-                .into(),
-                Algebraic::new(vec![Constructor::boxed(vec![Algebraic::new(vec![
-                    Constructor::unboxed(vec![Algebraic::new(vec![Constructor::boxed(vec![
-                        Type::Index(2),
-                    ])])
-                    .into()]),
-                ])
-                .into()])])
-                .into(),
-            ),
-            (
-                Algebraic::new(vec![Constructor::boxed(vec![Algebraic::new(vec![
-                    Constructor::boxed(vec![Algebraic::new(vec![
-                        Constructor::boxed(vec![Algebraic::new(vec![Constructor::boxed(vec![
-                            Algebraic::new(vec![Constructor::boxed(vec![Algebraic::new(vec![
-                                Constructor::boxed(vec![Type::Index(2)]),
-                                Constructor::boxed(vec![Type::Index(2)]),
-                            ])
-                            .into()])])
+                Record::new(
+                    vec![
+                        Record::new(vec![Record::new(vec![Type::Index(2)], true).into()], false)
                             .into(),
-                        ])])
-                        .into()]),
-                        Constructor::boxed(vec![Type::Index(2)]),
-                    ])
-                    .into()]),
-                ])
-                .into()])])
+                    ],
+                    true,
+                )
                 .into(),
-                Algebraic::new(vec![Constructor::boxed(vec![Algebraic::new(vec![
-                    Constructor::boxed(vec![Algebraic::new(vec![
-                        Constructor::boxed(vec![Type::Index(2)]),
-                        Constructor::boxed(vec![Type::Index(2)]),
-                    ])
-                    .into()]),
-                ])
-                .into()])])
+                Record::new(
+                    vec![
+                        Record::new(vec![Record::new(vec![Type::Index(2)], true).into()], false)
+                            .into(),
+                    ],
+                    true,
+                )
                 .into(),
             ),
             (
-                Algebraic::new(vec![Constructor::boxed(vec![Algebraic::new(vec![
-                    Constructor::boxed(vec![Algebraic::new(vec![
-                        Constructor::boxed(vec![Algebraic::new(vec![Constructor::boxed(vec![
-                            Type::Index(2),
-                        ])])
-                        .into()]),
-                        Constructor::boxed(vec![Type::Index(2)]),
-                    ])
-                    .into()]),
-                ])
-                .into()])])
+                Record::new(
+                    vec![Record::new(
+                        vec![Record::new(
+                            vec![Record::new(
+                                vec![Record::new(
+                                    vec![Record::new(vec![Type::Index(2)], true).into()],
+                                    false,
+                                )
+                                .into()],
+                                true,
+                            )
+                            .into()],
+                            true,
+                        )
+                        .into()],
+                        false,
+                    )
+                    .into()],
+                    true,
+                )
                 .into(),
-                Algebraic::new(vec![Constructor::boxed(vec![Algebraic::new(vec![
-                    Constructor::boxed(vec![Algebraic::new(vec![
-                        Constructor::boxed(vec![Type::Index(2)]),
-                        Constructor::boxed(vec![Type::Index(2)]),
-                    ])
-                    .into()]),
-                ])
-                .into()])])
+                Record::new(
+                    vec![
+                        Record::new(vec![Record::new(vec![Type::Index(2)], true).into()], false)
+                            .into(),
+                    ],
+                    true,
+                )
                 .into(),
             ),
             (
-                Algebraic::new(vec![Constructor::boxed(vec![Algebraic::new(vec![
-                    Constructor::unboxed(vec![]),
-                    Constructor::unboxed(vec![Algebraic::new(vec![Constructor::boxed(vec![
-                        Algebraic::new(vec![Constructor::boxed(vec![Algebraic::new(vec![
-                            Constructor::unboxed(vec![]),
-                            Constructor::unboxed(vec![Algebraic::new(vec![Constructor::boxed(
-                                vec![Type::Index(2)],
-                            )])
-                            .into()]),
-                        ])
-                        .into()])])
-                        .into(),
-                    ])])
-                    .into()]),
-                ])
-                .into()])])
+                Record::new(
+                    vec![Record::new(
+                        vec![Record::new(
+                            vec![Record::new(
+                                vec![Record::new(
+                                    vec![Record::new(vec![Type::Index(2)], true).into()],
+                                    true,
+                                )
+                                .into()],
+                                true,
+                            )
+                            .into()],
+                            true,
+                        )
+                        .into()],
+                        true,
+                    )
+                    .into()],
+                    true,
+                )
                 .into(),
-                Algebraic::new(vec![Constructor::boxed(vec![Algebraic::new(vec![
-                    Constructor::unboxed(vec![]),
-                    Constructor::unboxed(vec![Algebraic::new(vec![Constructor::boxed(vec![
-                        Type::Index(2),
-                    ])])
-                    .into()]),
-                ])
-                .into()])])
+                Record::new(vec![Type::Index(0)], true).into(),
+            ),
+            (
+                Record::new(
+                    vec![Record::new(
+                        vec![Record::new(
+                            vec![
+                                Record::new(vec![Type::Index(2)], true).into(),
+                                Type::Index(2),
+                            ],
+                            true,
+                        )
+                        .into()],
+                        true,
+                    )
+                    .into()],
+                    true,
+                )
+                .into(),
+                Record::new(
+                    vec![Record::new(
+                        vec![Record::new(vec![Type::Index(2), Type::Index(2)], true).into()],
+                        true,
+                    )
+                    .into()],
+                    true,
+                )
+                .into(),
+            ),
+            (
+                Record::new(
+                    vec![Record::new(
+                        vec![Record::new(
+                            vec![Record::new(
+                                vec![Record::new(
+                                    vec![Record::new(vec![Type::Index(2)], true).into()],
+                                    false,
+                                )
+                                .into()],
+                                true,
+                            )
+                            .into()],
+                            true,
+                        )
+                        .into()],
+                        false,
+                    )
+                    .into()],
+                    true,
+                )
+                .into(),
+                Record::new(
+                    vec![
+                        Record::new(vec![Record::new(vec![Type::Index(2)], true).into()], false)
+                            .into(),
+                    ],
+                    true,
+                )
                 .into(),
             ),
         ] {
