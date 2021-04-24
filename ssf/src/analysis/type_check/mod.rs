@@ -85,7 +85,7 @@ fn check_expression(
 
             types::Primitive::Boolean.into()
         }
-        Expression::RecordConstruction(record) => {
+        Expression::Record(record) => {
             if record.elements().len() != record.type_().elements().len() {
                 return Err(TypeCheckError::WrongArgumentsLength(expression.clone()));
             }
@@ -792,11 +792,11 @@ mod tests {
         }
     }
 
-    mod record_constructions {
+    mod records {
         use super::*;
 
         #[test]
-        fn check_record_constructions_with_no_element() {
+        fn check_records_with_no_element() {
             let record_type = types::Record::new(vec![], true);
 
             assert_eq!(
@@ -808,7 +808,7 @@ mod tests {
                         "f",
                         vec![],
                         vec![Argument::new("x", types::Primitive::Float64)],
-                        RecordConstruction::new(record_type.clone(), vec![]),
+                        Record::new(record_type.clone(), vec![]),
                         record_type,
                     )],
                 )),
@@ -817,7 +817,7 @@ mod tests {
         }
 
         #[test]
-        fn check_record_constructions_with_elements() {
+        fn check_records_with_elements() {
             let record_type = types::Record::new(vec![types::Primitive::Float64.into()], true);
 
             assert_eq!(
@@ -829,7 +829,7 @@ mod tests {
                         "f",
                         vec![],
                         vec![Argument::new("x", types::Primitive::Float64)],
-                        RecordConstruction::new(record_type.clone(), vec![42.0.into()],),
+                        Record::new(record_type.clone(), vec![42.0.into()],),
                         record_type,
                     )],
                 )),
@@ -838,7 +838,7 @@ mod tests {
         }
 
         #[test]
-        fn fail_to_check_record_constructions_with_wrong_number_of_elements() {
+        fn fail_to_check_records_with_wrong_number_of_elements() {
             let record_type = types::Record::new(vec![types::Primitive::Float64.into()], true);
             let module = Module::new(
                 vec![],
@@ -848,7 +848,7 @@ mod tests {
                     "f",
                     vec![],
                     vec![Argument::new("x", types::Primitive::Float64)],
-                    RecordConstruction::new(record_type.clone(), vec![42.0.into(), 42.0.into()]),
+                    Record::new(record_type.clone(), vec![42.0.into(), 42.0.into()]),
                     record_type,
                 )],
             );
@@ -860,7 +860,7 @@ mod tests {
         }
 
         #[test]
-        fn fail_to_check_record_constructions_with_wrong_element_type() {
+        fn fail_to_check_records_with_wrong_element_type() {
             let record_type = types::Record::new(vec![types::Primitive::Float64.into()], true);
 
             let module = Module::new(
@@ -871,10 +871,10 @@ mod tests {
                     "f",
                     vec![],
                     vec![Argument::new("x", types::Primitive::Float64)],
-                    RecordConstruction::new(
+                    Record::new(
                         record_type.clone(),
                         vec![
-                            RecordConstruction::new(record_type.clone(), vec![42.0.into()]).into(),
+                            Record::new(record_type.clone(), vec![42.0.into()]).into(),
                         ],
                     ),
                     record_type,
@@ -888,7 +888,7 @@ mod tests {
         }
 
         #[test]
-        fn check_record_constructions_of_recursive_record_types() {
+        fn check_records_of_recursive_record_types() {
             let record_type = types::Record::new(vec![Type::Index(0)], true);
 
             assert_eq!(
@@ -899,7 +899,7 @@ mod tests {
                     vec![Definition::new(
                         "f",
                         vec![Argument::new("x", record_type.clone())],
-                        RecordConstruction::new(
+                        Record::new(
                             record_type.clone(),
                             vec![Variable::new("x").into()],
                         ),

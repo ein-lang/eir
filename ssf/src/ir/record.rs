@@ -3,12 +3,12 @@ use crate::types::{self, Type};
 use std::collections::{HashMap, HashSet};
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct RecordConstruction {
+pub struct Record {
     type_: types::Record,
     elements: Vec<Expression>,
 }
 
-impl RecordConstruction {
+impl Record {
     pub fn new(record_type: types::Record, elements: Vec<Expression>) -> Self {
         Self {
             type_: record_type,

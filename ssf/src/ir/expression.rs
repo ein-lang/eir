@@ -7,7 +7,7 @@ use super::let_::Let;
 use super::let_recursive::LetRecursive;
 use super::primitive::Primitive;
 use super::primitive_case::PrimitiveCase;
-use super::record_construction::RecordConstruction;
+use super::record::Record;
 use super::variable::Variable;
 use super::variant::Variant;
 use super::variant_case::VariantCase;
@@ -24,7 +24,7 @@ pub enum Expression {
     Let(Let),
     LetRecursive(LetRecursive),
     Primitive(Primitive),
-    RecordConstruction(RecordConstruction),
+    Record(Record),
     Variable(Variable),
     Variant(Variant),
 }
@@ -43,7 +43,7 @@ impl Expression {
             Self::BitCast(bit_cast) => bit_cast.find_variables(),
             Self::Case(case) => case.find_variables(),
             Self::ComparisonOperation(operation) => operation.find_variables(),
-            Self::RecordConstruction(record_construction) => record_construction.find_variables(),
+            Self::Record(record) => record.find_variables(),
             Self::FunctionApplication(function_application) => {
                 function_application.find_variables()
             }
@@ -61,8 +61,8 @@ impl Expression {
             Self::BitCast(bit_cast) => bit_cast.infer_environment(variables).into(),
             Self::Case(case) => case.infer_environment(variables).into(),
             Self::ComparisonOperation(operation) => operation.infer_environment(variables).into(),
-            Self::RecordConstruction(record_construction) => {
-                record_construction.infer_environment(variables).into()
+            Self::Record(record) => {
+                record.infer_environment(variables).into()
             }
             Self::FunctionApplication(function_application) => {
                 function_application.infer_environment(variables).into()
@@ -80,8 +80,8 @@ impl Expression {
             Self::BitCast(bit_cast) => bit_cast.convert_types(convert).into(),
             Self::Case(case) => case.convert_types(convert).into(),
             Self::ComparisonOperation(operation) => operation.convert_types(convert).into(),
-            Self::RecordConstruction(record_construction) => {
-                record_construction.convert_types(convert).into()
+            Self::Record(record) => {
+                record.convert_types(convert).into()
             }
             Self::FunctionApplication(function_application) => {
                 function_application.convert_types(convert).into()
@@ -124,9 +124,9 @@ impl From<ComparisonOperation> for Expression {
     }
 }
 
-impl From<RecordConstruction> for Expression {
-    fn from(record_construction: RecordConstruction) -> Self {
-        Self::RecordConstruction(record_construction)
+impl From<Record> for Expression {
+    fn from(record: Record) -> Self {
+        Self::Record(record)
     }
 }
 
