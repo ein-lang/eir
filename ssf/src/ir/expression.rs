@@ -61,9 +61,7 @@ impl Expression {
             Self::BitCast(bit_cast) => bit_cast.infer_environment(variables).into(),
             Self::Case(case) => case.infer_environment(variables).into(),
             Self::ComparisonOperation(operation) => operation.infer_environment(variables).into(),
-            Self::Record(record) => {
-                record.infer_environment(variables).into()
-            }
+            Self::Record(record) => record.infer_environment(variables).into(),
             Self::FunctionApplication(function_application) => {
                 function_application.infer_environment(variables).into()
             }
@@ -80,9 +78,7 @@ impl Expression {
             Self::BitCast(bit_cast) => bit_cast.convert_types(convert).into(),
             Self::Case(case) => case.convert_types(convert).into(),
             Self::ComparisonOperation(operation) => operation.convert_types(convert).into(),
-            Self::Record(record) => {
-                record.convert_types(convert).into()
-            }
+            Self::Record(record) => record.convert_types(convert).into(),
             Self::FunctionApplication(function_application) => {
                 function_application.convert_types(convert).into()
             }

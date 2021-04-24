@@ -873,9 +873,7 @@ mod tests {
                     vec![Argument::new("x", types::Primitive::Float64)],
                     Record::new(
                         record_type.clone(),
-                        vec![
-                            Record::new(record_type.clone(), vec![42.0.into()]).into(),
-                        ],
+                        vec![Record::new(record_type.clone(), vec![42.0.into()]).into()],
                     ),
                     record_type,
                 )],
@@ -899,10 +897,7 @@ mod tests {
                     vec![Definition::new(
                         "f",
                         vec![Argument::new("x", record_type.clone())],
-                        Record::new(
-                            record_type.clone(),
-                            vec![Variable::new("x").into()],
-                        ),
+                        Record::new(record_type.clone(), vec![Variable::new("x").into()],),
                         record_type,
                     )],
                 )),
