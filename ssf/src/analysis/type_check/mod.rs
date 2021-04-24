@@ -90,7 +90,11 @@ fn check_expression(
                 return Err(TypeCheckError::WrongArgumentsLength(expression.clone()));
             }
 
-            for (element, element_type) in record.elements().iter().zip(record.type_().elements()) {
+            for (element, element_type) in record
+                .elements()
+                .iter()
+                .zip(record.type_().unfold().elements())
+            {
                 check_equality(&check_expression(element, variables)?, &element_type)?;
             }
 
@@ -527,7 +531,7 @@ mod tests {
     mod case_expressions {
         use super::*;
 
-        mod algebraic {
+        mod variant {
             use super::*;
 
             #[test]
@@ -548,186 +552,151 @@ mod tests {
                 );
             }
 
-            // #[test]
-            // fn check_case_expressions_with_one_alternative() {
-            //     let algebraic_type = types::Algebraic::new(vec![types::Constructor::boxed(vec![])]);
+            #[test]
+            fn check_case_expressions_with_one_alternative() {
+                assert_eq!(
+                    check_types(&Module::new(
+                        vec![],
+                        vec![],
+                        vec![],
+                        vec![Definition::new(
+                            "f",
+                            vec![Argument::new("x", Type::Variant)],
+                            VariantCase::new(
+                                Variable::new("x"),
+                                vec![VariantAlternative::new(
+                                    "foo",
+                                    types::Primitive::Float64,
+                                    "y",
+                                    Variable::new("y")
+                                )],
+                                None
+                            ),
+                            types::Primitive::Float64,
+                        )]
+                    )),
+                    Ok(())
+                );
+            }
 
-            //     assert_eq!(
-            //         check_types(&Module::new(
-            //             vec![],
-            //             vec![],
-            //             vec![],
-            //             vec![Definition::new(
-            //                 "f",
-            //                 vec![Argument::new("x", algebraic_type.clone())],
-            //                 VariantCase::new(
-            //                     Variable::new("x"),
-            //                     vec![VariantAlternative::new(
-            //                         Constructor::new(algebraic_type, 0),
-            //                         vec![],
-            //                         42.0
-            //                     )],
-            //                     None
-            //                 ),
-            //                 types::Primitive::Float64,
-            //             )]
-            //         )),
-            //         Ok(())
-            //     );
-            // }
+            #[test]
+            fn fail_to_check_case_expressions_without_alternatives() {
+                let module = Module::new(
+                    vec![],
+                    vec![],
+                    vec![],
+                    vec![Definition::new(
+                        "f",
+                        vec![Argument::new("x", Type::Variant)],
+                        VariantCase::new(Variable::new("x"), vec![], None),
+                        types::Primitive::Float64,
+                    )],
+                );
 
-            // #[test]
-            // fn check_case_expressions_with_deconstruction() {
-            //     let algebraic_type = types::Algebraic::new(vec![types::Constructor::boxed(vec![
-            //         types::Primitive::Float64.into(),
-            //     ])]);
+                assert!(matches!(
+                    check_types(&module),
+                    Err(TypeCheckError::NoAlternativeFound(_))
+                ));
+            }
 
-            //     assert_eq!(
-            //         check_types(&Module::new(
-            //             vec![],
-            //             vec![],
-            //             vec![],
-            //             vec![Definition::new(
-            //                 "f",
-            //                 vec![Argument::new("x", algebraic_type.clone())],
-            //                 VariantCase::new(
-            //                     Variable::new("x"),
-            //                     vec![VariantAlternative::new(
-            //                         Constructor::new(algebraic_type, 0),
-            //                         vec!["y".into()],
-            //                         Variable::new("y")
-            //                     )],
-            //                     None
-            //                 ),
-            //                 types::Primitive::Float64,
-            //             )]
-            //         )),
-            //         Ok(())
-            //     );
-            // }
+            #[test]
+            fn fail_to_check_case_expressions_with_inconsistent_alternative_types() {
+                let module = Module::new(
+                    vec![],
+                    vec![],
+                    vec![],
+                    vec![Definition::with_environment(
+                        "f",
+                        vec![],
+                        vec![Argument::new("x", Type::Variant)],
+                        VariantCase::new(
+                            Variable::new("x"),
+                            vec![
+                                VariantAlternative::new(
+                                    "foo",
+                                    types::Record::new(vec![], false),
+                                    "x",
+                                    Variable::new("x"),
+                                ),
+                                VariantAlternative::new(
+                                    "bar",
+                                    types::Primitive::Float64,
+                                    "x",
+                                    42.0,
+                                ),
+                            ],
+                            None,
+                        ),
+                        types::Primitive::Float64,
+                    )],
+                );
 
-            // #[test]
-            // fn fail_to_check_case_expressions_without_alternatives() {
-            //     let algebraic_type = types::Algebraic::new(vec![types::Constructor::boxed(vec![])]);
+                assert!(matches!(
+                    check_types(&module),
+                    Err(TypeCheckError::TypesNotMatched(_, _))
+                ));
+            }
 
-            //     let module = Module::new(
-            //         vec![],
-            //         vec![],
-            //         vec![],
-            //         vec![Definition::new(
-            //             "f",
-            //             vec![Argument::new("x", algebraic_type)],
-            //             VariantCase::new(Variable::new("x"), vec![], None),
-            //             types::Primitive::Float64,
-            //         )],
-            //     );
+            #[test]
+            fn check_case_expressions_with_recursive_record_types() {
+                let record_type = types::Record::new(vec![Type::Index(0)], true);
 
-            //     assert!(matches!(
-            //         check_types(&module),
-            //         Err(TypeCheckError::NoAlternativeFound(_))
-            //     ));
-            // }
+                assert_eq!(
+                    check_types(&Module::new(
+                        vec![],
+                        vec![],
+                        vec![],
+                        vec![Definition::with_environment(
+                            "f",
+                            vec![],
+                            vec![Argument::new("x", Type::Variant)],
+                            VariantCase::new(
+                                Variable::new("x"),
+                                vec![VariantAlternative::new(
+                                    "foo",
+                                    record_type.clone(),
+                                    "y",
+                                    Variable::new("y"),
+                                )],
+                                None,
+                            ),
+                            record_type,
+                        )]
+                    )),
+                    Ok(())
+                );
+            }
 
-            // #[test]
-            // fn fail_to_check_case_expressions_with_inconsistent_alternative_types() {
-            //     let algebraic_type = types::Algebraic::new(vec![types::Constructor::boxed(vec![])]);
-            //     let module = Module::new(
-            //         vec![],
-            //         vec![],
-            //         vec![],
-            //         vec![Definition::with_environment(
-            //             "f",
-            //             vec![],
-            //             vec![Argument::new(
-            //                 "x",
-            //                 types::Algebraic::new(vec![types::Constructor::boxed(vec![])]),
-            //             )],
-            //             VariantCase::new(
-            //                 Variable::new("x"),
-            //                 vec![
-            //                     VariantAlternative::new(
-            //                         Constructor::new(algebraic_type.clone(), 0),
-            //                         vec![],
-            //                         Variable::new("x"),
-            //                     ),
-            //                     VariantAlternative::new(
-            //                         Constructor::new(algebraic_type, 0),
-            //                         vec![],
-            //                         42.0,
-            //                     ),
-            //                 ],
-            //                 None,
-            //             ),
-            //             types::Primitive::Float64,
-            //         )],
-            //     );
+            #[test]
+            fn fail_for_unmatched_case_type() {
+                let record_type = types::Record::new(vec![], true);
+                let other_record_type = types::Record::new(vec![], false);
 
-            //     assert!(matches!(
-            //         check_types(&module),
-            //         Err(TypeCheckError::TypesNotMatched(_, _))
-            //     ));
-            // }
-
-            // #[test]
-            // fn check_case_expressions_with_recursive_algebraic_types() {
-            //     let algebraic_type =
-            //         types::Algebraic::new(vec![types::Constructor::boxed(vec![Type::Index(0)])]);
-
-            //     assert_eq!(
-            //         check_types(&Module::new(
-            //             vec![],
-            //             vec![],
-            //             vec![],
-            //             vec![Definition::with_environment(
-            //                 "f",
-            //                 vec![],
-            //                 vec![Argument::new("x", algebraic_type.clone())],
-            //                 VariantCase::new(
-            //                     Variable::new("x"),
-            //                     vec![VariantAlternative::new(
-            //                         Constructor::new(algebraic_type.clone(), 0),
-            //                         vec!["y".into()],
-            //                         Variable::new("y"),
-            //                     )],
-            //                     None,
-            //                 ),
-            //                 algebraic_type,
-            //             )]
-            //         )),
-            //         Ok(())
-            //     );
-            // }
-
-            // #[test]
-            // fn fail_for_unmatched_case_type() {
-            //     let algebraic_type = types::Algebraic::new(vec![types::Constructor::boxed(vec![])]);
-            //     let other_algebraic_type =
-            //         types::Algebraic::new(vec![types::Constructor::unboxed(vec![])]);
-
-            //     assert!(matches!(
-            //         check_types(&Module::new(
-            //             vec![],
-            //             vec![],
-            //             vec![],
-            //             vec![Definition::with_environment(
-            //                 "f",
-            //                 vec![],
-            //                 vec![Argument::new("x", algebraic_type)],
-            //                 VariantCase::new(
-            //                     Variable::new("x"),
-            //                     vec![VariantAlternative::new(
-            //                         Constructor::new(other_algebraic_type, 0),
-            //                         vec![],
-            //                         42.0
-            //                     )],
-            //                     None
-            //                 ),
-            //                 types::Primitive::Float64,
-            //             )],
-            //         )),
-            //         Err(TypeCheckError::TypesNotMatched(_, _))
-            //     ));
-            // }
+                assert!(matches!(
+                    check_types(&Module::new(
+                        vec![],
+                        vec![],
+                        vec![],
+                        vec![Definition::with_environment(
+                            "f",
+                            vec![],
+                            vec![Argument::new("x", Type::Variant)],
+                            VariantCase::new(
+                                Variable::new("x"),
+                                vec![VariantAlternative::new(
+                                    "foo",
+                                    other_record_type,
+                                    "y",
+                                    Variable::new("y")
+                                )],
+                                None
+                            ),
+                            record_type,
+                        )],
+                    )),
+                    Err(TypeCheckError::TypesNotMatched(_, _))
+                ));
+            }
         }
 
         mod primitive {
@@ -826,137 +795,120 @@ mod tests {
     mod record_constructions {
         use super::*;
 
-        // #[test]
-        // fn check_record_constructions_with_no_arguments() {
-        //     let algebraic_type = types::Algebraic::new(vec![types::Constructor::boxed(vec![])]);
+        #[test]
+        fn check_record_constructions_with_no_element() {
+            let record_type = types::Record::new(vec![], true);
 
-        //     assert_eq!(
-        //         check_types(&Module::new(
-        //             vec![],
-        //             vec![],
-        //             vec![],
-        //             vec![Definition::with_environment(
-        //                 "f",
-        //                 vec![],
-        //                 vec![Argument::new("x", types::Primitive::Float64)],
-        //                 RecordConstruction::new(
-        //                     Constructor::new(algebraic_type.clone(), 0),
-        //                     vec![],
-        //                 ),
-        //                 algebraic_type,
-        //             )],
-        //         )),
-        //         Ok(())
-        //     );
-        // }
+            assert_eq!(
+                check_types(&Module::new(
+                    vec![],
+                    vec![],
+                    vec![],
+                    vec![Definition::with_environment(
+                        "f",
+                        vec![],
+                        vec![Argument::new("x", types::Primitive::Float64)],
+                        RecordConstruction::new(record_type.clone(), vec![]),
+                        record_type,
+                    )],
+                )),
+                Ok(())
+            );
+        }
 
-        // #[test]
-        // fn check_record_constructions_with_arguments() {
-        //     let algebraic_type = types::Algebraic::new(vec![types::Constructor::boxed(vec![
-        //         types::Primitive::Float64.into(),
-        //     ])]);
+        #[test]
+        fn check_record_constructions_with_elements() {
+            let record_type = types::Record::new(vec![types::Primitive::Float64.into()], true);
 
-        //     assert_eq!(
-        //         check_types(&Module::new(
-        //             vec![],
-        //             vec![],
-        //             vec![],
-        //             vec![Definition::with_environment(
-        //                 "f",
-        //                 vec![],
-        //                 vec![Argument::new("x", types::Primitive::Float64)],
-        //                 RecordConstruction::new(
-        //                     Constructor::new(algebraic_type.clone(), 0),
-        //                     vec![42.0.into()],
-        //                 ),
-        //                 algebraic_type,
-        //             )],
-        //         )),
-        //         Ok(())
-        //     );
-        // }
+            assert_eq!(
+                check_types(&Module::new(
+                    vec![],
+                    vec![],
+                    vec![],
+                    vec![Definition::with_environment(
+                        "f",
+                        vec![],
+                        vec![Argument::new("x", types::Primitive::Float64)],
+                        RecordConstruction::new(record_type.clone(), vec![42.0.into()],),
+                        record_type,
+                    )],
+                )),
+                Ok(())
+            );
+        }
 
-        // #[test]
-        // fn fail_to_check_record_constructions_with_wrong_number_of_arguments() {
-        //     let algebraic_type = types::Algebraic::new(vec![types::Constructor::boxed(vec![
-        //         types::Primitive::Float64.into(),
-        //     ])]);
-        //     let module = Module::new(
-        //         vec![],
-        //         vec![],
-        //         vec![],
-        //         vec![Definition::with_environment(
-        //             "f",
-        //             vec![],
-        //             vec![Argument::new("x", types::Primitive::Float64)],
-        //             RecordConstruction::new(
-        //                 Constructor::new(algebraic_type.clone(), 0),
-        //                 vec![42.0.into(), 42.0.into()],
-        //             ),
-        //             algebraic_type,
-        //         )],
-        //     );
+        #[test]
+        fn fail_to_check_record_constructions_with_wrong_number_of_elements() {
+            let record_type = types::Record::new(vec![types::Primitive::Float64.into()], true);
+            let module = Module::new(
+                vec![],
+                vec![],
+                vec![],
+                vec![Definition::with_environment(
+                    "f",
+                    vec![],
+                    vec![Argument::new("x", types::Primitive::Float64)],
+                    RecordConstruction::new(record_type.clone(), vec![42.0.into(), 42.0.into()]),
+                    record_type,
+                )],
+            );
 
-        //     assert!(matches!(
-        //         check_types(&module),
-        //         Err(TypeCheckError::WrongArgumentsLength(_))
-        //     ));
-        // }
+            assert!(matches!(
+                check_types(&module),
+                Err(TypeCheckError::WrongArgumentsLength(_))
+            ));
+        }
 
-        // #[test]
-        // fn fail_to_check_record_constructions_with_wrong_argument_type() {
-        //     let algebraic_type = types::Algebraic::new(vec![types::Constructor::boxed(vec![
-        //         types::Primitive::Float64.into(),
-        //     ])]);
-        //     let module = Module::new(
-        //         vec![],
-        //         vec![],
-        //         vec![],
-        //         vec![Definition::with_environment(
-        //             "f",
-        //             vec![],
-        //             vec![Argument::new("x", types::Primitive::Float64)],
-        //             RecordConstruction::new(
-        //                 Constructor::new(algebraic_type.clone(), 0),
-        //                 vec![RecordConstruction::new(
-        //                     Constructor::new(algebraic_type.clone(), 0),
-        //                     vec![42.0.into()],
-        //                 )
-        //                 .into()],
-        //             ),
-        //             algebraic_type,
-        //         )],
-        //     );
+        #[test]
+        fn fail_to_check_record_constructions_with_wrong_element_type() {
+            let record_type = types::Record::new(vec![types::Primitive::Float64.into()], true);
 
-        //     assert!(matches!(
-        //         check_types(&module),
-        //         Err(TypeCheckError::TypesNotMatched(_, _))
-        //     ));
-        // }
+            let module = Module::new(
+                vec![],
+                vec![],
+                vec![],
+                vec![Definition::with_environment(
+                    "f",
+                    vec![],
+                    vec![Argument::new("x", types::Primitive::Float64)],
+                    RecordConstruction::new(
+                        record_type.clone(),
+                        vec![
+                            RecordConstruction::new(record_type.clone(), vec![42.0.into()]).into(),
+                        ],
+                    ),
+                    record_type,
+                )],
+            );
 
-        // #[test]
-        // fn check_record_constructions_of_recursive_algebraic_types() {
-        //     let algebraic_type =
-        //         types::Algebraic::new(vec![types::Constructor::boxed(vec![Type::Index(0)])]);
+            assert!(matches!(
+                check_types(&module),
+                Err(TypeCheckError::TypesNotMatched(_, _))
+            ));
+        }
 
-        //     assert_eq!(
-        //         check_types(&Module::new(
-        //             vec![],
-        //             vec![],
-        //             vec![],
-        //             vec![Definition::new(
-        //                 "f",
-        //                 vec![Argument::new("x", algebraic_type.clone())],
-        //                 RecordConstruction::new(
-        //                     Constructor::new(algebraic_type.clone(), 0),
-        //                     vec![Variable::new("x").into()],
-        //                 ),
-        //                 algebraic_type,
-        //             )],
-        //         )),
-        //         Ok(())
-        //     );
-        // }
+        #[test]
+        fn check_record_constructions_of_recursive_record_types() {
+            let record_type = types::Record::new(vec![Type::Index(0)], true);
+
+            assert_eq!(
+                check_types(&Module::new(
+                    vec![],
+                    vec![],
+                    vec![],
+                    vec![Definition::new(
+                        "f",
+                        vec![Argument::new("x", record_type.clone())],
+                        RecordConstruction::new(
+                            record_type.clone(),
+                            vec![Variable::new("x").into()],
+                        ),
+                        record_type,
+                    )],
+                )),
+                Ok(())
+            );
+        }
     }
 
     #[test]

@@ -3,11 +3,6 @@ use super::variant_case::VariantCase;
 use crate::types::Type;
 use std::collections::{HashMap, HashSet};
 
-/// Case expressions match values of algebraic data types with their
-/// constructors deconstructing them.
-///
-/// Their alternatives do not have to be exhaustive. See also options of each
-/// compiler for behavior on match failures.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Case {
     Primitive(PrimitiveCase),
