@@ -136,7 +136,10 @@ fn check_expression(
         }
         Expression::Primitive(primitive) => Ok(check_primitive(primitive).into())?,
         Expression::Variable(variable) => check_variable(variable, variables)?,
-        Expression::Variant(_) => Type::Variant,
+        Expression::Variant(_) => {
+            // TODO Check payload types.
+            Type::Variant
+        }
     })
 }
 
