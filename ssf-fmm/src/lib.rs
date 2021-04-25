@@ -714,6 +714,46 @@ mod tests {
             }
         }
 
+        mod record_elements {
+            use super::*;
+
+            #[test]
+            fn compile_with_unboxed_record() {
+                let record_type =
+                    ssf::types::Record::new(vec![ssf::types::Primitive::Float64.into()], false);
+
+                compile_module(&ssf::ir::Module::new(
+                    vec![],
+                    vec![],
+                    vec![],
+                    vec![ssf::ir::Definition::new(
+                        "f",
+                        vec![ssf::ir::Argument::new("x", record_type.clone())],
+                        ssf::ir::RecordElement::new(record_type, 0, ssf::ir::Variable::new("x")),
+                        ssf::types::Primitive::Float64,
+                    )],
+                ));
+            }
+
+            #[test]
+            fn compile_with_boxed_record() {
+                let record_type =
+                    ssf::types::Record::new(vec![ssf::types::Primitive::Float64.into()], true);
+
+                compile_module(&ssf::ir::Module::new(
+                    vec![],
+                    vec![],
+                    vec![],
+                    vec![ssf::ir::Definition::new(
+                        "f",
+                        vec![ssf::ir::Argument::new("x", record_type.clone())],
+                        ssf::ir::RecordElement::new(record_type, 0, ssf::ir::Variable::new("x")),
+                        ssf::types::Primitive::Float64,
+                    )],
+                ));
+            }
+        }
+
         mod variants {
             use super::*;
 

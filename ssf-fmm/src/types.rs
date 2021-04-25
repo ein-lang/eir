@@ -15,7 +15,7 @@ pub fn compile(type_: &ssf::types::Type) -> fmm::types::Type {
         }
         ssf::types::Type::Index(_) => unreachable!(),
         ssf::types::Type::Primitive(primitive) => compile_primitive(primitive),
-        ssf::types::Type::Record(record) => compile_record(record).into(),
+        ssf::types::Type::Record(record) => compile_record(record),
         ssf::types::Type::Variant => compile_variant().into(),
     }
 }
@@ -51,8 +51,12 @@ pub fn compile_record(record: &ssf::types::Record) -> fmm::types::Type {
     if record.is_boxed() {
         fmm::types::Pointer::new(fmm::types::Record::new(vec![])).into()
     } else {
-        fmm::types::Record::new(record.elements().iter().map(compile).collect()).into()
+        compile_unboxed_record(record).into()
     }
+}
+
+pub fn compile_unboxed_record(record: &ssf::types::Record) -> fmm::types::Record {
+    fmm::types::Record::new(record.elements().iter().map(compile).collect())
 }
 
 pub fn compile_sized_closure(definition: &ssf::ir::Definition) -> fmm::types::Record {

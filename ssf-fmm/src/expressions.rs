@@ -70,6 +70,23 @@ pub fn compile(
                 unboxed.into()
             }
         }
+        ssf::ir::Expression::RecordElement(element) => {
+            let record = compile(element.record(), variables)?;
+
+            println!("{:?}", record);
+
+            instruction_builder.deconstruct_record(
+                if element.type_().is_boxed() {
+                    instruction_builder.load(fmm::build::bit_cast(
+                        fmm::types::Pointer::new(types::compile_unboxed_record(element.type_())),
+                        record,
+                    ))?
+                } else {
+                    record
+                },
+                element.index(),
+            )?
+        }
         ssf::ir::Expression::Variable(variable) => variables[variable.name()].clone(),
         ssf::ir::Expression::Variant(variant) => fmm::build::record(vec![
             compile_tag(variant.tag()),
