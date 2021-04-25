@@ -10,12 +10,13 @@ pub fn get_arity(type_: &fmm::types::Function) -> usize {
 
 pub fn compile(type_: &ssf::types::Type) -> fmm::types::Type {
     match type_ {
-        ssf::types::Type::Algebraic(algebraic) => compile_algebraic(algebraic).into(),
         ssf::types::Type::Function(function) => {
             fmm::types::Pointer::new(compile_unsized_closure(function)).into()
         }
         ssf::types::Type::Index(_) => unreachable!(),
         ssf::types::Type::Primitive(primitive) => compile_primitive(primitive),
+        ssf::types::Type::Record(record) => compile_record(record).into(),
+        ssf::types::Type::Variant => compile_variant().into(),
     }
 }
 
@@ -31,50 +32,27 @@ pub fn compile_primitive(primitive: &ssf::types::Primitive) -> fmm::types::Type 
     }
 }
 
-pub fn compile_algebraic(algebraic: &ssf::types::Algebraic) -> fmm::types::Record {
-    fmm::types::Record::new(
-        (!algebraic.is_singleton())
-            .then(|| compile_tag().into())
-            .into_iter()
-            .chain((!algebraic.is_enum()).then(|| compile_constructor_union(algebraic).into()))
-            .collect(),
-    )
+pub fn compile_variant() -> fmm::types::Record {
+    fmm::types::Record::new(vec![compile_tag().into(), compile_payload().into()])
 }
 
-pub fn compile_constructor_union(algebraic_type: &ssf::types::Algebraic) -> fmm::types::Union {
-    fmm::types::Union::new(
-        algebraic_type
-            .constructors()
-            .iter()
-            .map(|(_, constructor)| compile_shallow_constructor(constructor))
-            .collect(),
-    )
+pub fn compile_tag() -> fmm::types::Pointer {
+    // TODO Add GC functions.
+    fmm::types::Pointer::new(fmm::types::Record::new(vec![
+        fmm::types::Primitive::Integer64.into(),
+    ]))
 }
 
-fn compile_shallow_constructor(constructor: &ssf::types::Constructor) -> fmm::types::Type {
-    if constructor.is_boxed() {
+pub fn compile_payload() -> fmm::types::Primitive {
+    fmm::types::Primitive::Integer64
+}
+
+pub fn compile_record(record: &ssf::types::Record) -> fmm::types::Type {
+    if record.is_boxed() {
         fmm::types::Pointer::new(fmm::types::Record::new(vec![])).into()
     } else {
-        compile_unboxed_constructor(constructor).into()
+        fmm::types::Record::new(record.elements().iter().map(compile).collect()).into()
     }
-}
-
-pub fn compile_boxed_constructor(constructor: &ssf::types::Constructor) -> fmm::types::Pointer {
-    fmm::types::Pointer::new(compile_unboxed_constructor(constructor))
-}
-
-pub fn compile_unboxed_constructor(constructor: &ssf::types::Constructor) -> fmm::types::Record {
-    fmm::types::Record::new(constructor.elements().iter().map(compile).collect())
-}
-
-pub fn get_constructor_union_index(algebraic_type: &ssf::types::Algebraic, tag: u64) -> usize {
-    algebraic_type
-        .constructors()
-        .iter()
-        .enumerate()
-        .find(|(_, (constructor_tag, _))| **constructor_tag == tag)
-        .unwrap()
-        .0
 }
 
 pub fn compile_sized_closure(definition: &ssf::ir::Definition) -> fmm::types::Record {
@@ -204,10 +182,6 @@ fn compile_calling_convention(
         ssf::ir::CallingConvention::Source => fmm::types::CallingConvention::Source,
         ssf::ir::CallingConvention::Target => fmm::types::CallingConvention::Target,
     }
-}
-
-pub fn compile_tag() -> fmm::types::Primitive {
-    fmm::types::Primitive::PointerInteger
 }
 
 pub fn compile_arity() -> fmm::types::Primitive {

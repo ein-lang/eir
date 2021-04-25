@@ -22,68 +22,12 @@ pub fn compile(
             compile_arithmetic_operation(module_builder, instruction_builder, operation, variables)?
                 .into()
         }
-        ssf::ir::Expression::BitCast(bit_cast) => fmm::build::bit_cast(
-            types::compile(bit_cast.type_()),
-            compile(bit_cast.expression(), variables)?,
-        )
-        .into(),
         ssf::ir::Expression::Case(case) => {
             compile_case(module_builder, instruction_builder, case, variables)?
         }
         ssf::ir::Expression::ComparisonOperation(operation) => {
             compile_comparison_operation(module_builder, instruction_builder, operation, variables)?
                 .into()
-        }
-        ssf::ir::Expression::ConstructorApplication(constructor_application) => {
-            let constructor = constructor_application.constructor();
-            let algebraic_type = constructor.algebraic_type();
-            let constructor_type =
-                algebraic_type.unfold().constructors()[&constructor.tag()].clone();
-
-            fmm::build::record(
-                if algebraic_type.is_singleton() {
-                    None
-                } else {
-                    Some(fmm::ir::Primitive::PointerInteger(constructor.tag() as i64).into())
-                }
-                .into_iter()
-                .chain(if constructor_type.is_enum() {
-                    None
-                } else {
-                    let payload = fmm::build::record(
-                        constructor_application
-                            .arguments()
-                            .iter()
-                            .map(|argument| compile(argument, variables))
-                            .collect::<Result<_, _>>()?,
-                    );
-                    let union_type = types::compile_constructor_union(algebraic_type);
-                    let member_index =
-                        types::get_constructor_union_index(algebraic_type, constructor.tag());
-
-                    Some(
-                        fmm::ir::Union::new(
-                            union_type.clone(),
-                            member_index,
-                            if constructor_type.is_boxed() {
-                                let pointer =
-                                    instruction_builder.allocate_heap(payload.type_().clone());
-                                instruction_builder.store(payload, pointer.clone());
-
-                                fmm::ir::Expression::from(fmm::build::bit_cast(
-                                    union_type.members()[member_index].clone(),
-                                    pointer,
-                                ))
-                            } else {
-                                payload.into()
-                            },
-                        )
-                        .into(),
-                    )
-                })
-                .collect(),
-            )
-            .into()
         }
         ssf::ir::Expression::FunctionApplication(function_application) => {
             function_applications::compile(
@@ -107,7 +51,35 @@ pub fn compile(
             variables,
         )?,
         ssf::ir::Expression::Primitive(primitive) => compile_primitive(primitive).into(),
+        ssf::ir::Expression::Record(record) => {
+            let unboxed = fmm::build::record(
+                record
+                    .elements()
+                    .iter()
+                    .map(|argument| compile(argument, variables))
+                    .collect::<Result<_, _>>()?,
+            );
+
+            if record.type_().is_boxed() {
+                let pointer = instruction_builder.allocate_heap(unboxed.type_().clone());
+
+                instruction_builder.store(unboxed, pointer.clone());
+
+                fmm::build::bit_cast(types::compile_record(record.type_()), pointer).into()
+            } else {
+                unboxed.into()
+            }
+        }
         ssf::ir::Expression::Variable(variable) => variables[variable.name()].clone(),
+        ssf::ir::Expression::Variant(variant) => fmm::build::record(vec![
+            compile_tag(variant.tag()),
+            fmm::build::bit_cast(
+                types::compile_payload(),
+                compile(variant.payload(), variables)?,
+            )
+            .into(),
+        ])
+        .into(),
     })
 }
 
@@ -117,44 +89,45 @@ fn compile_case(
     case: &ssf::ir::Case,
     variables: &HashMap<String, fmm::build::TypedExpression>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
-    let compile = |expression| compile(module_builder, instruction_builder, expression, variables);
-
     Ok(match case {
-        ssf::ir::Case::Algebraic(case) => {
-            let argument = compile(case.argument())?;
-
-            compile_algebraic_alternatives(
-                module_builder,
-                instruction_builder,
-                if case
-                    .alternatives()
-                    .get(0)
-                    .map(|alternative| alternative.constructor().algebraic_type().is_singleton())
-                    .unwrap_or(true)
-                {
-                    fmm::ir::Primitive::PointerInteger(0).into()
-                } else {
-                    instruction_builder.deconstruct_record(argument.clone(), 0)?
-                },
-                argument,
-                case.alternatives(),
-                case.default_alternative(),
-                variables,
-            )?
-            .unwrap()
-        }
         ssf::ir::Case::Primitive(case) => {
             compile_primitive_case(module_builder, instruction_builder, case, variables)?
+        }
+        ssf::ir::Case::Variant(case) => {
+            compile_variant_case(module_builder, instruction_builder, case, variables)?
         }
     })
 }
 
-fn compile_algebraic_alternatives(
+fn compile_variant_case(
     module_builder: &fmm::build::ModuleBuilder,
     instruction_builder: &fmm::build::InstructionBuilder,
-    tag: fmm::build::TypedExpression,
+    case: &ssf::ir::VariantCase,
+    variables: &HashMap<String, fmm::build::TypedExpression>,
+) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
+    let argument = compile(
+        module_builder,
+        instruction_builder,
+        case.argument(),
+        variables,
+    )?;
+
+    Ok(compile_variant_alternatives(
+        module_builder,
+        instruction_builder,
+        argument,
+        case.alternatives(),
+        case.default_alternative(),
+        variables,
+    )?
+    .unwrap())
+}
+
+fn compile_variant_alternatives(
+    module_builder: &fmm::build::ModuleBuilder,
+    instruction_builder: &fmm::build::InstructionBuilder,
     argument: fmm::build::TypedExpression,
-    alternatives: &[ssf::ir::AlgebraicAlternative],
+    alternatives: &[ssf::ir::VariantAlternative],
     default_alternative: Option<&ssf::ir::Expression>,
     variables: &HashMap<String, fmm::build::TypedExpression>,
 ) -> Result<Option<fmm::build::TypedExpression>, fmm::build::BuildError> {
@@ -169,88 +142,55 @@ fn compile_algebraic_alternatives(
                 )
             })
             .transpose()?,
-        [alternative, ..] => {
-            let constructor = alternative.constructor();
-
-            Some(instruction_builder.if_(
-                fmm::build::comparison_operation(
-                    fmm::ir::ComparisonOperator::Equal,
-                    tag.clone(),
-                    fmm::ir::Primitive::PointerInteger(constructor.tag() as i64),
-                )?,
-                |instruction_builder| {
-                    Ok(instruction_builder.branch(compile(
+        [alternative, ..] => Some(instruction_builder.if_(
+            fmm::build::comparison_operation(
+                fmm::ir::ComparisonOperator::Equal,
+                fmm::build::bit_cast(
+                    fmm::types::Primitive::PointerInteger,
+                    instruction_builder.deconstruct_record(argument.clone(), 0)?,
+                ),
+                fmm::build::bit_cast(
+                    fmm::types::Primitive::PointerInteger,
+                    compile_tag(alternative.tag()),
+                ),
+            )?,
+            |instruction_builder| {
+                Ok(instruction_builder.branch(compile(
+                    module_builder,
+                    &instruction_builder,
+                    alternative.expression(),
+                    &variables
+                        .clone()
+                        .into_iter()
+                        .chain(vec![(
+                            alternative.name().into(),
+                            instruction_builder.deconstruct_record(argument.clone(), 1)?,
+                        )])
+                        .collect(),
+                )?))
+            },
+            |instruction_builder| {
+                Ok(
+                    if let Some(expression) = compile_variant_alternatives(
                         module_builder,
                         &instruction_builder,
-                        alternative.expression(),
-                        &if constructor.constructor_type().is_enum() {
-                            variables.clone()
-                        } else {
-                            let mut payload = instruction_builder.deconstruct_union(
-                                instruction_builder.deconstruct_record(
-                                    argument.clone(),
-                                    if constructor.algebraic_type().is_singleton() {
-                                        0
-                                    } else {
-                                        1
-                                    },
-                                )?,
-                                types::get_constructor_union_index(
-                                    constructor.algebraic_type(),
-                                    constructor.tag(),
-                                ),
-                            )?;
-
-                            if constructor.constructor_type().is_boxed() {
-                                payload = instruction_builder.load(fmm::build::bit_cast(
-                                    types::compile_boxed_constructor(
-                                        constructor.constructor_type(),
-                                    ),
-                                    payload,
-                                ))?;
-                            }
-
-                            variables
-                                .clone()
-                                .into_iter()
-                                .chain(
-                                    alternative
-                                        .element_names()
-                                        .iter()
-                                        .enumerate()
-                                        .map(|(index, name)| {
-                                            Ok((
-                                                name.into(),
-                                                instruction_builder
-                                                    .deconstruct_record(payload.clone(), index)?,
-                                            ))
-                                        })
-                                        .collect::<Result<Vec<_>, _>>()?,
-                                )
-                                .collect()
-                        },
-                    )?))
-                },
-                |instruction_builder| {
-                    Ok(
-                        if let Some(expression) = compile_algebraic_alternatives(
-                            module_builder,
-                            &instruction_builder,
-                            tag.clone(),
-                            argument.clone(),
-                            &alternatives[1..],
-                            default_alternative,
-                            variables,
-                        )? {
-                            instruction_builder.branch(expression)
-                        } else {
-                            instruction_builder.unreachable()
-                        },
-                    )
-                },
-            )?)
-        }
+                        argument.clone(),
+                        &alternatives[1..],
+                        default_alternative,
+                        variables,
+                    )? {
+                        instruction_builder.branch(expression)
+                    } else {
+                        instruction_builder.unreachable()
+                    },
+                )
+            },
+        )?),
     })
+}
+
+fn compile_tag(tag: &str) -> fmm::build::TypedExpression {
+    fmm::build::variable(tag, types::compile_tag())
 }
 
 fn compile_primitive_case(
