@@ -9,11 +9,8 @@ pub struct Record {
 }
 
 impl Record {
-    pub fn new(record_type: types::Record, elements: Vec<Expression>) -> Self {
-        Self {
-            type_: record_type,
-            elements,
-        }
+    pub fn new(type_: types::Record, elements: Vec<Expression>) -> Self {
+        Self { type_, elements }
     }
 
     pub fn type_(&self) -> &types::Record {

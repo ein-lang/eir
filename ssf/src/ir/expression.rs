@@ -7,6 +7,7 @@ use super::let_recursive::LetRecursive;
 use super::primitive::Primitive;
 use super::primitive_case::PrimitiveCase;
 use super::record::Record;
+use super::record_element::RecordElement;
 use super::variable::Variable;
 use super::variant::Variant;
 use super::variant_case::VariantCase;
@@ -23,6 +24,7 @@ pub enum Expression {
     LetRecursive(LetRecursive),
     Primitive(Primitive),
     Record(Record),
+    RecordElement(RecordElement),
     Variable(Variable),
     Variant(Variant),
 }
@@ -40,12 +42,13 @@ impl Expression {
             Self::ArithmeticOperation(operation) => operation.find_variables(),
             Self::Case(case) => case.find_variables(),
             Self::ComparisonOperation(operation) => operation.find_variables(),
-            Self::Record(record) => record.find_variables(),
             Self::FunctionApplication(function_application) => {
                 function_application.find_variables()
             }
             Self::LetRecursive(let_recursive) => let_recursive.find_variables(),
             Self::Let(let_) => let_.find_variables(),
+            Self::Record(record) => record.find_variables(),
+            Self::RecordElement(element) => element.find_variables(),
             Self::Variable(variable) => variable.find_variables(),
             Self::Variant(variant) => variant.find_variables(),
             Self::Primitive(_) => HashSet::new(),
@@ -57,12 +60,13 @@ impl Expression {
             Self::ArithmeticOperation(operation) => operation.infer_environment(variables).into(),
             Self::Case(case) => case.infer_environment(variables).into(),
             Self::ComparisonOperation(operation) => operation.infer_environment(variables).into(),
-            Self::Record(record) => record.infer_environment(variables).into(),
             Self::FunctionApplication(function_application) => {
                 function_application.infer_environment(variables).into()
             }
             Self::LetRecursive(let_recursive) => let_recursive.infer_environment(variables).into(),
             Self::Let(let_) => let_.infer_environment(variables).into(),
+            Self::Record(record) => record.infer_environment(variables).into(),
+            Self::RecordElement(element) => element.infer_environment(variables).into(),
             Self::Variant(variant) => variant.infer_environment(variables).into(),
             Self::Primitive(_) | Self::Variable(_) => self.clone(),
         }
@@ -73,21 +77,16 @@ impl Expression {
             Self::ArithmeticOperation(operation) => operation.convert_types(convert).into(),
             Self::Case(case) => case.convert_types(convert).into(),
             Self::ComparisonOperation(operation) => operation.convert_types(convert).into(),
-            Self::Record(record) => record.convert_types(convert).into(),
             Self::FunctionApplication(function_application) => {
                 function_application.convert_types(convert).into()
             }
             Self::LetRecursive(let_recursive) => let_recursive.convert_types(convert).into(),
             Self::Let(let_) => let_.convert_types(convert).into(),
+            Self::Record(record) => record.convert_types(convert).into(),
+            Self::RecordElement(element) => element.convert_types(convert).into(),
             Self::Variant(variant) => variant.convert_types(convert).into(),
             Self::Primitive(_) | Self::Variable(_) => self.clone(),
         }
-    }
-}
-
-impl From<VariantCase> for Expression {
-    fn from(variant_case: VariantCase) -> Self {
-        Self::Case(variant_case.into())
     }
 }
 
@@ -106,12 +105,6 @@ impl From<Case> for Expression {
 impl From<ComparisonOperation> for Expression {
     fn from(operation: ComparisonOperation) -> Self {
         Self::ComparisonOperation(operation)
-    }
-}
-
-impl From<Record> for Expression {
-    fn from(record: Record) -> Self {
-        Self::Record(record)
     }
 }
 
@@ -145,6 +138,18 @@ impl From<PrimitiveCase> for Expression {
     }
 }
 
+impl From<Record> for Expression {
+    fn from(record: Record) -> Self {
+        Self::Record(record)
+    }
+}
+
+impl From<RecordElement> for Expression {
+    fn from(element: RecordElement) -> Self {
+        Self::RecordElement(element)
+    }
+}
+
 impl From<Variable> for Expression {
     fn from(variable: Variable) -> Self {
         Self::Variable(variable)
@@ -154,5 +159,11 @@ impl From<Variable> for Expression {
 impl From<Variant> for Expression {
     fn from(variant: Variant) -> Self {
         Self::Variant(variant)
+    }
+}
+
+impl From<VariantCase> for Expression {
+    fn from(variant_case: VariantCase) -> Self {
+        Self::Case(variant_case.into())
     }
 }

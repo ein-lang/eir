@@ -81,21 +81,6 @@ fn check_expression(
 
             types::Primitive::Boolean.into()
         }
-        Expression::Record(record) => {
-            if record.elements().len() != record.type_().elements().len() {
-                return Err(TypeCheckError::WrongArgumentsLength(expression.clone()));
-            }
-
-            for (element, element_type) in record
-                .elements()
-                .iter()
-                .zip(record.type_().unfold().elements())
-            {
-                check_equality(&check_expression(element, variables)?, &element_type)?;
-            }
-
-            record.type_().clone().into()
-        }
         Expression::FunctionApplication(function_application) => {
             let function_type = check_expression(function_application.function(), variables)?
                 .into_function()
@@ -135,6 +120,34 @@ fn check_expression(
             check_expression(let_.expression(), &variables)?
         }
         Expression::Primitive(primitive) => Ok(check_primitive(primitive).into())?,
+        Expression::Record(record) => {
+            if record.elements().len() != record.type_().elements().len() {
+                return Err(TypeCheckError::WrongArgumentsLength(expression.clone()));
+            }
+
+            for (element, element_type) in record
+                .elements()
+                .iter()
+                .zip(record.type_().unfold().elements())
+            {
+                check_equality(&check_expression(element, variables)?, &element_type)?;
+            }
+
+            record.type_().clone().into()
+        }
+        Expression::RecordElement(element) => {
+            check_equality(
+                &check_expression(element.record(), variables)?,
+                &element.type_().clone().into(),
+            )?;
+
+            element
+                .type_()
+                .elements()
+                .get(element.index())
+                .ok_or_else(|| TypeCheckError::ElementIndexOutOfBounds(element.clone()))?
+                .clone()
+        }
         Expression::Variable(variable) => check_variable(variable, variables)?,
         Expression::Variant(_) => {
             // TODO Check payload types.
