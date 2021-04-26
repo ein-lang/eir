@@ -61,13 +61,4 @@ impl VariantAlternative {
             expression: self.expression.infer_environment(&variables),
         }
     }
-
-    pub(crate) fn convert_types(&self, convert: &impl Fn(&Type) -> Type) -> Self {
-        Self {
-            tag: self.tag.clone(),
-            type_: convert(&self.type_.clone()),
-            name: self.name.clone(),
-            expression: self.expression.convert_types(convert),
-        }
-    }
 }

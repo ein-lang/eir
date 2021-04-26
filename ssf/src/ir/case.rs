@@ -23,13 +23,6 @@ impl Case {
             Self::Variant(variant_case) => variant_case.infer_environment(variables).into(),
         }
     }
-
-    pub(crate) fn convert_types(&self, convert: &impl Fn(&Type) -> Type) -> Self {
-        match self {
-            Self::Primitive(primitive_case) => primitive_case.convert_types(convert).into(),
-            Self::Variant(variant_case) => variant_case.convert_types(convert).into(),
-        }
-    }
 }
 
 impl From<PrimitiveCase> for Case {

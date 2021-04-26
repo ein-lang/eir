@@ -5,13 +5,13 @@ use std::sync::Arc;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct RecordElement {
-    type_: types::Record,
+    type_: types::Reference,
     index: usize,
     record: Arc<Expression>,
 }
 
 impl RecordElement {
-    pub fn new(type_: types::Record, index: usize, record: impl Into<Expression>) -> Self {
+    pub fn new(type_: types::Reference, index: usize, record: impl Into<Expression>) -> Self {
         Self {
             type_,
             index,
@@ -19,7 +19,7 @@ impl RecordElement {
         }
     }
 
-    pub fn type_(&self) -> &types::Record {
+    pub fn type_(&self) -> &types::Reference {
         &self.type_
     }
 
@@ -40,14 +40,6 @@ impl RecordElement {
             type_: self.type_.clone(),
             index: self.index,
             record: self.record.infer_environment(variables).into(),
-        }
-    }
-
-    pub(crate) fn convert_types(&self, convert: &impl Fn(&Type) -> Type) -> Self {
-        Self {
-            type_: convert(&self.type_.clone().into()).into_record().unwrap(),
-            index: self.index,
-            record: self.record.convert_types(convert).into(),
         }
     }
 }

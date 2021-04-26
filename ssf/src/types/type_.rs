@@ -1,13 +1,13 @@
 use super::function::Function;
 use super::primitive::Primitive;
-use super::record::Record;
+use super::reference::Reference;
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum Type {
     Function(Function),
     Index(usize),
     Primitive(Primitive),
-    Record(Record),
+    Reference(Reference),
     Variant,
 }
 
@@ -30,9 +30,9 @@ impl Type {
         }
     }
 
-    pub fn into_record(self) -> Option<Record> {
+    pub fn into_reference(self) -> Option<Reference> {
         match self {
-            Self::Record(record) => Some(record),
+            Self::Reference(reference) => Some(reference),
             _ => None,
         }
     }
@@ -50,8 +50,8 @@ impl From<Primitive> for Type {
     }
 }
 
-impl From<Record> for Type {
-    fn from(record: Record) -> Self {
-        Self::Record(record)
+impl From<Reference> for Type {
+    fn from(reference: Reference) -> Self {
+        Self::Reference(reference)
     }
 }

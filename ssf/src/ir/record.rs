@@ -37,14 +37,4 @@ impl Record {
                 .collect(),
         )
     }
-
-    pub(crate) fn convert_types(&self, convert: &impl Fn(&Type) -> Type) -> Self {
-        Self::new(
-            convert(&self.type_.clone().into()).into_record().unwrap(),
-            self.elements
-                .iter()
-                .map(|element| element.convert_types(convert))
-                .collect(),
-        )
-    }
 }

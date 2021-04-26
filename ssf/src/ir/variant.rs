@@ -34,8 +34,4 @@ impl Variant {
     pub(crate) fn infer_environment(&self, variables: &HashMap<String, Type>) -> Self {
         Self::new(self.name.clone(), self.payload.infer_environment(variables))
     }
-
-    pub(crate) fn convert_types(&self, convert: &impl Fn(&Type) -> Type) -> Self {
-        Self::new(self.name.clone(), self.payload.convert_types(convert))
-    }
 }

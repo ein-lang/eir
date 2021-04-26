@@ -23,7 +23,7 @@ mod variable;
 mod variant;
 mod variant_alternative;
 mod variant_case;
-mod variant_definition;
+mod type_definition;
 
 pub use argument::*;
 pub use arithmetic_operation::*;
@@ -50,4 +50,4 @@ pub use variable::*;
 pub use variant::*;
 pub use variant_alternative::*;
 pub use variant_case::*;
-pub use variant_definition::*;
+pub use type_definition::*;

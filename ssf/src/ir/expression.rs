@@ -71,23 +71,6 @@ impl Expression {
             Self::Primitive(_) | Self::Variable(_) => self.clone(),
         }
     }
-
-    pub(crate) fn convert_types(&self, convert: &impl Fn(&Type) -> Type) -> Self {
-        match self {
-            Self::ArithmeticOperation(operation) => operation.convert_types(convert).into(),
-            Self::Case(case) => case.convert_types(convert).into(),
-            Self::ComparisonOperation(operation) => operation.convert_types(convert).into(),
-            Self::FunctionApplication(function_application) => {
-                function_application.convert_types(convert).into()
-            }
-            Self::LetRecursive(let_recursive) => let_recursive.convert_types(convert).into(),
-            Self::Let(let_) => let_.convert_types(convert).into(),
-            Self::Record(record) => record.convert_types(convert).into(),
-            Self::RecordElement(element) => element.convert_types(convert).into(),
-            Self::Variant(variant) => variant.convert_types(convert).into(),
-            Self::Primitive(_) | Self::Variable(_) => self.clone(),
-        }
-    }
 }
 
 impl From<ArithmeticOperation> for Expression {
