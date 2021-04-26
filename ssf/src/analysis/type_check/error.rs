@@ -1,5 +1,5 @@
 use crate::ir::*;
-use crate::types::Type;
+use crate::types::{self, Type};
 use std::error::Error;
 use std::fmt::Display;
 
@@ -9,9 +9,9 @@ pub enum TypeCheckError {
     ForeignDefinitionNotFound(ForeignDefinition),
     FunctionExpected(Expression),
     NoAlternativeFound(Case),
+    TypeNotFound(types::Reference),
     TypesNotMatched(Type, Type),
     VariableNotFound(Variable),
-    VariantNotFound(Variant),
     WrongArgumentsLength(Expression),
 }
 

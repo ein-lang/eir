@@ -130,20 +130,19 @@ fn check_expression(
         }
         Expression::Primitive(primitive) => Ok(check_primitive(primitive).into())?,
         Expression::Record(record) => {
-            if record.elements().len() != record.type_().elements().len() {
+            let record_type = types
+                .get(record.type_().name())
+                .ok_or_else(|| TypeCheckError::TypeNotFound(record.type_().clone()))?;
+
+            if record.elements().len() != record_type.elements().len() {
                 return Err(TypeCheckError::WrongArgumentsLength(expression.clone()));
             }
 
-            // for (element, element_type) in record
-            //     .elements()
-            //     .iter()
-            //     .zip(record.type_().unfold().elements())
-            // {
-            //     check_equality(&check_expression(element, variables)?, &element_type)?;
-            // }
+            for (element, element_type) in record.elements().iter().zip(record_type.elements()) {
+                check_equality(&check_expression(element, variables)?, &element_type)?;
+            }
 
-            // record.type_().clone().into()
-            todo!()
+            record.type_().clone().into()
         }
         Expression::RecordElement(element) => {
             check_equality(
@@ -151,13 +150,13 @@ fn check_expression(
                 &element.type_().clone().into(),
             )?;
 
-            // element
-            //     .type_()
-            //     .elements()
-            //     .get(element.index())
-            //     .ok_or_else(|| TypeCheckError::ElementIndexOutOfBounds(element.clone()))?
-            //     .clone()
-            todo!()
+            types
+                .get(element.type_().name())
+                .ok_or_else(|| TypeCheckError::TypeNotFound(element.type_().clone()))?
+                .elements()
+                .get(element.index())
+                .ok_or_else(|| TypeCheckError::ElementIndexOutOfBounds(element.clone()))?
+                .clone()
         }
         Expression::Variable(variable) => check_variable(variable, variables)?,
         Expression::Variant(variant) => {
@@ -287,6 +286,13 @@ mod tests {
 
     fn create_module_from_definitions(definitions: Vec<Definition>) -> Module {
         Module::new(vec![], vec![], vec![], vec![], definitions)
+    }
+
+    fn create_module_with_records(
+        type_definitions: Vec<TypeDefinition>,
+        definitions: Vec<Definition>,
+    ) -> Module {
+        Module::new(type_definitions, vec![], vec![], vec![], definitions)
     }
 
     #[test]
@@ -712,99 +718,124 @@ mod tests {
         }
     }
 
-    // TODO
-    // mod records {
-    //     use super::*;
+    mod records {
+        use super::*;
 
-    //     #[test]
-    //     fn check_records_with_no_element() {
-    //         let record_type = types::Record::new(vec![], true);
+        #[test]
+        fn check_records_with_no_element() {
+            let reference_type = types::Reference::new("foo");
 
-    //         assert_eq!(
-    //             check_types(&create_module_from_definitions(vec![
-    //                 Definition::with_environment(
-    //                     "f",
-    //                     vec![],
-    //                     vec![Argument::new("x", types::Primitive::Float64)],
-    //                     Record::new(record_type.clone(), vec![]),
-    //                     record_type,
-    //                 )
-    //             ],)),
-    //             Ok(())
-    //         );
-    //     }
+            assert_eq!(
+                check_types(&create_module_with_records(
+                    vec![TypeDefinition::new("foo", types::Record::new(vec![]))],
+                    vec![Definition::with_environment(
+                        "f",
+                        vec![],
+                        vec![Argument::new("x", types::Primitive::Float64)],
+                        Record::new(reference_type.clone(), vec![]),
+                        reference_type,
+                    )],
+                )),
+                Ok(())
+            );
+        }
 
-    //     #[test]
-    //     fn check_records_with_elements() {
-    //         let record_type = types::Record::new(vec![types::Primitive::Float64.into()], true);
+        #[test]
+        fn check_records_with_elements() {
+            let reference_type = types::Reference::new("foo");
 
-    //         assert_eq!(
-    //             check_types(&create_module_from_definitions(vec![
-    //                 Definition::with_environment(
-    //                     "f",
-    //                     vec![],
-    //                     vec![Argument::new("x", types::Primitive::Float64)],
-    //                     Record::new(record_type.clone(), vec![42.0.into()],),
-    //                     record_type,
-    //                 )
-    //             ],)),
-    //             Ok(())
-    //         );
-    //     }
+            assert_eq!(
+                check_types(&create_module_with_records(
+                    vec![TypeDefinition::new(
+                        "foo",
+                        types::Record::new(vec![types::Primitive::Float64.into()])
+                    )],
+                    vec![Definition::with_environment(
+                        "f",
+                        vec![],
+                        vec![Argument::new("x", types::Primitive::Float64)],
+                        Record::new(reference_type.clone(), vec![42.0.into()],),
+                        reference_type,
+                    )],
+                )),
+                Ok(())
+            );
+        }
 
-    //     #[test]
-    //     fn fail_to_check_records_with_wrong_number_of_elements() {
-    //         let record_type = types::Record::new(vec![types::Primitive::Float64.into()], true);
-    //         let module = create_module_from_definitions(vec![Definition::with_environment(
-    //             "f",
-    //             vec![],
-    //             vec![Argument::new("x", types::Primitive::Float64)],
-    //             Record::new(record_type.clone(), vec![42.0.into(), 42.0.into()]),
-    //             record_type,
-    //         )]);
+        #[test]
+        fn fail_to_check_records_with_wrong_number_of_elements() {
+            let reference_type = types::Reference::new("foo");
 
-    //         assert!(matches!(
-    //             check_types(&module),
-    //             Err(TypeCheckError::WrongArgumentsLength(_))
-    //         ));
-    //     }
+            let module = create_module_with_records(
+                vec![TypeDefinition::new(
+                    "foo",
+                    types::Record::new(vec![types::Primitive::Float64.into()]),
+                )],
+                vec![Definition::with_environment(
+                    "f",
+                    vec![],
+                    vec![Argument::new("x", types::Primitive::Float64)],
+                    Record::new(reference_type.clone(), vec![42.0.into(), 42.0.into()]),
+                    reference_type,
+                )],
+            );
 
-    //     #[test]
-    //     fn fail_to_check_records_with_wrong_element_type() {
-    //         let record_type = types::Record::new(vec![types::Primitive::Float64.into()], true);
+            assert!(matches!(
+                check_types(&module),
+                Err(TypeCheckError::WrongArgumentsLength(_))
+            ));
+        }
 
-    //         let module = create_module_from_definitions(vec![Definition::with_environment(
-    //             "f",
-    //             vec![],
-    //             vec![Argument::new("x", types::Primitive::Float64)],
-    //             Record::new(
-    //                 record_type.clone(),
-    //                 vec![Record::new(record_type.clone(), vec![42.0.into()]).into()],
-    //             ),
-    //             record_type,
-    //         )]);
+        #[test]
+        fn fail_to_check_records_with_wrong_element_type() {
+            let reference_type = types::Reference::new("foo");
 
-    //         assert!(matches!(
-    //             check_types(&module),
-    //             Err(TypeCheckError::TypesNotMatched(_, _))
-    //         ));
-    //     }
+            let module = create_module_with_records(
+                vec![TypeDefinition::new(
+                    "foo",
+                    types::Record::new(vec![types::Primitive::Float64.into()]),
+                )],
+                vec![Definition::with_environment(
+                    "f",
+                    vec![],
+                    vec![Argument::new("x", types::Primitive::Float64)],
+                    Record::new(reference_type.clone(), vec![true.into()]),
+                    reference_type,
+                )],
+            );
 
-    //     #[test]
-    //     fn check_records_of_recursive_record_types() {
-    //         let record_type = types::Record::new(vec![Type::Index(0)], true);
+            assert!(matches!(
+                check_types(&module),
+                Err(TypeCheckError::TypesNotMatched(_, _))
+            ));
+        }
 
-    //         assert_eq!(
-    //             check_types(&create_module_from_definitions(vec![Definition::new(
-    //                 "f",
-    //                 vec![Argument::new("x", record_type.clone())],
-    //                 Record::new(record_type.clone(), vec![Variable::new("x").into()],),
-    //                 record_type,
-    //             )],)),
-    //             Ok(())
-    //         );
-    //     }
-    // }
+        #[test]
+        fn check_record_element() {
+            let reference_type = types::Reference::new("foo");
+
+            assert_eq!(
+                check_types(&create_module_with_records(
+                    vec![TypeDefinition::new(
+                        "foo",
+                        types::Record::new(vec![types::Primitive::Float64.into()])
+                    )],
+                    vec![Definition::with_environment(
+                        "f",
+                        vec![],
+                        vec![Argument::new("x", types::Primitive::Float64)],
+                        RecordElement::new(
+                            reference_type.clone(),
+                            0,
+                            Record::new(reference_type.clone(), vec![42.0.into()],)
+                        ),
+                        types::Primitive::Float64
+                    )],
+                )),
+                Ok(())
+            );
+        }
+    }
 
     #[test]
     fn check_add_operator() {

@@ -4,16 +4,16 @@ use std::collections::{HashMap, HashSet};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Record {
-    type_: types::Record,
+    type_: types::Reference,
     elements: Vec<Expression>,
 }
 
 impl Record {
-    pub fn new(type_: types::Record, elements: Vec<Expression>) -> Self {
+    pub fn new(type_: types::Reference, elements: Vec<Expression>) -> Self {
         Self { type_, elements }
     }
 
-    pub fn type_(&self) -> &types::Record {
+    pub fn type_(&self) -> &types::Reference {
         &self.type_
     }
 
