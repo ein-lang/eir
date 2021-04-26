@@ -763,7 +763,13 @@ mod tests {
                     vec![ssf::ir::Definition::new(
                         "f",
                         vec![ssf::ir::Argument::new("x", record_type.clone())],
-                        ssf::ir::Variant::new("foo", ssf::ir::Record::new(record_type, vec![])),
+                        ssf::ir::Variant::new(
+                            "foo",
+                            ssf::ir::Record::new(
+                                record_type,
+                                vec![ssf::ir::Primitive::Float64(42.0).into()],
+                            ),
+                        ),
                         ssf::types::Type::Variant,
                     )],
                 ));

@@ -87,7 +87,7 @@ pub fn compile(
         }
         ssf::ir::Expression::Variable(variable) => variables[variable.name()].clone(),
         ssf::ir::Expression::Variant(variant) => fmm::build::record(vec![
-            compile_variant_tag(variant.tag()),
+            compile_variant_tag(variant.name()),
             compile_payload_bit_cast(
                 instruction_builder,
                 types::compile_payload(),

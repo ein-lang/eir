@@ -11,6 +11,7 @@ pub enum TypeCheckError {
     NoAlternativeFound(Case),
     TypesNotMatched(Type, Type),
     VariableNotFound(Variable),
+    VariantNotFound(Variant),
     WrongArgumentsLength(Expression),
 }
 
