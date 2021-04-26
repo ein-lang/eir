@@ -7,20 +7,20 @@ use std::{
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Variant {
-    name: String,
+    type_: Type,
     payload: Arc<Expression>,
 }
 
 impl Variant {
-    pub fn new(name: impl Into<String>, payload: impl Into<Expression>) -> Self {
+    pub fn new(type_: impl Into<Type>, payload: impl Into<Expression>) -> Self {
         Self {
-            name: name.into(),
+            type_: type_.into(),
             payload: payload.into().into(),
         }
     }
 
-    pub fn name(&self) -> &str {
-        &self.name
+    pub fn type_(&self) -> &Type {
+        &self.type_
     }
 
     pub fn payload(&self) -> &Expression {
@@ -32,6 +32,9 @@ impl Variant {
     }
 
     pub(crate) fn infer_environment(&self, variables: &HashMap<String, Type>) -> Self {
-        Self::new(self.name.clone(), self.payload.infer_environment(variables))
+        Self::new(
+            self.type_.clone(),
+            self.payload.infer_environment(variables),
+        )
     }
 }

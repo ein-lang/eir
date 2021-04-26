@@ -161,13 +161,10 @@ fn check_expression(
         }
         Expression::Variable(variable) => check_variable(variable, variables)?,
         Expression::Variant(variant) => {
-            todo!();
-            // check_equality(
-            //     &check_expression(variant.payload(), variables)?,
-            //     types
-            //         .get(variant.name())
-            //         .ok_or_else(|| TypeCheckError::VariantNotFound(variant.clone()))?,
-            // )?;
+            check_equality(
+                &check_expression(variant.payload(), variables)?,
+                variant.type_(),
+            )?;
 
             Type::Variant
         }
