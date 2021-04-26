@@ -39,7 +39,7 @@ pub fn compile_variant() -> fmm::types::Record {
 pub fn compile_tag() -> fmm::types::Pointer {
     // TODO Add GC functions.
     fmm::types::Pointer::new(fmm::types::Record::new(vec![
-        fmm::types::Primitive::Integer64.into(),
+        fmm::types::Primitive::Integer8.into(),
     ]))
 }
 

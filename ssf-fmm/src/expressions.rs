@@ -73,8 +73,6 @@ pub fn compile(
         ssf::ir::Expression::RecordElement(element) => {
             let record = compile(element.record(), variables)?;
 
-            println!("{:?}", record);
-
             instruction_builder.deconstruct_record(
                 if element.type_().is_boxed() {
                     instruction_builder.load(fmm::build::bit_cast(
@@ -89,12 +87,12 @@ pub fn compile(
         }
         ssf::ir::Expression::Variable(variable) => variables[variable.name()].clone(),
         ssf::ir::Expression::Variant(variant) => fmm::build::record(vec![
-            compile_tag(variant.tag()),
-            fmm::build::bit_cast(
+            compile_variant_tag(variant.tag()),
+            compile_payload_bit_cast(
+                instruction_builder,
                 types::compile_payload(),
                 compile(variant.payload(), variables)?,
-            )
-            .into(),
+            )?,
         ])
         .into(),
     })
@@ -168,7 +166,7 @@ fn compile_variant_alternatives(
                 ),
                 fmm::build::bit_cast(
                     fmm::types::Primitive::PointerInteger,
-                    compile_tag(alternative.tag()),
+                    compile_variant_tag(alternative.tag()),
                 ),
             )?,
             |instruction_builder| {
@@ -181,7 +179,11 @@ fn compile_variant_alternatives(
                         .into_iter()
                         .chain(vec![(
                             alternative.name().into(),
-                            instruction_builder.deconstruct_record(argument.clone(), 1)?,
+                            compile_payload_bit_cast(
+                                &instruction_builder,
+                                types::compile(alternative.type_()),
+                                instruction_builder.deconstruct_record(argument.clone(), 1)?,
+                            )?,
                         )])
                         .collect(),
                 )?))
@@ -206,8 +208,30 @@ fn compile_variant_alternatives(
     })
 }
 
-fn compile_tag(tag: &str) -> fmm::build::TypedExpression {
-    fmm::build::variable(tag, types::compile_tag())
+fn compile_variant_tag(name: &str) -> fmm::build::TypedExpression {
+    fmm::build::variable(name, types::compile_tag())
+}
+
+fn compile_payload_bit_cast(
+    builder: &fmm::build::InstructionBuilder,
+    to_type: impl Into<fmm::types::Type>,
+    argument: impl Into<fmm::build::TypedExpression>,
+) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
+    let argument = argument.into();
+    let to_type = to_type.into();
+
+    Ok(if argument.type_() == &to_type {
+        argument
+    } else {
+        builder.deconstruct_union(
+            fmm::ir::Union::new(
+                fmm::types::Union::new(vec![argument.type_().clone(), to_type]),
+                0,
+                argument.expression().clone(),
+            ),
+            1,
+        )?
+    })
 }
 
 fn compile_primitive_case(

@@ -8,6 +8,7 @@ mod foreign_declarations;
 mod foreign_definitions;
 mod function_applications;
 mod types;
+mod variant_definitions;
 
 use declarations::compile_declaration;
 use definitions::compile_definition;
@@ -15,11 +16,16 @@ pub use error::CompileError;
 use foreign_declarations::compile_foreign_declaration;
 use foreign_definitions::compile_foreign_definition;
 use std::collections::HashMap;
+use variant_definitions::compile_variant_definition;
 
 pub fn compile(module: &ssf::ir::Module) -> Result<fmm::ir::Module, CompileError> {
     ssf::analysis::check_types(module)?;
 
     let module_builder = fmm::build::ModuleBuilder::new();
+
+    for definition in module.variant_definitions() {
+        compile_variant_definition(&module_builder, definition)?;
+    }
 
     for declaration in module.foreign_declarations() {
         compile_foreign_declaration(&module_builder, declaration)?;
@@ -116,6 +122,10 @@ mod tests {
         compile_final_module(
             &fmm::analysis::transform_to_cps(&module, fmm::types::Record::new(vec![])).unwrap(),
         );
+    }
+
+    fn compile_final_module(module: &fmm::ir::Module) {
+        fmm::analysis::check_types(module).unwrap();
 
         fmm_llvm::compile_to_object(
             &module,
@@ -129,32 +139,26 @@ mod tests {
         .unwrap();
     }
 
-    fn compile_final_module(module: &fmm::ir::Module) {
-        fmm::analysis::check_types(&module).unwrap();
+    fn create_module_from_definitions(definitions: Vec<ssf::ir::Definition>) -> ssf::ir::Module {
+        ssf::ir::Module::new(vec![], vec![], vec![], vec![], definitions)
+    }
 
-        let directory = tempfile::tempdir().unwrap();
-        let file_path = directory.path().join("foo.c");
-        let source = fmm_c::compile(&module, None);
-
-        std::fs::write(&file_path, source).unwrap();
-        let output = std::process::Command::new("clang")
-            .arg("-Werror") // cspell:disable-line
-            .arg("-Wno-incompatible-pointer-types-discards-qualifiers") // cspell:disable-line
-            .arg("-o")
-            .arg(directory.path().join("foo.o"))
-            .arg("-c")
-            .arg(&file_path)
-            .output()
-            .unwrap();
-
-        assert_eq!(String::from_utf8_lossy(&output.stdout), "");
-        assert_eq!(String::from_utf8_lossy(&output.stderr), "");
-        assert!(output.status.success());
+    fn create_module_for_variants(
+        variant_definitions: Vec<ssf::ir::VariantDefinition>,
+        definitions: Vec<ssf::ir::Definition>,
+    ) -> ssf::ir::Module {
+        ssf::ir::Module::new(variant_definitions, vec![], vec![], vec![], definitions)
     }
 
     #[test]
     fn compile_empty_module() {
-        compile_module(&ssf::ir::Module::new(vec![], vec![], vec![], vec![]));
+        compile_module(&ssf::ir::Module::new(
+            vec![],
+            vec![],
+            vec![],
+            vec![],
+            vec![],
+        ));
     }
 
     mod foreign_declarations {
@@ -163,6 +167,7 @@ mod tests {
         #[test]
         fn compile() {
             compile_module(&ssf::ir::Module::new(
+                vec![],
                 vec![ssf::ir::ForeignDeclaration::new(
                     "f",
                     "g",
@@ -181,6 +186,7 @@ mod tests {
         #[test]
         fn compile_with_multiple_arguments() {
             compile_module(&ssf::ir::Module::new(
+                vec![],
                 vec![ssf::ir::ForeignDeclaration::new(
                     "f",
                     "g",
@@ -202,6 +208,7 @@ mod tests {
         #[test]
         fn compile_with_source_calling_convention() {
             compile_module(&ssf::ir::Module::new(
+                vec![],
                 vec![ssf::ir::ForeignDeclaration::new(
                     "f",
                     "g",
@@ -224,6 +231,7 @@ mod tests {
         #[test]
         fn compile_for_foreign_declaration() {
             compile_module(&ssf::ir::Module::new(
+                vec![],
                 vec![ssf::ir::ForeignDeclaration::new(
                     "f",
                     "g",
@@ -243,6 +251,7 @@ mod tests {
         fn compile_for_declaration() {
             compile_module(&ssf::ir::Module::new(
                 vec![],
+                vec![],
                 vec![ssf::ir::ForeignDefinition::new("f", "g")],
                 vec![ssf::ir::Declaration::new(
                     "f",
@@ -258,6 +267,7 @@ mod tests {
         #[test]
         fn compile_for_definition() {
             compile_module(&ssf::ir::Module::new(
+                vec![],
                 vec![],
                 vec![ssf::ir::ForeignDefinition::new("f", "g")],
                 vec![],
@@ -279,6 +289,7 @@ mod tests {
             compile_module(&ssf::ir::Module::new(
                 vec![],
                 vec![],
+                vec![],
                 vec![ssf::ir::Declaration::new(
                     "f",
                     ssf::types::Function::new(
@@ -293,6 +304,7 @@ mod tests {
         #[test]
         fn compile_with_multiple_arguments() {
             compile_module(&ssf::ir::Module::new(
+                vec![],
                 vec![],
                 vec![],
                 vec![ssf::ir::Declaration::new(
@@ -315,26 +327,20 @@ mod tests {
 
         #[test]
         fn compile() {
-            compile_module(&ssf::ir::Module::new(
-                vec![],
-                vec![],
-                vec![],
-                vec![ssf::ir::Definition::new(
+            compile_module(&create_module_from_definitions(vec![
+                ssf::ir::Definition::new(
                     "f",
                     vec![ssf::ir::Argument::new("x", ssf::types::Primitive::Float64)],
                     ssf::ir::Variable::new("x"),
                     ssf::types::Primitive::Float64,
-                )],
-            ));
+                ),
+            ]));
         }
 
         #[test]
         fn compile_with_multiple_arguments() {
-            compile_module(&ssf::ir::Module::new(
-                vec![],
-                vec![],
-                vec![],
-                vec![ssf::ir::Definition::new(
+            compile_module(&create_module_from_definitions(vec![
+                ssf::ir::Definition::new(
                     "f",
                     vec![
                         ssf::ir::Argument::new("x", ssf::types::Primitive::Float64),
@@ -346,34 +352,29 @@ mod tests {
                         ssf::ir::Variable::new("y"),
                     ),
                     ssf::types::Primitive::Float64,
-                )],
-            ));
+                ),
+            ]));
         }
 
         #[test]
         fn compile_thunk() {
-            compile_module(&ssf::ir::Module::new(
-                vec![],
-                vec![],
-                vec![],
-                vec![
-                    ssf::ir::Definition::thunk(
-                        "f",
-                        vec![ssf::ir::Argument::new("x", ssf::types::Primitive::Float64)],
+            compile_module(&create_module_from_definitions(vec![
+                ssf::ir::Definition::thunk(
+                    "f",
+                    vec![ssf::ir::Argument::new("x", ssf::types::Primitive::Float64)],
+                    ssf::ir::Variable::new("x"),
+                    ssf::types::Primitive::Float64,
+                ),
+                ssf::ir::Definition::new(
+                    "g",
+                    vec![ssf::ir::Argument::new("x", ssf::types::Primitive::Float64)],
+                    ssf::ir::FunctionApplication::new(
+                        ssf::ir::Variable::new("f"),
                         ssf::ir::Variable::new("x"),
-                        ssf::types::Primitive::Float64,
                     ),
-                    ssf::ir::Definition::new(
-                        "g",
-                        vec![ssf::ir::Argument::new("x", ssf::types::Primitive::Float64)],
-                        ssf::ir::FunctionApplication::new(
-                            ssf::ir::Variable::new("f"),
-                            ssf::ir::Variable::new("x"),
-                        ),
-                        ssf::types::Primitive::Float64,
-                    ),
-                ],
-            ));
+                    ssf::types::Primitive::Float64,
+                ),
+            ]));
         }
     }
 
@@ -382,11 +383,8 @@ mod tests {
 
         #[test]
         fn compile_let() {
-            compile_module(&ssf::ir::Module::new(
-                vec![],
-                vec![],
-                vec![],
-                vec![ssf::ir::Definition::new(
+            compile_module(&create_module_from_definitions(vec![
+                ssf::ir::Definition::new(
                     "f",
                     vec![ssf::ir::Argument::new("x", ssf::types::Primitive::Float64)],
                     ssf::ir::Let::new(
@@ -396,17 +394,14 @@ mod tests {
                         ssf::ir::Variable::new("y"),
                     ),
                     ssf::types::Primitive::Float64,
-                )],
-            ));
+                ),
+            ]));
         }
 
         #[test]
         fn compile_let_recursive() {
-            compile_module(&ssf::ir::Module::new(
-                vec![],
-                vec![],
-                vec![],
-                vec![ssf::ir::Definition::new(
+            compile_module(&create_module_from_definitions(vec![
+                ssf::ir::Definition::new(
                     "f",
                     vec![ssf::ir::Argument::new("x", ssf::types::Primitive::Float64)],
                     ssf::ir::LetRecursive::new(
@@ -426,17 +421,14 @@ mod tests {
                         ),
                     ),
                     ssf::types::Primitive::Float64,
-                )],
-            ));
+                ),
+            ]));
         }
 
         #[test]
         fn compile_let_recursive_with_curried_function() {
-            compile_module(&ssf::ir::Module::new(
-                vec![],
-                vec![],
-                vec![],
-                vec![ssf::ir::Definition::new(
+            compile_module(&create_module_from_definitions(vec![
+                ssf::ir::Definition::new(
                     "f",
                     vec![ssf::ir::Argument::new("x", ssf::types::Primitive::Float64)],
                     ssf::ir::LetRecursive::new(
@@ -477,8 +469,8 @@ mod tests {
                         ),
                     ),
                     ssf::types::Primitive::Float64,
-                )],
-            ));
+                ),
+            ]));
         }
 
         mod variant_cases {
@@ -486,10 +478,11 @@ mod tests {
 
             #[test]
             fn compile_with_float_64() {
-                compile_module(&ssf::ir::Module::new(
-                    vec![],
-                    vec![],
-                    vec![],
+                compile_module(&create_module_for_variants(
+                    vec![ssf::ir::VariantDefinition::new(
+                        "foo",
+                        ssf::types::Primitive::Float64,
+                    )],
                     vec![ssf::ir::Definition::new(
                         "f",
                         vec![ssf::ir::Argument::new("x", ssf::types::Type::Variant)],
@@ -512,10 +505,8 @@ mod tests {
             fn compile_with_unboxed_record() {
                 let record_type =
                     ssf::types::Record::new(vec![ssf::types::Primitive::Float64.into()], false);
-                compile_module(&ssf::ir::Module::new(
-                    vec![],
-                    vec![],
-                    vec![],
+                compile_module(&create_module_for_variants(
+                    vec![ssf::ir::VariantDefinition::new("foo", record_type.clone())],
                     vec![ssf::ir::Definition::new(
                         "f",
                         vec![ssf::ir::Argument::new("x", ssf::types::Type::Variant)],
@@ -539,10 +530,8 @@ mod tests {
                 let record_type =
                     ssf::types::Record::new(vec![ssf::types::Primitive::Float64.into()], true);
 
-                compile_module(&ssf::ir::Module::new(
-                    vec![],
-                    vec![],
-                    vec![],
+                compile_module(&create_module_for_variants(
+                    vec![ssf::ir::VariantDefinition::new("foo", record_type.clone())],
                     vec![ssf::ir::Definition::new(
                         "f",
                         vec![ssf::ir::Argument::new("x", ssf::types::Type::Variant)],
@@ -567,11 +556,8 @@ mod tests {
 
             #[test]
             fn compile() {
-                compile_module(&ssf::ir::Module::new(
-                    vec![],
-                    vec![],
-                    vec![],
-                    vec![ssf::ir::Definition::new(
+                compile_module(&create_module_from_definitions(vec![
+                    ssf::ir::Definition::new(
                         "f",
                         vec![ssf::ir::Argument::new("x", ssf::types::Primitive::Float64)],
                         ssf::ir::PrimitiveCase::new(
@@ -589,17 +575,14 @@ mod tests {
                             None,
                         ),
                         ssf::types::Primitive::Float64,
-                    )],
-                ));
+                    ),
+                ]));
             }
 
             #[test]
             fn compile_with_default_alternative() {
-                compile_module(&ssf::ir::Module::new(
-                    vec![],
-                    vec![],
-                    vec![],
-                    vec![ssf::ir::Definition::new(
+                compile_module(&create_module_from_definitions(vec![
+                    ssf::ir::Definition::new(
                         "f",
                         vec![ssf::ir::Argument::new("x", ssf::types::Primitive::Float64)],
                         ssf::ir::PrimitiveCase::new(
@@ -617,8 +600,8 @@ mod tests {
                             Some(ssf::ir::Primitive::Float64(4.0).into()),
                         ),
                         ssf::types::Primitive::Float64,
-                    )],
-                ));
+                    ),
+                ]));
             }
         }
 
@@ -629,17 +612,14 @@ mod tests {
             fn compile_with_no_element() {
                 let record_type = ssf::types::Record::new(vec![], false);
 
-                compile_module(&ssf::ir::Module::new(
-                    vec![],
-                    vec![],
-                    vec![],
-                    vec![ssf::ir::Definition::new(
+                compile_module(&create_module_from_definitions(vec![
+                    ssf::ir::Definition::new(
                         "f",
                         vec![ssf::ir::Argument::new("x", ssf::types::Primitive::Float64)],
                         ssf::ir::Record::new(record_type.clone(), vec![]),
                         record_type,
-                    )],
-                ));
+                    ),
+                ]));
             }
 
             #[test]
@@ -647,11 +627,8 @@ mod tests {
                 let record_type =
                     ssf::types::Record::new(vec![ssf::types::Primitive::Float64.into()], false);
 
-                compile_module(&ssf::ir::Module::new(
-                    vec![],
-                    vec![],
-                    vec![],
-                    vec![ssf::ir::Definition::new(
+                compile_module(&create_module_from_definitions(vec![
+                    ssf::ir::Definition::new(
                         "f",
                         vec![ssf::ir::Argument::new("x", ssf::types::Primitive::Float64)],
                         ssf::ir::Record::new(
@@ -659,8 +636,8 @@ mod tests {
                             vec![ssf::ir::Primitive::Float64(42.0).into()],
                         ),
                         record_type,
-                    )],
-                ));
+                    ),
+                ]));
             }
 
             #[test]
@@ -673,11 +650,8 @@ mod tests {
                     false,
                 );
 
-                compile_module(&ssf::ir::Module::new(
-                    vec![],
-                    vec![],
-                    vec![],
-                    vec![ssf::ir::Definition::new(
+                compile_module(&create_module_from_definitions(vec![
+                    ssf::ir::Definition::new(
                         "f",
                         vec![ssf::ir::Argument::new("x", ssf::types::Primitive::Float64)],
                         ssf::ir::Record::new(
@@ -688,8 +662,8 @@ mod tests {
                             ],
                         ),
                         record_type,
-                    )],
-                ));
+                    ),
+                ]));
             }
 
             #[test]
@@ -697,11 +671,8 @@ mod tests {
                 let record_type =
                     ssf::types::Record::new(vec![ssf::types::Primitive::Float64.into()], true);
 
-                compile_module(&ssf::ir::Module::new(
-                    vec![],
-                    vec![],
-                    vec![],
-                    vec![ssf::ir::Definition::new(
+                compile_module(&create_module_from_definitions(vec![
+                    ssf::ir::Definition::new(
                         "f",
                         vec![ssf::ir::Argument::new("x", ssf::types::Primitive::Float64)],
                         ssf::ir::Record::new(
@@ -709,8 +680,8 @@ mod tests {
                             vec![ssf::ir::Primitive::Float64(42.0).into()],
                         ),
                         record_type,
-                    )],
-                ));
+                    ),
+                ]));
             }
         }
 
@@ -722,17 +693,14 @@ mod tests {
                 let record_type =
                     ssf::types::Record::new(vec![ssf::types::Primitive::Float64.into()], false);
 
-                compile_module(&ssf::ir::Module::new(
-                    vec![],
-                    vec![],
-                    vec![],
-                    vec![ssf::ir::Definition::new(
+                compile_module(&create_module_from_definitions(vec![
+                    ssf::ir::Definition::new(
                         "f",
                         vec![ssf::ir::Argument::new("x", record_type.clone())],
                         ssf::ir::RecordElement::new(record_type, 0, ssf::ir::Variable::new("x")),
                         ssf::types::Primitive::Float64,
-                    )],
-                ));
+                    ),
+                ]));
             }
 
             #[test]
@@ -740,17 +708,14 @@ mod tests {
                 let record_type =
                     ssf::types::Record::new(vec![ssf::types::Primitive::Float64.into()], true);
 
-                compile_module(&ssf::ir::Module::new(
-                    vec![],
-                    vec![],
-                    vec![],
-                    vec![ssf::ir::Definition::new(
+                compile_module(&create_module_from_definitions(vec![
+                    ssf::ir::Definition::new(
                         "f",
                         vec![ssf::ir::Argument::new("x", record_type.clone())],
                         ssf::ir::RecordElement::new(record_type, 0, ssf::ir::Variable::new("x")),
                         ssf::types::Primitive::Float64,
-                    )],
-                ));
+                    ),
+                ]));
             }
         }
 
@@ -758,15 +723,47 @@ mod tests {
             use super::*;
 
             #[test]
-            fn compile() {
-                compile_module(&ssf::ir::Module::new(
-                    vec![],
-                    vec![],
-                    vec![],
+            fn compile_with_float_64() {
+                compile_module(&create_module_for_variants(
+                    vec![ssf::ir::VariantDefinition::new(
+                        "foo",
+                        ssf::types::Primitive::Float64,
+                    )],
                     vec![ssf::ir::Definition::new(
                         "f",
                         vec![ssf::ir::Argument::new("x", ssf::types::Primitive::Float64)],
                         ssf::ir::Variant::new("foo", ssf::ir::Primitive::Float64(42.0)),
+                        ssf::types::Type::Variant,
+                    )],
+                ));
+            }
+
+            #[test]
+            fn compile_with_empty_unboxed_record() {
+                let record_type = ssf::types::Record::new(vec![], false);
+
+                compile_module(&create_module_for_variants(
+                    vec![ssf::ir::VariantDefinition::new("foo", record_type.clone())],
+                    vec![ssf::ir::Definition::new(
+                        "f",
+                        vec![ssf::ir::Argument::new("x", record_type.clone())],
+                        ssf::ir::Variant::new("foo", ssf::ir::Record::new(record_type, vec![])),
+                        ssf::types::Type::Variant,
+                    )],
+                ));
+            }
+
+            #[test]
+            fn compile_with_unboxed_record() {
+                let record_type =
+                    ssf::types::Record::new(vec![ssf::types::Primitive::Float64.into()], false);
+
+                compile_module(&create_module_for_variants(
+                    vec![ssf::ir::VariantDefinition::new("foo", record_type.clone())],
+                    vec![ssf::ir::Definition::new(
+                        "f",
+                        vec![ssf::ir::Argument::new("x", record_type.clone())],
+                        ssf::ir::Variant::new("foo", ssf::ir::Record::new(record_type, vec![])),
                         ssf::types::Type::Variant,
                     )],
                 ));
@@ -778,186 +775,69 @@ mod tests {
 
             #[test]
             fn compile_1_argument() {
-                compile_module(&ssf::ir::Module::new(
-                    vec![],
-                    vec![],
-                    vec![],
-                    vec![
-                        ssf::ir::Definition::new(
-                            "f",
-                            vec![ssf::ir::Argument::new("x", ssf::types::Primitive::Float64)],
-                            ssf::ir::Variable::new("x"),
-                            ssf::types::Primitive::Float64,
+                compile_module(&create_module_from_definitions(vec![
+                    ssf::ir::Definition::new(
+                        "f",
+                        vec![ssf::ir::Argument::new("x", ssf::types::Primitive::Float64)],
+                        ssf::ir::Variable::new("x"),
+                        ssf::types::Primitive::Float64,
+                    ),
+                    ssf::ir::Definition::new(
+                        "g",
+                        vec![ssf::ir::Argument::new("x", ssf::types::Primitive::Float64)],
+                        ssf::ir::FunctionApplication::new(
+                            ssf::ir::Variable::new("f"),
+                            ssf::ir::Primitive::Float64(42.0),
                         ),
-                        ssf::ir::Definition::new(
-                            "g",
-                            vec![ssf::ir::Argument::new("x", ssf::types::Primitive::Float64)],
-                            ssf::ir::FunctionApplication::new(
-                                ssf::ir::Variable::new("f"),
-                                ssf::ir::Primitive::Float64(42.0),
-                            ),
-                            ssf::types::Primitive::Float64,
-                        ),
-                    ],
-                ));
+                        ssf::types::Primitive::Float64,
+                    ),
+                ]));
             }
 
             #[test]
             fn compile_2_arguments() {
-                compile_module(&ssf::ir::Module::new(
-                    vec![],
-                    vec![],
-                    vec![],
-                    vec![
-                        ssf::ir::Definition::new(
-                            "f",
-                            vec![
-                                ssf::ir::Argument::new("x", ssf::types::Primitive::Float64),
-                                ssf::ir::Argument::new("y", ssf::types::Primitive::Integer32),
-                            ],
-                            ssf::ir::Variable::new("x"),
-                            ssf::types::Primitive::Float64,
-                        ),
-                        ssf::ir::Definition::new(
-                            "g",
-                            vec![ssf::ir::Argument::new("x", ssf::types::Primitive::Float64)],
+                compile_module(&create_module_from_definitions(vec![
+                    ssf::ir::Definition::new(
+                        "f",
+                        vec![
+                            ssf::ir::Argument::new("x", ssf::types::Primitive::Float64),
+                            ssf::ir::Argument::new("y", ssf::types::Primitive::Integer32),
+                        ],
+                        ssf::ir::Variable::new("x"),
+                        ssf::types::Primitive::Float64,
+                    ),
+                    ssf::ir::Definition::new(
+                        "g",
+                        vec![ssf::ir::Argument::new("x", ssf::types::Primitive::Float64)],
+                        ssf::ir::FunctionApplication::new(
                             ssf::ir::FunctionApplication::new(
-                                ssf::ir::FunctionApplication::new(
-                                    ssf::ir::Variable::new("f"),
-                                    ssf::ir::Primitive::Float64(42.0),
-                                ),
-                                ssf::ir::Primitive::Integer32(42),
+                                ssf::ir::Variable::new("f"),
+                                ssf::ir::Primitive::Float64(42.0),
                             ),
-                            ssf::types::Primitive::Float64,
+                            ssf::ir::Primitive::Integer32(42),
                         ),
-                    ],
-                ));
+                        ssf::types::Primitive::Float64,
+                    ),
+                ]));
             }
 
             #[test]
             fn compile_3_arguments() {
-                compile_module(&ssf::ir::Module::new(
-                    vec![],
-                    vec![],
-                    vec![],
-                    vec![
-                        ssf::ir::Definition::new(
-                            "f",
-                            vec![
-                                ssf::ir::Argument::new("x", ssf::types::Primitive::Float64),
-                                ssf::ir::Argument::new("y", ssf::types::Primitive::Integer32),
-                                ssf::ir::Argument::new("z", ssf::types::Primitive::Integer64),
-                            ],
-                            ssf::ir::Variable::new("x"),
-                            ssf::types::Primitive::Float64,
-                        ),
-                        ssf::ir::Definition::new(
-                            "g",
-                            vec![ssf::ir::Argument::new("x", ssf::types::Primitive::Float64)],
-                            ssf::ir::FunctionApplication::new(
-                                ssf::ir::FunctionApplication::new(
-                                    ssf::ir::FunctionApplication::new(
-                                        ssf::ir::Variable::new("f"),
-                                        ssf::ir::Primitive::Float64(111.0),
-                                    ),
-                                    ssf::ir::Primitive::Integer32(222),
-                                ),
-                                ssf::ir::Primitive::Integer64(333),
-                            ),
-                            ssf::types::Primitive::Float64,
-                        ),
-                    ],
-                ));
-            }
-
-            #[test]
-            fn compile_1_argument_with_arity_of_2() {
-                compile_module(&ssf::ir::Module::new(
-                    vec![],
-                    vec![],
-                    vec![],
-                    vec![
-                        ssf::ir::Definition::new(
-                            "f",
-                            vec![
-                                ssf::ir::Argument::new("x", ssf::types::Primitive::Float64),
-                                ssf::ir::Argument::new("y", ssf::types::Primitive::Integer32),
-                            ],
-                            ssf::ir::Variable::new("x"),
-                            ssf::types::Primitive::Float64,
-                        ),
-                        ssf::ir::Definition::new(
-                            "g",
-                            vec![ssf::ir::Argument::new("x", ssf::types::Primitive::Float64)],
-                            ssf::ir::FunctionApplication::new(
-                                ssf::ir::Variable::new("f"),
-                                ssf::ir::Primitive::Float64(42.0),
-                            ),
-                            ssf::types::Function::new(
-                                ssf::types::Primitive::Integer32,
-                                ssf::types::Primitive::Float64,
-                            ),
-                        ),
-                    ],
-                ));
-            }
-
-            #[test]
-            fn compile_1_argument_with_arity_of_3() {
-                compile_module(&ssf::ir::Module::new(
-                    vec![],
-                    vec![],
-                    vec![],
-                    vec![
-                        ssf::ir::Definition::new(
-                            "f",
-                            vec![
-                                ssf::ir::Argument::new("x", ssf::types::Primitive::Float64),
-                                ssf::ir::Argument::new("y", ssf::types::Primitive::Integer32),
-                                ssf::ir::Argument::new("z", ssf::types::Primitive::Integer64),
-                            ],
-                            ssf::ir::Variable::new("x"),
-                            ssf::types::Primitive::Float64,
-                        ),
-                        ssf::ir::Definition::new(
-                            "g",
-                            vec![ssf::ir::Argument::new("x", ssf::types::Primitive::Float64)],
-                            ssf::ir::FunctionApplication::new(
-                                ssf::ir::Variable::new("f"),
-                                ssf::ir::Primitive::Float64(42.0),
-                            ),
-                            ssf::types::Function::new(
-                                ssf::types::Primitive::Integer32,
-                                ssf::types::Function::new(
-                                    ssf::types::Primitive::Integer64,
-                                    ssf::types::Primitive::Float64,
-                                ),
-                            ),
-                        ),
-                    ],
-                ));
-            }
-
-            #[test]
-            fn compile_2_arguments_with_arity_of_3() {
-                compile_module(&ssf::ir::Module::new(
-                    vec![],
-                    vec![],
-                    vec![],
-                    vec![
-                        ssf::ir::Definition::new(
-                            "f",
-                            vec![
-                                ssf::ir::Argument::new("x", ssf::types::Primitive::Float64),
-                                ssf::ir::Argument::new("y", ssf::types::Primitive::Integer32),
-                                ssf::ir::Argument::new("z", ssf::types::Primitive::Integer64),
-                            ],
-                            ssf::ir::Variable::new("x"),
-                            ssf::types::Primitive::Float64,
-                        ),
-                        ssf::ir::Definition::new(
-                            "g",
-                            vec![ssf::ir::Argument::new("x", ssf::types::Primitive::Float64)],
+                compile_module(&create_module_from_definitions(vec![
+                    ssf::ir::Definition::new(
+                        "f",
+                        vec![
+                            ssf::ir::Argument::new("x", ssf::types::Primitive::Float64),
+                            ssf::ir::Argument::new("y", ssf::types::Primitive::Integer32),
+                            ssf::ir::Argument::new("z", ssf::types::Primitive::Integer64),
+                        ],
+                        ssf::ir::Variable::new("x"),
+                        ssf::types::Primitive::Float64,
+                    ),
+                    ssf::ir::Definition::new(
+                        "g",
+                        vec![ssf::ir::Argument::new("x", ssf::types::Primitive::Float64)],
+                        ssf::ir::FunctionApplication::new(
                             ssf::ir::FunctionApplication::new(
                                 ssf::ir::FunctionApplication::new(
                                     ssf::ir::Variable::new("f"),
@@ -965,60 +845,139 @@ mod tests {
                                 ),
                                 ssf::ir::Primitive::Integer32(222),
                             ),
+                            ssf::ir::Primitive::Integer64(333),
+                        ),
+                        ssf::types::Primitive::Float64,
+                    ),
+                ]));
+            }
+
+            #[test]
+            fn compile_1_argument_with_arity_of_2() {
+                compile_module(&create_module_from_definitions(vec![
+                    ssf::ir::Definition::new(
+                        "f",
+                        vec![
+                            ssf::ir::Argument::new("x", ssf::types::Primitive::Float64),
+                            ssf::ir::Argument::new("y", ssf::types::Primitive::Integer32),
+                        ],
+                        ssf::ir::Variable::new("x"),
+                        ssf::types::Primitive::Float64,
+                    ),
+                    ssf::ir::Definition::new(
+                        "g",
+                        vec![ssf::ir::Argument::new("x", ssf::types::Primitive::Float64)],
+                        ssf::ir::FunctionApplication::new(
+                            ssf::ir::Variable::new("f"),
+                            ssf::ir::Primitive::Float64(42.0),
+                        ),
+                        ssf::types::Function::new(
+                            ssf::types::Primitive::Integer32,
+                            ssf::types::Primitive::Float64,
+                        ),
+                    ),
+                ]));
+            }
+
+            #[test]
+            fn compile_1_argument_with_arity_of_3() {
+                compile_module(&create_module_from_definitions(vec![
+                    ssf::ir::Definition::new(
+                        "f",
+                        vec![
+                            ssf::ir::Argument::new("x", ssf::types::Primitive::Float64),
+                            ssf::ir::Argument::new("y", ssf::types::Primitive::Integer32),
+                            ssf::ir::Argument::new("z", ssf::types::Primitive::Integer64),
+                        ],
+                        ssf::ir::Variable::new("x"),
+                        ssf::types::Primitive::Float64,
+                    ),
+                    ssf::ir::Definition::new(
+                        "g",
+                        vec![ssf::ir::Argument::new("x", ssf::types::Primitive::Float64)],
+                        ssf::ir::FunctionApplication::new(
+                            ssf::ir::Variable::new("f"),
+                            ssf::ir::Primitive::Float64(42.0),
+                        ),
+                        ssf::types::Function::new(
+                            ssf::types::Primitive::Integer32,
                             ssf::types::Function::new(
                                 ssf::types::Primitive::Integer64,
                                 ssf::types::Primitive::Float64,
                             ),
                         ),
-                    ],
-                ));
+                    ),
+                ]));
+            }
+
+            #[test]
+            fn compile_2_arguments_with_arity_of_3() {
+                compile_module(&create_module_from_definitions(vec![
+                    ssf::ir::Definition::new(
+                        "f",
+                        vec![
+                            ssf::ir::Argument::new("x", ssf::types::Primitive::Float64),
+                            ssf::ir::Argument::new("y", ssf::types::Primitive::Integer32),
+                            ssf::ir::Argument::new("z", ssf::types::Primitive::Integer64),
+                        ],
+                        ssf::ir::Variable::new("x"),
+                        ssf::types::Primitive::Float64,
+                    ),
+                    ssf::ir::Definition::new(
+                        "g",
+                        vec![ssf::ir::Argument::new("x", ssf::types::Primitive::Float64)],
+                        ssf::ir::FunctionApplication::new(
+                            ssf::ir::FunctionApplication::new(
+                                ssf::ir::Variable::new("f"),
+                                ssf::ir::Primitive::Float64(111.0),
+                            ),
+                            ssf::ir::Primitive::Integer32(222),
+                        ),
+                        ssf::types::Function::new(
+                            ssf::types::Primitive::Integer64,
+                            ssf::types::Primitive::Float64,
+                        ),
+                    ),
+                ]));
             }
 
             #[test]
             fn compile_with_curried_function() {
-                compile_module(&ssf::ir::Module::new(
-                    vec![],
-                    vec![],
-                    vec![],
-                    vec![
-                        ssf::ir::Definition::new(
-                            "f",
-                            vec![ssf::ir::Argument::new("x", ssf::types::Primitive::Float64)],
-                            ssf::ir::LetRecursive::new(
-                                vec![ssf::ir::Definition::new(
-                                    "g",
-                                    vec![ssf::ir::Argument::new(
-                                        "y",
-                                        ssf::types::Primitive::Float64,
-                                    )],
-                                    ssf::ir::ArithmeticOperation::new(
-                                        ssf::ir::ArithmeticOperator::Add,
-                                        ssf::ir::Variable::new("x"),
-                                        ssf::ir::Variable::new("y"),
-                                    ),
-                                    ssf::types::Primitive::Float64,
-                                )],
-                                ssf::ir::Variable::new("g"),
-                            ),
-                            ssf::types::Function::new(
-                                ssf::types::Primitive::Float64,
-                                ssf::types::Primitive::Float64,
-                            ),
-                        ),
-                        ssf::ir::Definition::new(
-                            "g",
-                            vec![ssf::ir::Argument::new("x", ssf::types::Primitive::Float64)],
-                            ssf::ir::FunctionApplication::new(
-                                ssf::ir::FunctionApplication::new(
-                                    ssf::ir::Variable::new("f"),
-                                    ssf::ir::Primitive::Float64(111.0),
+                compile_module(&create_module_from_definitions(vec![
+                    ssf::ir::Definition::new(
+                        "f",
+                        vec![ssf::ir::Argument::new("x", ssf::types::Primitive::Float64)],
+                        ssf::ir::LetRecursive::new(
+                            vec![ssf::ir::Definition::new(
+                                "g",
+                                vec![ssf::ir::Argument::new("y", ssf::types::Primitive::Float64)],
+                                ssf::ir::ArithmeticOperation::new(
+                                    ssf::ir::ArithmeticOperator::Add,
+                                    ssf::ir::Variable::new("x"),
+                                    ssf::ir::Variable::new("y"),
                                 ),
-                                ssf::ir::Primitive::Float64(222.0),
-                            ),
+                                ssf::types::Primitive::Float64,
+                            )],
+                            ssf::ir::Variable::new("g"),
+                        ),
+                        ssf::types::Function::new(
+                            ssf::types::Primitive::Float64,
                             ssf::types::Primitive::Float64,
                         ),
-                    ],
-                ));
+                    ),
+                    ssf::ir::Definition::new(
+                        "g",
+                        vec![ssf::ir::Argument::new("x", ssf::types::Primitive::Float64)],
+                        ssf::ir::FunctionApplication::new(
+                            ssf::ir::FunctionApplication::new(
+                                ssf::ir::Variable::new("f"),
+                                ssf::ir::Primitive::Float64(111.0),
+                            ),
+                            ssf::ir::Primitive::Float64(222.0),
+                        ),
+                        ssf::types::Primitive::Float64,
+                    ),
+                ]));
             }
         }
     }
