@@ -6,10 +6,10 @@ pub use error::TypeCheckError;
 use std::collections::*;
 
 pub fn check_types(module: &Module) -> Result<(), TypeCheckError> {
-    let variants = module
+    let types = module
         .type_definitions()
         .iter()
-        .map(|definition| (definition.name(), definition.type_().clone()))
+        .map(|definition| (definition.name(), definition.type_()))
         .collect();
     let mut variables = HashMap::<&str, Type>::new();
 
@@ -26,7 +26,7 @@ pub fn check_types(module: &Module) -> Result<(), TypeCheckError> {
     }
 
     for definition in module.definitions() {
-        check_definition(definition, &variables, &variants)?;
+        check_definition(definition, &variables, &types)?;
     }
 
     for definition in module.foreign_definitions() {
@@ -43,7 +43,7 @@ pub fn check_types(module: &Module) -> Result<(), TypeCheckError> {
 fn check_definition(
     definition: &Definition,
     variables: &HashMap<&str, Type>,
-    variants: &HashMap<&str, Type>,
+    types: &HashMap<&str, &types::Record>,
 ) -> Result<(), TypeCheckError> {
     let mut variables = variables.clone();
 
@@ -56,7 +56,7 @@ fn check_definition(
     }
 
     check_equality(
-        &check_expression(definition.body(), &variables, variants)?,
+        &check_expression(definition.body(), &variables, types)?,
         &definition.result_type().clone(),
     )
 }
@@ -64,10 +64,9 @@ fn check_definition(
 fn check_expression(
     expression: &Expression,
     variables: &HashMap<&str, Type>,
-    variants: &HashMap<&str, Type>,
+    types: &HashMap<&str, &types::Record>,
 ) -> Result<Type, TypeCheckError> {
-    let check_expression =
-        |expression, variables| check_expression(expression, variables, variants);
+    let check_expression = |expression, variables| check_expression(expression, variables, types);
 
     Ok(match expression {
         Expression::ArithmeticOperation(operation) => {
@@ -80,7 +79,7 @@ fn check_expression(
 
             lhs_type
         }
-        Expression::Case(case) => check_case(case, variables, variants)?,
+        Expression::Case(case) => check_case(case, variables, types)?,
         Expression::ComparisonOperation(operation) => {
             let lhs_type = check_expression(operation.lhs(), variables)?;
             let rhs_type = check_expression(operation.rhs(), variables)?;
@@ -113,7 +112,7 @@ fn check_expression(
             }
 
             for definition in let_recursive.definitions() {
-                check_definition(definition, &variables, &variants)?;
+                check_definition(definition, &variables, &types)?;
             }
 
             check_expression(let_recursive.expression(), &variables)?
@@ -162,12 +161,13 @@ fn check_expression(
         }
         Expression::Variable(variable) => check_variable(variable, variables)?,
         Expression::Variant(variant) => {
-            check_equality(
-                &check_expression(variant.payload(), variables)?,
-                variants
-                    .get(variant.name())
-                    .ok_or_else(|| TypeCheckError::VariantNotFound(variant.clone()))?,
-            )?;
+            todo!();
+            // check_equality(
+            //     &check_expression(variant.payload(), variables)?,
+            //     types
+            //         .get(variant.name())
+            //         .ok_or_else(|| TypeCheckError::VariantNotFound(variant.clone()))?,
+            // )?;
 
             Type::Variant
         }
@@ -177,10 +177,10 @@ fn check_expression(
 fn check_case(
     case: &Case,
     variables: &HashMap<&str, Type>,
-    variants: &HashMap<&str, Type>,
+    types: &HashMap<&str, &types::Record>,
 ) -> Result<Type, TypeCheckError> {
     let check_expression = |expression: &Expression, variables: &HashMap<&str, Type>| {
-        check_expression(expression, variables, variants)
+        check_expression(expression, variables, types)
     };
 
     match case {
