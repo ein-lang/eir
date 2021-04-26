@@ -135,7 +135,7 @@ fn check_expression(
                 .ok_or_else(|| TypeCheckError::TypeNotFound(record.type_().clone()))?;
 
             if record.elements().len() != record_type.elements().len() {
-                return Err(TypeCheckError::WrongArgumentsLength(expression.clone()));
+                return Err(TypeCheckError::WrongElementCount(expression.clone()));
             }
 
             for (element, element_type) in record.elements().iter().zip(record_type.elements()) {
@@ -160,6 +160,10 @@ fn check_expression(
         }
         Expression::Variable(variable) => check_variable(variable, variables)?,
         Expression::Variant(variant) => {
+            if matches!(variant.type_(), Type::Variant) {
+                return Err(TypeCheckError::VariantInVariant(variant.clone()));
+            }
+
             check_equality(
                 &check_expression(variant.payload(), variables)?,
                 variant.type_(),
@@ -776,7 +780,7 @@ mod tests {
 
             assert!(matches!(
                 check_types(&module),
-                Err(TypeCheckError::WrongArgumentsLength(_))
+                Err(TypeCheckError::WrongElementCount(_))
             ));
         }
 
@@ -828,6 +832,42 @@ mod tests {
                 )),
                 Ok(())
             );
+        }
+    }
+
+    mod variants {
+        use super::*;
+
+        #[test]
+        fn check_variant() {
+            assert_eq!(
+                check_types(&create_module_from_definitions(vec![
+                    Definition::with_environment(
+                        "f",
+                        vec![],
+                        vec![Argument::new("x", types::Primitive::Float64)],
+                        Variant::new(types::Primitive::Float64, Primitive::Float64(42.0),),
+                        Type::Variant
+                    )
+                ],)),
+                Ok(())
+            );
+        }
+
+        #[test]
+        fn fail_to_check_variant_in_variant() {
+            assert!(matches!(
+                check_types(&create_module_from_definitions(vec![
+                    Definition::with_environment(
+                        "f",
+                        vec![],
+                        vec![Argument::new("x", Type::Variant)],
+                        Variant::new(Type::Variant, Variable::new("x")),
+                        Type::Variant
+                    )
+                ],)),
+                Err(TypeCheckError::VariantInVariant(_))
+            ));
         }
     }
 

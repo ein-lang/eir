@@ -12,7 +12,8 @@ pub enum TypeCheckError {
     TypeNotFound(types::Reference),
     TypesNotMatched(Type, Type),
     VariableNotFound(Variable),
-    WrongArgumentsLength(Expression),
+    VariantInVariant(Variant),
+    WrongElementCount(Expression),
 }
 
 impl Display for TypeCheckError {
