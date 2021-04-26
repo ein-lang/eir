@@ -61,7 +61,7 @@ impl Definition {
                     arguments.iter().last().unwrap().type_().clone(),
                     result_type.clone(),
                 ),
-                |result, argument| types::Function::new(argument.type_().clone(), result).into(),
+                |result, argument| types::Function::new(argument.type_().clone(), result),
             ),
             name: name.into(),
             environment,

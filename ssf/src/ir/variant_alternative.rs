@@ -4,7 +4,6 @@ use std::collections::{HashMap, HashSet};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct VariantAlternative {
-    tag: String,
     type_: Type,
     name: String,
     expression: Expression,
@@ -12,21 +11,15 @@ pub struct VariantAlternative {
 
 impl VariantAlternative {
     pub fn new(
-        tag: impl Into<String>,
         type_: impl Into<Type>,
         name: impl Into<String>,
         expression: impl Into<Expression>,
     ) -> Self {
         Self {
-            tag: tag.into(),
             type_: type_.into(),
             name: name.into(),
             expression: expression.into(),
         }
-    }
-
-    pub fn tag(&self) -> &str {
-        &self.tag
     }
 
     pub fn type_(&self) -> &Type {
@@ -55,7 +48,6 @@ impl VariantAlternative {
         variables.insert(self.name.clone(), self.type_.clone());
 
         Self {
-            tag: self.tag.clone(),
             type_: self.type_.clone(),
             name: self.name.clone(),
             expression: self.expression.infer_environment(&variables),

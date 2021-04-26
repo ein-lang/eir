@@ -552,7 +552,6 @@ mod tests {
                         VariantCase::new(
                             Variable::new("x"),
                             vec![VariantAlternative::new(
-                                "foo",
                                 types::Primitive::Float64,
                                 "y",
                                 Variable::new("y")
@@ -590,12 +589,11 @@ mod tests {
                         Variable::new("x"),
                         vec![
                             VariantAlternative::new(
-                                "foo",
                                 types::Primitive::Integer64,
                                 "x",
                                 Variable::new("x"),
                             ),
-                            VariantAlternative::new("bar", types::Primitive::Float64, "x", 42.0),
+                            VariantAlternative::new(types::Primitive::Float64, "x", 42.0),
                         ],
                         None,
                     ),
@@ -610,9 +608,6 @@ mod tests {
 
             #[test]
             fn fail_for_unmatched_case_type() {
-                let reference_type = types::Reference::new("foo");
-                let other_reference_type = types::Reference::new("bar");
-
                 assert!(matches!(
                     check_types(&create_module_from_definitions(vec![
                         Definition::with_environment(
@@ -622,14 +617,13 @@ mod tests {
                             VariantCase::new(
                                 Variable::new("x"),
                                 vec![VariantAlternative::new(
-                                    "foo",
-                                    other_reference_type,
+                                    types::Reference::new("foo"),
                                     "y",
                                     Variable::new("y")
                                 )],
                                 None
                             ),
-                            reference_type,
+                            types::Reference::new("bar"),
                         )
                     ])),
                     Err(TypeCheckError::TypesNotMatched(_, _))
@@ -827,7 +821,7 @@ mod tests {
                         RecordElement::new(
                             reference_type.clone(),
                             0,
-                            Record::new(reference_type.clone(), vec![42.0.into()],)
+                            Record::new(reference_type, vec![42.0.into()],)
                         ),
                         types::Primitive::Float64
                     )],
