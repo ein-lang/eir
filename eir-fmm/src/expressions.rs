@@ -111,7 +111,7 @@ pub fn compile(
             compile_variant_tag(variant.type_()),
             compile_payload_bit_cast(
                 instruction_builder,
-                types::compile_payload(),
+                types::compile_variant_payload(),
                 compile(variant.payload(), variables)?,
             )?,
         ])
