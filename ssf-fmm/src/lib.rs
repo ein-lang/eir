@@ -7,8 +7,8 @@ mod expressions;
 mod foreign_declarations;
 mod foreign_definitions;
 mod function_applications;
+mod type_information;
 mod types;
-mod variant_definitions;
 
 use declarations::compile_declaration;
 use definitions::compile_definition;
@@ -16,32 +16,37 @@ pub use error::CompileError;
 use foreign_declarations::compile_foreign_declaration;
 use foreign_definitions::compile_foreign_definition;
 use std::collections::HashMap;
-use variant_definitions::compile_variant_definition;
+use type_information::compile_type_information_global_variable;
 
 pub fn compile(module: &ssf::ir::Module) -> Result<fmm::ir::Module, CompileError> {
     ssf::analysis::check_types(module)?;
 
     let module_builder = fmm::build::ModuleBuilder::new();
+    let types = module
+        .type_definitions()
+        .iter()
+        .map(|definition| (definition.name().into(), definition.type_().clone()))
+        .collect();
 
-    for definition in module.variant_definitions() {
-        compile_variant_definition(&module_builder, definition)?;
+    for type_ in ssf::analysis::collect_variant_types(module) {
+        compile_type_information_global_variable(&module_builder, type_)?;
     }
 
     for declaration in module.foreign_declarations() {
-        compile_foreign_declaration(&module_builder, declaration)?;
+        compile_foreign_declaration(&module_builder, declaration, &types)?;
     }
 
     for declaration in module.declarations() {
-        compile_declaration(&module_builder, declaration);
+        compile_declaration(&module_builder, declaration, &types);
     }
 
-    let global_variables = compile_global_variables(module);
+    let global_variables = compile_global_variables(module, &types);
 
     for definition in module.definitions() {
-        compile_definition(&module_builder, definition, &global_variables)?;
+        compile_definition(&module_builder, definition, &global_variables, &types)?;
     }
 
-    let types = module
+    let function_types = module
         .foreign_declarations()
         .iter()
         .map(|declaration| (declaration.name(), declaration.type_()))
@@ -63,8 +68,9 @@ pub fn compile(module: &ssf::ir::Module) -> Result<fmm::ir::Module, CompileError
         compile_foreign_definition(
             &module_builder,
             definition,
-            types[definition.name()],
+            function_types[definition.name()],
             &global_variables[definition.name()],
+            &types,
         )?;
     }
 
@@ -73,6 +79,7 @@ pub fn compile(module: &ssf::ir::Module) -> Result<fmm::ir::Module, CompileError
 
 fn compile_global_variables(
     module: &ssf::ir::Module,
+    types: &HashMap<String, ssf::types::Record>,
 ) -> HashMap<String, fmm::build::TypedExpression> {
     module
         .foreign_declarations()
@@ -82,7 +89,10 @@ fn compile_global_variables(
                 declaration.name().into(),
                 fmm::build::variable(
                     declaration.name(),
-                    fmm::types::Pointer::new(types::compile_unsized_closure(declaration.type_())),
+                    fmm::types::Pointer::new(types::compile_unsized_closure(
+                        declaration.type_(),
+                        types,
+                    )),
                 ),
             )
         })
@@ -91,7 +101,10 @@ fn compile_global_variables(
                 declaration.name().into(),
                 fmm::build::variable(
                     declaration.name(),
-                    fmm::types::Pointer::new(types::compile_unsized_closure(declaration.type_())),
+                    fmm::types::Pointer::new(types::compile_unsized_closure(
+                        declaration.type_(),
+                        &types,
+                    )),
                 ),
             )
         }))
@@ -99,10 +112,13 @@ fn compile_global_variables(
             (
                 definition.name().into(),
                 fmm::build::bit_cast(
-                    fmm::types::Pointer::new(types::compile_unsized_closure(definition.type_())),
+                    fmm::types::Pointer::new(types::compile_unsized_closure(
+                        definition.type_(),
+                        &types,
+                    )),
                     fmm::build::variable(
                         definition.name(),
-                        fmm::types::Pointer::new(types::compile_sized_closure(definition)),
+                        fmm::types::Pointer::new(types::compile_sized_closure(definition, types)),
                     ),
                 )
                 .into(),

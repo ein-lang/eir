@@ -13,22 +13,38 @@ pub fn compile(
     instruction_builder: &fmm::build::InstructionBuilder,
     expression: &ssf::ir::Expression,
     variables: &HashMap<String, fmm::build::TypedExpression>,
+    types: &HashMap<String, ssf::types::Record>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
-    let compile =
-        |expression, variables| compile(module_builder, instruction_builder, expression, variables);
+    let compile = |expression, variables| {
+        compile(
+            module_builder,
+            instruction_builder,
+            expression,
+            variables,
+            types,
+        )
+    };
 
     Ok(match expression {
-        ssf::ir::Expression::ArithmeticOperation(operation) => {
-            compile_arithmetic_operation(module_builder, instruction_builder, operation, variables)?
-                .into()
-        }
+        ssf::ir::Expression::ArithmeticOperation(operation) => compile_arithmetic_operation(
+            module_builder,
+            instruction_builder,
+            operation,
+            variables,
+            types,
+        )?
+        .into(),
         ssf::ir::Expression::Case(case) => {
-            compile_case(module_builder, instruction_builder, case, variables)?
+            compile_case(module_builder, instruction_builder, case, variables, types)?
         }
-        ssf::ir::Expression::ComparisonOperation(operation) => {
-            compile_comparison_operation(module_builder, instruction_builder, operation, variables)?
-                .into()
-        }
+        ssf::ir::Expression::ComparisonOperation(operation) => compile_comparison_operation(
+            module_builder,
+            instruction_builder,
+            operation,
+            variables,
+            types,
+        )?
+        .into(),
         ssf::ir::Expression::FunctionApplication(function_application) => {
             function_applications::compile(
                 module_builder,
@@ -42,13 +58,14 @@ pub fn compile(
             )?
         }
         ssf::ir::Expression::Let(let_) => {
-            compile_let(module_builder, instruction_builder, let_, variables)?
+            compile_let(module_builder, instruction_builder, let_, variables, types)?
         }
         ssf::ir::Expression::LetRecursive(let_recursive) => compile_let_recursive(
             module_builder,
             instruction_builder,
             let_recursive,
             variables,
+            types,
         )?,
         ssf::ir::Expression::Primitive(primitive) => compile_primitive(primitive).into(),
         ssf::ir::Expression::Record(record) => {
@@ -60,12 +77,13 @@ pub fn compile(
                     .collect::<Result<_, _>>()?,
             );
 
-            if record.type_().is_boxed() {
+            if types::is_reference_boxed(record.type_(), types) {
                 let pointer = instruction_builder.allocate_heap(unboxed.type_().clone());
 
                 instruction_builder.store(unboxed, pointer.clone());
 
-                fmm::build::bit_cast(types::compile_record(record.type_()), pointer).into()
+                fmm::build::bit_cast(types::compile_reference(record.type_(), types), pointer)
+                    .into()
             } else {
                 unboxed.into()
             }
@@ -74,9 +92,12 @@ pub fn compile(
             let record = compile(element.record(), variables)?;
 
             instruction_builder.deconstruct_record(
-                if element.type_().is_boxed() {
+                if types::is_reference_boxed(element.type_(), types) {
                     instruction_builder.load(fmm::build::bit_cast(
-                        fmm::types::Pointer::new(types::compile_unboxed_record(element.type_())),
+                        fmm::types::Pointer::new(types::compile_unboxed_reference(
+                            element.type_(),
+                            types,
+                        )),
                         record,
                     ))?
                 } else {
@@ -87,7 +108,7 @@ pub fn compile(
         }
         ssf::ir::Expression::Variable(variable) => variables[variable.name()].clone(),
         ssf::ir::Expression::Variant(variant) => fmm::build::record(vec![
-            compile_variant_tag(variant.name()),
+            compile_variant_tag(variant.type_()),
             compile_payload_bit_cast(
                 instruction_builder,
                 types::compile_payload(),
@@ -103,13 +124,14 @@ fn compile_case(
     instruction_builder: &fmm::build::InstructionBuilder,
     case: &ssf::ir::Case,
     variables: &HashMap<String, fmm::build::TypedExpression>,
+    types: &HashMap<String, ssf::types::Record>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
     Ok(match case {
         ssf::ir::Case::Primitive(case) => {
-            compile_primitive_case(module_builder, instruction_builder, case, variables)?
+            compile_primitive_case(module_builder, instruction_builder, case, variables, types)?
         }
         ssf::ir::Case::Variant(case) => {
-            compile_variant_case(module_builder, instruction_builder, case, variables)?
+            compile_variant_case(module_builder, instruction_builder, case, variables, types)?
         }
     })
 }
@@ -119,12 +141,14 @@ fn compile_variant_case(
     instruction_builder: &fmm::build::InstructionBuilder,
     case: &ssf::ir::VariantCase,
     variables: &HashMap<String, fmm::build::TypedExpression>,
+    types: &HashMap<String, ssf::types::Record>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
     let argument = compile(
         module_builder,
         instruction_builder,
         case.argument(),
         variables,
+        types,
     )?;
 
     Ok(compile_variant_alternatives(
@@ -134,6 +158,7 @@ fn compile_variant_case(
         case.alternatives(),
         case.default_alternative(),
         variables,
+        types,
     )?
     .unwrap())
 }
@@ -145,6 +170,7 @@ fn compile_variant_alternatives(
     alternatives: &[ssf::ir::VariantAlternative],
     default_alternative: Option<&ssf::ir::Expression>,
     variables: &HashMap<String, fmm::build::TypedExpression>,
+    types: &HashMap<String, ssf::types::Record>,
 ) -> Result<Option<fmm::build::TypedExpression>, fmm::build::BuildError> {
     Ok(match alternatives {
         [] => default_alternative
@@ -154,6 +180,7 @@ fn compile_variant_alternatives(
                     instruction_builder,
                     default_alternative,
                     variables,
+                    types,
                 )
             })
             .transpose()?,
@@ -166,7 +193,7 @@ fn compile_variant_alternatives(
                 ),
                 fmm::build::bit_cast(
                     fmm::types::Primitive::PointerInteger,
-                    compile_variant_tag(alternative.tag()),
+                    compile_variant_tag(alternative.type_()),
                 ),
             )?,
             |instruction_builder| {
@@ -181,11 +208,12 @@ fn compile_variant_alternatives(
                             alternative.name().into(),
                             compile_payload_bit_cast(
                                 &instruction_builder,
-                                types::compile(alternative.type_()),
+                                types::compile(alternative.type_(), types),
                                 instruction_builder.deconstruct_record(argument.clone(), 1)?,
                             )?,
                         )])
                         .collect(),
+                    types,
                 )?))
             },
             |instruction_builder| {
@@ -197,6 +225,7 @@ fn compile_variant_alternatives(
                         &alternatives[1..],
                         default_alternative,
                         variables,
+                        types,
                     )? {
                         instruction_builder.branch(expression)
                     } else {
@@ -208,8 +237,8 @@ fn compile_variant_alternatives(
     })
 }
 
-fn compile_variant_tag(name: &str) -> fmm::build::TypedExpression {
-    fmm::build::variable(name, types::compile_tag())
+fn compile_variant_tag(type_: &ssf::types::Type) -> fmm::build::TypedExpression {
+    fmm::build::variable(types::compile_type_id(type_), types::compile_variant_tag())
 }
 
 fn compile_payload_bit_cast(
@@ -239,12 +268,14 @@ fn compile_primitive_case(
     instruction_builder: &fmm::build::InstructionBuilder,
     case: &ssf::ir::PrimitiveCase,
     variables: &HashMap<String, fmm::build::TypedExpression>,
+    types: &HashMap<String, ssf::types::Record>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
     let argument = compile(
         module_builder,
         instruction_builder,
         case.argument(),
         variables,
+        types,
     )?;
 
     Ok(compile_primitive_alternatives(
@@ -254,6 +285,7 @@ fn compile_primitive_case(
         case.alternatives(),
         case.default_alternative(),
         variables,
+        types,
     )?
     .unwrap())
 }
@@ -265,8 +297,17 @@ fn compile_primitive_alternatives(
     alternatives: &[ssf::ir::PrimitiveAlternative],
     default_alternative: Option<&ssf::ir::Expression>,
     variables: &HashMap<String, fmm::build::TypedExpression>,
+    types: &HashMap<String, ssf::types::Record>,
 ) -> Result<Option<fmm::build::TypedExpression>, fmm::build::BuildError> {
-    let compile = |expression| compile(module_builder, instruction_builder, expression, variables);
+    let compile = |expression| {
+        compile(
+            module_builder,
+            instruction_builder,
+            expression,
+            variables,
+            types,
+        )
+    };
 
     Ok(match alternatives {
         [] => default_alternative.map(compile).transpose()?,
@@ -288,6 +329,7 @@ fn compile_primitive_alternatives(
                         &alternatives[1..],
                         default_alternative,
                         variables,
+                        types,
                     )? {
                         instruction_builder.branch(expression)
                     } else {
@@ -304,9 +346,17 @@ fn compile_let(
     instruction_builder: &fmm::build::InstructionBuilder,
     let_: &ssf::ir::Let,
     variables: &HashMap<String, fmm::build::TypedExpression>,
+    types: &HashMap<String, ssf::types::Record>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
-    let compile =
-        |expression, variables| compile(module_builder, instruction_builder, expression, variables);
+    let compile = |expression, variables| {
+        compile(
+            module_builder,
+            instruction_builder,
+            expression,
+            variables,
+            types,
+        )
+    };
 
     compile(
         let_.expression(),
@@ -326,18 +376,19 @@ fn compile_let_recursive(
     instruction_builder: &fmm::build::InstructionBuilder,
     let_: &ssf::ir::LetRecursive,
     variables: &HashMap<String, fmm::build::TypedExpression>,
+    types: &HashMap<String, ssf::types::Record>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
     let mut variables = variables.clone();
     let mut closure_pointers = HashMap::new();
 
     for definition in let_.definitions() {
         let closure_pointer =
-            instruction_builder.allocate_heap(types::compile_sized_closure(definition));
+            instruction_builder.allocate_heap(types::compile_sized_closure(definition, types));
 
         variables.insert(
             definition.name().into(),
             fmm::build::bit_cast(
-                fmm::types::Pointer::new(types::compile_unsized_closure(definition.type_())),
+                fmm::types::Pointer::new(types::compile_unsized_closure(definition.type_(), types)),
                 closure_pointer.clone(),
             )
             .into(),
@@ -348,7 +399,7 @@ fn compile_let_recursive(
     for definition in let_.definitions() {
         instruction_builder.store(
             closures::compile_closure_content(
-                entry_functions::compile(module_builder, definition, &variables)?,
+                entry_functions::compile(module_builder, definition, &variables, types)?,
                 definition
                     .environment()
                     .iter()
@@ -364,6 +415,7 @@ fn compile_let_recursive(
         instruction_builder,
         let_.expression(),
         &variables,
+        &types,
     )
 }
 
@@ -372,8 +424,17 @@ fn compile_arithmetic_operation(
     instruction_builder: &fmm::build::InstructionBuilder,
     operation: &ssf::ir::ArithmeticOperation,
     variables: &HashMap<String, fmm::build::TypedExpression>,
+    types: &HashMap<String, ssf::types::Record>,
 ) -> Result<fmm::ir::ArithmeticOperation, fmm::build::BuildError> {
-    let compile = |expression| compile(module_builder, instruction_builder, expression, variables);
+    let compile = |expression| {
+        compile(
+            module_builder,
+            instruction_builder,
+            expression,
+            variables,
+            types,
+        )
+    };
 
     let lhs = compile(operation.lhs())?;
     let rhs = compile(operation.rhs())?;
@@ -399,8 +460,17 @@ fn compile_comparison_operation(
     instruction_builder: &fmm::build::InstructionBuilder,
     operation: &ssf::ir::ComparisonOperation,
     variables: &HashMap<String, fmm::build::TypedExpression>,
+    types: &HashMap<String, ssf::types::Record>,
 ) -> Result<fmm::ir::ComparisonOperation, fmm::build::BuildError> {
-    let compile = |expression| compile(module_builder, instruction_builder, expression, variables);
+    let compile = |expression| {
+        compile(
+            module_builder,
+            instruction_builder,
+            expression,
+            variables,
+            types,
+        )
+    };
 
     let lhs = compile(operation.lhs())?;
     let rhs = compile(operation.rhs())?;
