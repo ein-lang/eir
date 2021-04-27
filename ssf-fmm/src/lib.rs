@@ -159,8 +159,8 @@ mod tests {
         ssf::ir::Module::new(vec![], vec![], vec![], vec![], definitions)
     }
 
-    fn create_module_for_variants(
-        variant_definitions: Vec<ssf::ir::VariantDefinition>,
+    fn create_module_with_type_definitions(
+        variant_definitions: Vec<ssf::ir::TypeDefinition>,
         definitions: Vec<ssf::ir::Definition>,
     ) -> ssf::ir::Module {
         ssf::ir::Module::new(variant_definitions, vec![], vec![], vec![], definitions)
@@ -494,18 +494,13 @@ mod tests {
 
             #[test]
             fn compile_with_float_64() {
-                compile_module(&create_module_for_variants(
-                    vec![ssf::ir::VariantDefinition::new(
-                        "foo",
-                        ssf::types::Primitive::Float64,
-                    )],
-                    vec![ssf::ir::Definition::new(
+                compile_module(&create_module_from_definitions(vec![
+                    ssf::ir::Definition::new(
                         "f",
                         vec![ssf::ir::Argument::new("x", ssf::types::Type::Variant)],
                         ssf::ir::VariantCase::new(
                             ssf::ir::Variable::new("x"),
                             vec![ssf::ir::VariantAlternative::new(
-                                "foo",
                                 ssf::types::Primitive::Float64,
                                 "y",
                                 ssf::ir::Variable::new("y"),
@@ -513,55 +508,58 @@ mod tests {
                             None,
                         ),
                         ssf::types::Primitive::Float64,
-                    )],
-                ));
+                    ),
+                ]));
             }
 
             #[test]
             fn compile_with_unboxed_record() {
-                let record_type =
-                    ssf::types::Record::new(vec![ssf::types::Primitive::Float64.into()], false);
-                compile_module(&create_module_for_variants(
-                    vec![ssf::ir::VariantDefinition::new("foo", record_type.clone())],
+                let reference_type = ssf::types::Reference::new("foo");
+
+                compile_module(&create_module_with_type_definitions(
+                    vec![ssf::ir::TypeDefinition::new(
+                        "foo",
+                        ssf::types::Record::new(vec![ssf::types::Primitive::Float64.into()]),
+                    )],
                     vec![ssf::ir::Definition::new(
                         "f",
                         vec![ssf::ir::Argument::new("x", ssf::types::Type::Variant)],
                         ssf::ir::VariantCase::new(
                             ssf::ir::Variable::new("x"),
                             vec![ssf::ir::VariantAlternative::new(
-                                "foo",
-                                record_type.clone(),
+                                reference_type.clone(),
                                 "x",
                                 ssf::ir::Variable::new("x"),
                             )],
                             None,
                         ),
-                        record_type,
+                        reference_type,
                     )],
                 ));
             }
 
             #[test]
             fn compile_with_boxed_record() {
-                let record_type =
-                    ssf::types::Record::new(vec![ssf::types::Primitive::Float64.into()], true);
+                let reference_type = ssf::types::Reference::new("foo");
 
-                compile_module(&create_module_for_variants(
-                    vec![ssf::ir::VariantDefinition::new("foo", record_type.clone())],
+                compile_module(&create_module_with_type_definitions(
+                    vec![ssf::ir::TypeDefinition::new(
+                        "foo",
+                        ssf::types::Record::new(vec![ssf::types::Primitive::Float64.into()]),
+                    )],
                     vec![ssf::ir::Definition::new(
                         "f",
                         vec![ssf::ir::Argument::new("x", ssf::types::Type::Variant)],
                         ssf::ir::VariantCase::new(
                             ssf::ir::Variable::new("x"),
                             vec![ssf::ir::VariantAlternative::new(
-                                "foo",
-                                record_type.clone(),
+                                reference_type.clone(),
                                 "x",
                                 ssf::ir::Variable::new("x"),
                             )],
                             None,
                         ),
-                        record_type,
+                        reference_type,
                     )],
                 ));
             }
@@ -622,82 +620,94 @@ mod tests {
         }
 
         mod records {
+
             use super::*;
 
             #[test]
             fn compile_with_no_element() {
-                let record_type = ssf::types::Record::new(vec![], false);
+                let reference_type = ssf::types::Reference::new("foo");
 
-                compile_module(&create_module_from_definitions(vec![
-                    ssf::ir::Definition::new(
+                compile_module(&create_module_with_type_definitions(
+                    vec![ssf::ir::TypeDefinition::new(
+                        "foo",
+                        ssf::types::Record::new(vec![]),
+                    )],
+                    vec![ssf::ir::Definition::new(
                         "f",
                         vec![ssf::ir::Argument::new("x", ssf::types::Primitive::Float64)],
-                        ssf::ir::Record::new(record_type.clone(), vec![]),
-                        record_type,
-                    ),
-                ]));
+                        ssf::ir::Record::new(reference_type.clone(), vec![]),
+                        reference_type,
+                    )],
+                ));
             }
 
             #[test]
             fn compile_with_1_element() {
-                let record_type =
-                    ssf::types::Record::new(vec![ssf::types::Primitive::Float64.into()], false);
+                let reference_type = ssf::types::Reference::new("foo");
 
-                compile_module(&create_module_from_definitions(vec![
-                    ssf::ir::Definition::new(
+                compile_module(&create_module_with_type_definitions(
+                    vec![ssf::ir::TypeDefinition::new(
+                        "foo",
+                        ssf::types::Record::new(vec![ssf::types::Primitive::Float64.into()]),
+                    )],
+                    vec![ssf::ir::Definition::new(
                         "f",
                         vec![ssf::ir::Argument::new("x", ssf::types::Primitive::Float64)],
                         ssf::ir::Record::new(
-                            record_type.clone(),
+                            reference_type.clone(),
                             vec![ssf::ir::Primitive::Float64(42.0).into()],
                         ),
-                        record_type,
-                    ),
-                ]));
+                        reference_type,
+                    )],
+                ));
             }
 
             #[test]
             fn compile_with_2_elements() {
-                let record_type = ssf::types::Record::new(
-                    vec![
-                        ssf::types::Primitive::Float64.into(),
-                        ssf::types::Primitive::Integer64.into(),
-                    ],
-                    false,
-                );
+                let reference_type = ssf::types::Reference::new("foo");
 
-                compile_module(&create_module_from_definitions(vec![
-                    ssf::ir::Definition::new(
+                compile_module(&create_module_with_type_definitions(
+                    vec![ssf::ir::TypeDefinition::new(
+                        "foo",
+                        ssf::types::Record::new(vec![
+                            ssf::types::Primitive::Float64.into(),
+                            ssf::types::Primitive::Integer64.into(),
+                        ]),
+                    )],
+                    vec![ssf::ir::Definition::new(
                         "f",
                         vec![ssf::ir::Argument::new("x", ssf::types::Primitive::Float64)],
                         ssf::ir::Record::new(
-                            record_type.clone(),
+                            reference_type.clone(),
                             vec![
                                 ssf::ir::Primitive::Float64(42.0).into(),
                                 ssf::ir::Primitive::Integer64(42).into(),
                             ],
                         ),
-                        record_type,
-                    ),
-                ]));
+                        reference_type,
+                    )],
+                ));
             }
 
             #[test]
             fn compile_boxed() {
-                let record_type =
-                    ssf::types::Record::new(vec![ssf::types::Primitive::Float64.into()], true);
+                let reference_type = ssf::types::Reference::new("foo");
 
-                compile_module(&create_module_from_definitions(vec![
-                    ssf::ir::Definition::new(
+                compile_module(&create_module_with_type_definitions(
+                    vec![ssf::ir::TypeDefinition::new(
+                        "foo",
+                        ssf::types::Record::new(vec![ssf::types::Primitive::Float64.into()]),
+                    )],
+                    vec![ssf::ir::Definition::new(
                         "f",
                         vec![ssf::ir::Argument::new("x", ssf::types::Primitive::Float64)],
                         ssf::ir::Record::new(
-                            record_type.clone(),
+                            reference_type.clone(),
                             vec![ssf::ir::Primitive::Float64(42.0).into()],
                         ),
-                        record_type,
-                    ),
-                ]));
+                        reference_type,
+                    )],
+                ));
             }
         }
 
@@ -705,33 +715,42 @@ mod tests {
             use super::*;
 
             #[test]
-            fn compile_with_unboxed_record() {
-                let record_type =
-                    ssf::types::Record::new(vec![ssf::types::Primitive::Float64.into()], false);
+            fn compile_with_1_element_record() {
+                let reference_type = ssf::types::Reference::new("foo");
 
-                compile_module(&create_module_from_definitions(vec![
-                    ssf::ir::Definition::new(
+                compile_module(&create_module_with_type_definitions(
+                    vec![ssf::ir::TypeDefinition::new(
+                        "foo",
+                        ssf::types::Record::new(vec![ssf::types::Primitive::Float64.into()]),
+                    )],
+                    vec![ssf::ir::Definition::new(
                         "f",
-                        vec![ssf::ir::Argument::new("x", record_type.clone())],
-                        ssf::ir::RecordElement::new(record_type, 0, ssf::ir::Variable::new("x")),
+                        vec![ssf::ir::Argument::new("x", reference_type.clone())],
+                        ssf::ir::RecordElement::new(reference_type, 0, ssf::ir::Variable::new("x")),
                         ssf::types::Primitive::Float64,
-                    ),
-                ]));
+                    )],
+                ));
             }
 
             #[test]
-            fn compile_with_boxed_record() {
-                let record_type =
-                    ssf::types::Record::new(vec![ssf::types::Primitive::Float64.into()], true);
+            fn compile_with_2_element_record() {
+                let reference_type = ssf::types::Reference::new("foo");
 
-                compile_module(&create_module_from_definitions(vec![
-                    ssf::ir::Definition::new(
+                compile_module(&create_module_with_type_definitions(
+                    vec![ssf::ir::TypeDefinition::new(
+                        "foo",
+                        ssf::types::Record::new(vec![
+                            ssf::types::Primitive::Boolean.into(),
+                            ssf::types::Primitive::Float64.into(),
+                        ]),
+                    )],
+                    vec![ssf::ir::Definition::new(
                         "f",
-                        vec![ssf::ir::Argument::new("x", record_type.clone())],
-                        ssf::ir::RecordElement::new(record_type, 0, ssf::ir::Variable::new("x")),
+                        vec![ssf::ir::Argument::new("x", reference_type.clone())],
+                        ssf::ir::RecordElement::new(reference_type, 1, ssf::ir::Variable::new("x")),
                         ssf::types::Primitive::Float64,
-                    ),
-                ]));
+                    )],
+                ));
             }
         }
 
@@ -740,30 +759,35 @@ mod tests {
 
             #[test]
             fn compile_with_float_64() {
-                compile_module(&create_module_for_variants(
-                    vec![ssf::ir::VariantDefinition::new(
-                        "foo",
-                        ssf::types::Primitive::Float64,
-                    )],
-                    vec![ssf::ir::Definition::new(
+                compile_module(&create_module_from_definitions(vec![
+                    ssf::ir::Definition::new(
                         "f",
                         vec![ssf::ir::Argument::new("x", ssf::types::Primitive::Float64)],
-                        ssf::ir::Variant::new("foo", ssf::ir::Primitive::Float64(42.0)),
+                        ssf::ir::Variant::new(
+                            ssf::types::Primitive::Float64,
+                            ssf::ir::Primitive::Float64(42.0),
+                        ),
                         ssf::types::Type::Variant,
-                    )],
-                ));
+                    ),
+                ]));
             }
 
             #[test]
             fn compile_with_empty_unboxed_record() {
-                let record_type = ssf::types::Record::new(vec![], false);
+                let reference_type = ssf::types::Reference::new("foo");
 
-                compile_module(&create_module_for_variants(
-                    vec![ssf::ir::VariantDefinition::new("foo", record_type.clone())],
+                compile_module(&create_module_with_type_definitions(
+                    vec![ssf::ir::TypeDefinition::new(
+                        "foo",
+                        ssf::types::Record::new(vec![]),
+                    )],
                     vec![ssf::ir::Definition::new(
                         "f",
-                        vec![ssf::ir::Argument::new("x", record_type.clone())],
-                        ssf::ir::Variant::new("foo", ssf::ir::Record::new(record_type, vec![])),
+                        vec![ssf::ir::Argument::new("x", reference_type.clone())],
+                        ssf::ir::Variant::new(
+                            reference_type.clone(),
+                            ssf::ir::Record::new(reference_type, vec![]),
+                        ),
                         ssf::types::Type::Variant,
                     )],
                 ));
@@ -771,18 +795,20 @@ mod tests {
 
             #[test]
             fn compile_with_unboxed_record() {
-                let record_type =
-                    ssf::types::Record::new(vec![ssf::types::Primitive::Float64.into()], false);
+                let reference_type = ssf::types::Reference::new("foo");
 
-                compile_module(&create_module_for_variants(
-                    vec![ssf::ir::VariantDefinition::new("foo", record_type.clone())],
+                compile_module(&create_module_with_type_definitions(
+                    vec![ssf::ir::TypeDefinition::new(
+                        "foo",
+                        ssf::types::Record::new(vec![ssf::types::Primitive::Float64.into()]),
+                    )],
                     vec![ssf::ir::Definition::new(
                         "f",
-                        vec![ssf::ir::Argument::new("x", record_type.clone())],
+                        vec![ssf::ir::Argument::new("x", reference_type.clone())],
                         ssf::ir::Variant::new(
-                            "foo",
+                            reference_type.clone(),
                             ssf::ir::Record::new(
-                                record_type,
+                                reference_type.clone(),
                                 vec![ssf::ir::Primitive::Float64(42.0).into()],
                             ),
                         ),
