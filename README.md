@@ -1,20 +1,20 @@
-# ssf
+# eir
 
-[![GitHub Action](https://img.shields.io/github/workflow/status/raviqqe/ssf/test?style=flat-square)](https://github.com/raviqqe/ssf/actions?query=workflow%3Atest)
-[![Codecov](https://img.shields.io/codecov/c/github/raviqqe/ssf.svg?style=flat-square)](https://codecov.io/gh/raviqqe/ssf)
-[![License](https://img.shields.io/github/license/raviqqe/ssf.svg?style=flat-square)](LICENSE)
+[![GitHub Action](https://img.shields.io/github/workflow/status/raviqqe/eir/test?style=flat-square)](https://github.com/raviqqe/eir/actions?query=workflow%3Atest)
+[![Codecov](https://img.shields.io/codecov/c/github/raviqqe/eir.svg?style=flat-square)](https://codecov.io/gh/raviqqe/eir)
+[![License](https://img.shields.io/github/license/raviqqe/eir.svg?style=flat-square)](LICENSE)
 
-`ssf` is a structurally-typed strict functional core language supposed to be used as a target language for high-level strict functional programming languages.
+`eir` is a structurally-typed strict functional core language supposed to be used as a target language for high-level strict functional programming languages.
 
-This repository consists of two crates of `ssf` and `ssf-llvm`. The former is to construct intermediate representation (IR) of `ssf` going through type check and other validation and the latter is to compile it into LLVM IR bitcode.
+This repository consists of two crates of `eir` and `eir-llvm`. The former is to construct intermediate representation (IR) of `eir` going through type check and other validation and the latter is to compile it into LLVM IR bitcode.
 
 ## Install
 
 In your `Cargo.toml`,
 
 ```
-ssf = { git = "https://github.com/raviqqe/ssf", branch = "master" }
-ssf-llvm = { git = "https://github.com/raviqqe/ssf", branch = "master" }
+eir = { git = "https://github.com/raviqqe/eir", branch = "master" }
+eir-llvm = { git = "https://github.com/raviqqe/eir", branch = "master" }
 ```
 
 ## Features
@@ -75,19 +75,19 @@ ssf-llvm = { git = "https://github.com/raviqqe/ssf", branch = "master" }
 ## Examples
 
 ```rust
-let algebraic_type = ssf::types::Algebraic::new(vec![ssf::types::Constructor::boxed(vec![
-    ssf::types::Primitive::Float64.into(),
+let algebraic_type = eir::types::Algebraic::new(vec![eir::types::Constructor::boxed(vec![
+    eir::types::Primitive::Float64.into(),
 ])]);
 
-let bitcode = ssf_llvm::compile(
-    &ssf::ir::Module::new(
+let bitcode = eir_llvm::compile(
+    &eir::ir::Module::new(
         vec![],
-        vec![ssf::ir::FunctionDefinition::new(
+        vec![eir::ir::FunctionDefinition::new(
             "f",
-            vec![ssf::ir::Argument::new("x", ssf::types::Primitive::Float64)],
-            ssf::ir::ConstructorApplication::new(
-                ssf::ir::Constructor::boxed(algebraic_type.clone(), 0),
-                vec![ssf::ir::Variable("x").into()],
+            vec![eir::ir::Argument::new("x", eir::types::Primitive::Float64)],
+            eir::ir::ConstructorApplication::new(
+                eir::ir::Constructor::boxed(algebraic_type.clone(), 0),
+                vec![eir::ir::Variable("x").into()],
             ),
             algebraic_type,
         )
