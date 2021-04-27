@@ -808,7 +808,7 @@ mod tests {
                         ssf::ir::Variant::new(
                             reference_type.clone(),
                             ssf::ir::Record::new(
-                                reference_type.clone(),
+                                reference_type,
                                 vec![ssf::ir::Primitive::Float64(42.0).into()],
                             ),
                         ),

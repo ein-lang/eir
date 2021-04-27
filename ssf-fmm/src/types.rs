@@ -83,7 +83,7 @@ pub fn is_reference_boxed(
 
 // TODO Unbox small non-recursive records.
 pub fn is_record_boxed(record: &ssf::types::Record) -> bool {
-    record.elements().len() > 0
+    !record.elements().is_empty()
 }
 
 pub fn compile_unboxed_reference(
