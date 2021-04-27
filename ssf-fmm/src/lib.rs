@@ -28,7 +28,7 @@ pub fn compile(module: &ssf::ir::Module) -> Result<fmm::ir::Module, CompileError
         .map(|definition| (definition.name().into(), definition.type_().clone()))
         .collect();
 
-    for type_ in ssf::analysis::collect_variant_types(module) {
+    for type_ in &ssf::analysis::collect_variant_types(module) {
         compile_type_information_global_variable(&module_builder, type_)?;
     }
 
