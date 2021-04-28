@@ -67,7 +67,7 @@ pub fn compile(
             variables,
             types,
         )?,
-        eir::ir::Expression::Primitive(primitive) => compile_primitive(primitive).into(),
+        eir::ir::Expression::Primitive(primitive) => compile_primitive(*primitive).into(),
         eir::ir::Expression::Record(record) => {
             let unboxed = fmm::build::record(
                 record
@@ -511,9 +511,9 @@ fn compile_comparison_operation(
     )
 }
 
-fn compile_primitive(primitive: &eir::ir::Primitive) -> fmm::ir::Primitive {
+fn compile_primitive(primitive: eir::ir::Primitive) -> fmm::ir::Primitive {
     match primitive {
-        eir::ir::Primitive::Boolean(boolean) => fmm::ir::Primitive::Boolean(*boolean),
-        eir::ir::Primitive::Number(number) => fmm::ir::Primitive::Float64(*number),
+        eir::ir::Primitive::Boolean(boolean) => fmm::ir::Primitive::Boolean(boolean),
+        eir::ir::Primitive::Number(number) => fmm::ir::Primitive::Float64(number),
     }
 }

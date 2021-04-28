@@ -128,7 +128,7 @@ fn check_expression(
 
             check_expression(let_.expression(), &variables)?
         }
-        Expression::Primitive(primitive) => Ok(check_primitive(primitive).into())?,
+        Expression::Primitive(primitive) => Ok(check_primitive(*primitive).into())?,
         Expression::Record(record) => {
             let record_type = types
                 .get(record.type_().name())
@@ -253,7 +253,7 @@ fn check_case(
     }
 }
 
-fn check_primitive(primitive: &Primitive) -> types::Primitive {
+fn check_primitive(primitive: Primitive) -> types::Primitive {
     match primitive {
         Primitive::Boolean(_) => types::Primitive::Boolean,
         Primitive::Number(_) => types::Primitive::Number,

@@ -21,6 +21,8 @@ use type_information::compile_type_information_global_variable;
 pub fn compile(module: &eir::ir::Module) -> Result<fmm::ir::Module, CompileError> {
     eir::analysis::check_types(module)?;
 
+    let module = eir::analysis::infer_environment(module);
+
     let module_builder = fmm::build::ModuleBuilder::new();
     let types = module
         .type_definitions()
@@ -28,7 +30,7 @@ pub fn compile(module: &eir::ir::Module) -> Result<fmm::ir::Module, CompileError
         .map(|definition| (definition.name().into(), definition.type_().clone()))
         .collect();
 
-    for type_ in &eir::analysis::collect_variant_types(module) {
+    for type_ in &eir::analysis::collect_variant_types(&module) {
         compile_type_information_global_variable(&module_builder, type_)?;
     }
 
@@ -40,7 +42,7 @@ pub fn compile(module: &eir::ir::Module) -> Result<fmm::ir::Module, CompileError
         compile_declaration(&module_builder, declaration, &types);
     }
 
-    let global_variables = compile_global_variables(module, &types);
+    let global_variables = compile_global_variables(&module, &types);
 
     for definition in module.definitions() {
         compile_definition(&module_builder, definition, &global_variables, &types)?;
