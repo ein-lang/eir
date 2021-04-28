@@ -1,16 +1,16 @@
 #[derive(Clone, Debug, PartialEq)]
 pub struct EirString {
-    value: String,
+    value: Vec<u8>,
 }
 
 impl EirString {
-    pub fn new(value: impl Into<String>) -> Self {
+    pub fn new(value: Vec<u8>) -> Self {
         Self {
             value: value.into(),
         }
     }
 
-    pub fn value(&self) -> &str {
+    pub fn value(&self) -> &[u8] {
         &self.value
     }
 }

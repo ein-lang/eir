@@ -110,19 +110,15 @@ pub fn compile(
             types::compile_string(),
             module_builder.define_anonymous_variable(
                 fmm::build::record(
-                    vec![
-                        fmm::ir::Primitive::PointerInteger(string.value().as_bytes().len() as i64)
-                            .into(),
-                    ]
-                    .into_iter()
-                    .chain(
-                        string
-                            .value()
-                            .as_bytes()
-                            .iter()
-                            .map(|&byte| fmm::ir::Primitive::Integer8(byte).into()),
-                    )
-                    .collect(),
+                    vec![fmm::ir::Primitive::PointerInteger(string.value().len() as i64).into()]
+                        .into_iter()
+                        .chain(
+                            string
+                                .value()
+                                .iter()
+                                .map(|&byte| fmm::ir::Primitive::Integer8(byte).into()),
+                        )
+                        .collect(),
                 ),
                 false,
             ),

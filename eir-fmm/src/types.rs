@@ -2,10 +2,6 @@ use std::collections::HashMap;
 
 pub const FUNCTION_ARGUMENT_OFFSET: usize = 1;
 
-pub fn compile_generic_pointer() -> fmm::types::Pointer {
-    fmm::types::Pointer::new(fmm::types::Primitive::Integer8)
-}
-
 pub fn get_arity(type_: &fmm::types::Function) -> usize {
     type_.arguments().len() - FUNCTION_ARGUMENT_OFFSET
 }
