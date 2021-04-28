@@ -28,12 +28,7 @@ pub fn compile(
 pub fn compile_primitive(primitive: &eir::types::Primitive) -> fmm::types::Type {
     match primitive {
         eir::types::Primitive::Boolean => fmm::types::Primitive::Boolean.into(),
-        eir::types::Primitive::Float32 => fmm::types::Primitive::Float32.into(),
         eir::types::Primitive::Float64 => fmm::types::Primitive::Float64.into(),
-        eir::types::Primitive::Integer8 => fmm::types::Primitive::Integer8.into(),
-        eir::types::Primitive::Integer32 => fmm::types::Primitive::Integer32.into(),
-        eir::types::Primitive::Integer64 => fmm::types::Primitive::Integer64.into(),
-        eir::types::Primitive::Pointer => compile_generic_pointer().into(),
     }
 }
 
