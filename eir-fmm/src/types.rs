@@ -24,7 +24,7 @@ pub fn compile(
 pub fn compile_primitive(primitive: &eir::types::Primitive) -> fmm::types::Type {
     match primitive {
         eir::types::Primitive::Boolean => fmm::types::Primitive::Boolean.into(),
-        eir::types::Primitive::Float64 => fmm::types::Primitive::Float64.into(),
+        eir::types::Primitive::Number => fmm::types::Primitive::Float64.into(),
     }
 }
 

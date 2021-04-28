@@ -188,8 +188,8 @@ mod tests {
                     "f",
                     "g",
                     eir::types::Function::new(
-                        eir::types::Primitive::Float64,
-                        eir::types::Primitive::Float64,
+                        eir::types::Primitive::Number,
+                        eir::types::Primitive::Number,
                     ),
                     eir::ir::CallingConvention::Target,
                 )],
@@ -207,10 +207,10 @@ mod tests {
                     "f",
                     "g",
                     eir::types::Function::new(
-                        eir::types::Primitive::Float64,
+                        eir::types::Primitive::Number,
                         eir::types::Function::new(
-                            eir::types::Primitive::Float64,
-                            eir::types::Primitive::Float64,
+                            eir::types::Primitive::Number,
+                            eir::types::Primitive::Number,
                         ),
                     ),
                     eir::ir::CallingConvention::Target,
@@ -229,8 +229,8 @@ mod tests {
                     "f",
                     "g",
                     eir::types::Function::new(
-                        eir::types::Primitive::Float64,
-                        eir::types::Primitive::Float64,
+                        eir::types::Primitive::Number,
+                        eir::types::Primitive::Number,
                     ),
                     eir::ir::CallingConvention::Source,
                 )],
@@ -252,8 +252,8 @@ mod tests {
                     "f",
                     "g",
                     eir::types::Function::new(
-                        eir::types::Primitive::Float64,
-                        eir::types::Primitive::Float64,
+                        eir::types::Primitive::Number,
+                        eir::types::Primitive::Number,
                     ),
                     eir::ir::CallingConvention::Target,
                 )],
@@ -272,8 +272,8 @@ mod tests {
                 vec![eir::ir::Declaration::new(
                     "f",
                     eir::types::Function::new(
-                        eir::types::Primitive::Float64,
-                        eir::types::Primitive::Float64,
+                        eir::types::Primitive::Number,
+                        eir::types::Primitive::Number,
                     ),
                 )],
                 vec![],
@@ -289,9 +289,9 @@ mod tests {
                 vec![],
                 vec![eir::ir::Definition::new(
                     "f",
-                    vec![eir::ir::Argument::new("x", eir::types::Primitive::Float64)],
+                    vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
                     eir::ir::Variable::new("x"),
-                    eir::types::Primitive::Float64,
+                    eir::types::Primitive::Number,
                 )],
             ));
         }
@@ -309,8 +309,8 @@ mod tests {
                 vec![eir::ir::Declaration::new(
                     "f",
                     eir::types::Function::new(
-                        eir::types::Primitive::Float64,
-                        eir::types::Primitive::Float64,
+                        eir::types::Primitive::Number,
+                        eir::types::Primitive::Number,
                     ),
                 )],
                 vec![],
@@ -326,10 +326,10 @@ mod tests {
                 vec![eir::ir::Declaration::new(
                     "f",
                     eir::types::Function::new(
-                        eir::types::Primitive::Float64,
+                        eir::types::Primitive::Number,
                         eir::types::Function::new(
-                            eir::types::Primitive::Float64,
-                            eir::types::Primitive::Float64,
+                            eir::types::Primitive::Number,
+                            eir::types::Primitive::Number,
                         ),
                     ),
                 )],
@@ -346,9 +346,9 @@ mod tests {
             compile_module(&create_module_with_definitions(vec![
                 eir::ir::Definition::new(
                     "f",
-                    vec![eir::ir::Argument::new("x", eir::types::Primitive::Float64)],
+                    vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
                     eir::ir::Variable::new("x"),
-                    eir::types::Primitive::Float64,
+                    eir::types::Primitive::Number,
                 ),
             ]));
         }
@@ -359,15 +359,15 @@ mod tests {
                 eir::ir::Definition::new(
                     "f",
                     vec![
-                        eir::ir::Argument::new("x", eir::types::Primitive::Float64),
-                        eir::ir::Argument::new("y", eir::types::Primitive::Float64),
+                        eir::ir::Argument::new("x", eir::types::Primitive::Number),
+                        eir::ir::Argument::new("y", eir::types::Primitive::Number),
                     ],
                     eir::ir::ArithmeticOperation::new(
                         eir::ir::ArithmeticOperator::Add,
                         eir::ir::Variable::new("x"),
                         eir::ir::Variable::new("y"),
                     ),
-                    eir::types::Primitive::Float64,
+                    eir::types::Primitive::Number,
                 ),
             ]));
         }
@@ -377,18 +377,18 @@ mod tests {
             compile_module(&create_module_with_definitions(vec![
                 eir::ir::Definition::thunk(
                     "f",
-                    vec![eir::ir::Argument::new("x", eir::types::Primitive::Float64)],
+                    vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
                     eir::ir::Variable::new("x"),
-                    eir::types::Primitive::Float64,
+                    eir::types::Primitive::Number,
                 ),
                 eir::ir::Definition::new(
                     "g",
-                    vec![eir::ir::Argument::new("x", eir::types::Primitive::Float64)],
+                    vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
                     eir::ir::FunctionApplication::new(
                         eir::ir::Variable::new("f"),
                         eir::ir::Variable::new("x"),
                     ),
-                    eir::types::Primitive::Float64,
+                    eir::types::Primitive::Number,
                 ),
             ]));
         }
@@ -402,14 +402,14 @@ mod tests {
             compile_module(&create_module_with_definitions(vec![
                 eir::ir::Definition::new(
                     "f",
-                    vec![eir::ir::Argument::new("x", eir::types::Primitive::Float64)],
+                    vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
                     eir::ir::Let::new(
                         "y",
-                        eir::types::Primitive::Float64,
+                        eir::types::Primitive::Number,
                         eir::ir::Variable::new("x"),
                         eir::ir::Variable::new("y"),
                     ),
-                    eir::types::Primitive::Float64,
+                    eir::types::Primitive::Number,
                 ),
             ]));
         }
@@ -419,24 +419,24 @@ mod tests {
             compile_module(&create_module_with_definitions(vec![
                 eir::ir::Definition::new(
                     "f",
-                    vec![eir::ir::Argument::new("x", eir::types::Primitive::Float64)],
+                    vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
                     eir::ir::LetRecursive::new(
                         vec![eir::ir::Definition::new(
                             "g",
-                            vec![eir::ir::Argument::new("y", eir::types::Primitive::Float64)],
+                            vec![eir::ir::Argument::new("y", eir::types::Primitive::Number)],
                             eir::ir::ArithmeticOperation::new(
                                 eir::ir::ArithmeticOperator::Add,
                                 eir::ir::Variable::new("x"),
                                 eir::ir::Variable::new("y"),
                             ),
-                            eir::types::Primitive::Float64,
+                            eir::types::Primitive::Number,
                         )],
                         eir::ir::FunctionApplication::new(
                             eir::ir::Variable::new("g"),
-                            eir::ir::Primitive::Float64(42.0),
+                            eir::ir::Primitive::Number(42.0),
                         ),
                     ),
-                    eir::types::Primitive::Float64,
+                    eir::types::Primitive::Number,
                 ),
             ]));
         }
@@ -446,17 +446,17 @@ mod tests {
             compile_module(&create_module_with_definitions(vec![
                 eir::ir::Definition::new(
                     "f",
-                    vec![eir::ir::Argument::new("x", eir::types::Primitive::Float64)],
+                    vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
                     eir::ir::LetRecursive::new(
                         vec![eir::ir::Definition::new(
                             "g",
-                            vec![eir::ir::Argument::new("y", eir::types::Primitive::Float64)],
+                            vec![eir::ir::Argument::new("y", eir::types::Primitive::Number)],
                             eir::ir::LetRecursive::new(
                                 vec![eir::ir::Definition::new(
                                     "h",
                                     vec![eir::ir::Argument::new(
                                         "z",
-                                        eir::types::Primitive::Float64,
+                                        eir::types::Primitive::Number,
                                     )],
                                     eir::ir::ArithmeticOperation::new(
                                         eir::ir::ArithmeticOperator::Add,
@@ -467,24 +467,24 @@ mod tests {
                                         ),
                                         eir::ir::Variable::new("z"),
                                     ),
-                                    eir::types::Primitive::Float64,
+                                    eir::types::Primitive::Number,
                                 )],
                                 eir::ir::Variable::new("h"),
                             ),
                             eir::types::Function::new(
-                                eir::types::Primitive::Float64,
-                                eir::types::Primitive::Float64,
+                                eir::types::Primitive::Number,
+                                eir::types::Primitive::Number,
                             ),
                         )],
                         eir::ir::FunctionApplication::new(
                             eir::ir::FunctionApplication::new(
                                 eir::ir::Variable::new("g"),
-                                eir::ir::Primitive::Float64(42.0),
+                                eir::ir::Primitive::Number(42.0),
                             ),
-                            eir::ir::Primitive::Float64(42.0),
+                            eir::ir::Primitive::Number(42.0),
                         ),
                     ),
-                    eir::types::Primitive::Float64,
+                    eir::types::Primitive::Number,
                 ),
             ]));
         }
@@ -501,13 +501,13 @@ mod tests {
                         eir::ir::VariantCase::new(
                             eir::ir::Variable::new("x"),
                             vec![eir::ir::VariantAlternative::new(
-                                eir::types::Primitive::Float64,
+                                eir::types::Primitive::Number,
                                 "y",
                                 eir::ir::Variable::new("y"),
                             )],
                             None,
                         ),
-                        eir::types::Primitive::Float64,
+                        eir::types::Primitive::Number,
                     ),
                 ]));
             }
@@ -519,7 +519,7 @@ mod tests {
                 compile_module(&create_module_with_type_definitions(
                     vec![eir::ir::TypeDefinition::new(
                         "foo",
-                        eir::types::Record::new(vec![eir::types::Primitive::Float64.into()]),
+                        eir::types::Record::new(vec![eir::types::Primitive::Number.into()]),
                     )],
                     vec![eir::ir::Definition::new(
                         "f",
@@ -545,7 +545,7 @@ mod tests {
                 compile_module(&create_module_with_type_definitions(
                     vec![eir::ir::TypeDefinition::new(
                         "foo",
-                        eir::types::Record::new(vec![eir::types::Primitive::Float64.into()]),
+                        eir::types::Record::new(vec![eir::types::Primitive::Number.into()]),
                     )],
                     vec![eir::ir::Definition::new(
                         "f",
@@ -573,22 +573,22 @@ mod tests {
                 compile_module(&create_module_with_definitions(vec![
                     eir::ir::Definition::new(
                         "f",
-                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Float64)],
+                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
                         eir::ir::PrimitiveCase::new(
                             eir::ir::Variable::new("x"),
                             vec![
                                 eir::ir::PrimitiveAlternative::new(
-                                    eir::ir::Primitive::Float64(0.0),
-                                    eir::ir::Primitive::Float64(1.0),
+                                    eir::ir::Primitive::Number(0.0),
+                                    eir::ir::Primitive::Number(1.0),
                                 ),
                                 eir::ir::PrimitiveAlternative::new(
-                                    eir::ir::Primitive::Float64(2.0),
-                                    eir::ir::Primitive::Float64(3.0),
+                                    eir::ir::Primitive::Number(2.0),
+                                    eir::ir::Primitive::Number(3.0),
                                 ),
                             ],
                             None,
                         ),
-                        eir::types::Primitive::Float64,
+                        eir::types::Primitive::Number,
                     ),
                 ]));
             }
@@ -598,22 +598,22 @@ mod tests {
                 compile_module(&create_module_with_definitions(vec![
                     eir::ir::Definition::new(
                         "f",
-                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Float64)],
+                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
                         eir::ir::PrimitiveCase::new(
                             eir::ir::Variable::new("x"),
                             vec![
                                 eir::ir::PrimitiveAlternative::new(
-                                    eir::ir::Primitive::Float64(0.0),
-                                    eir::ir::Primitive::Float64(1.0),
+                                    eir::ir::Primitive::Number(0.0),
+                                    eir::ir::Primitive::Number(1.0),
                                 ),
                                 eir::ir::PrimitiveAlternative::new(
-                                    eir::ir::Primitive::Float64(2.0),
-                                    eir::ir::Primitive::Float64(3.0),
+                                    eir::ir::Primitive::Number(2.0),
+                                    eir::ir::Primitive::Number(3.0),
                                 ),
                             ],
-                            Some(eir::ir::Primitive::Float64(4.0).into()),
+                            Some(eir::ir::Primitive::Number(4.0).into()),
                         ),
-                        eir::types::Primitive::Float64,
+                        eir::types::Primitive::Number,
                     ),
                 ]));
             }
@@ -634,7 +634,7 @@ mod tests {
                     )],
                     vec![eir::ir::Definition::new(
                         "f",
-                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Float64)],
+                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
                         eir::ir::Record::new(reference_type.clone(), vec![]),
                         reference_type,
                     )],
@@ -648,14 +648,14 @@ mod tests {
                 compile_module(&create_module_with_type_definitions(
                     vec![eir::ir::TypeDefinition::new(
                         "foo",
-                        eir::types::Record::new(vec![eir::types::Primitive::Float64.into()]),
+                        eir::types::Record::new(vec![eir::types::Primitive::Number.into()]),
                     )],
                     vec![eir::ir::Definition::new(
                         "f",
-                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Float64)],
+                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
                         eir::ir::Record::new(
                             reference_type.clone(),
-                            vec![eir::ir::Primitive::Float64(42.0).into()],
+                            vec![eir::ir::Primitive::Number(42.0).into()],
                         ),
                         reference_type,
                     )],
@@ -670,19 +670,16 @@ mod tests {
                     vec![eir::ir::TypeDefinition::new(
                         "foo",
                         eir::types::Record::new(vec![
-                            eir::types::Primitive::Float64.into(),
-                            eir::types::Primitive::Integer64.into(),
+                            eir::types::Primitive::Number.into(),
+                            eir::types::Primitive::Boolean.into(),
                         ]),
                     )],
                     vec![eir::ir::Definition::new(
                         "f",
-                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Float64)],
+                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
                         eir::ir::Record::new(
                             reference_type.clone(),
-                            vec![
-                                eir::ir::Primitive::Float64(42.0).into(),
-                                eir::ir::Primitive::Integer64(42).into(),
-                            ],
+                            vec![42.0.into(), true.into()],
                         ),
                         reference_type,
                     )],
@@ -696,14 +693,14 @@ mod tests {
                 compile_module(&create_module_with_type_definitions(
                     vec![eir::ir::TypeDefinition::new(
                         "foo",
-                        eir::types::Record::new(vec![eir::types::Primitive::Float64.into()]),
+                        eir::types::Record::new(vec![eir::types::Primitive::Number.into()]),
                     )],
                     vec![eir::ir::Definition::new(
                         "f",
-                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Float64)],
+                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
                         eir::ir::Record::new(
                             reference_type.clone(),
-                            vec![eir::ir::Primitive::Float64(42.0).into()],
+                            vec![eir::ir::Primitive::Number(42.0).into()],
                         ),
                         reference_type,
                     )],
@@ -721,13 +718,13 @@ mod tests {
                 compile_module(&create_module_with_type_definitions(
                     vec![eir::ir::TypeDefinition::new(
                         "foo",
-                        eir::types::Record::new(vec![eir::types::Primitive::Float64.into()]),
+                        eir::types::Record::new(vec![eir::types::Primitive::Number.into()]),
                     )],
                     vec![eir::ir::Definition::new(
                         "f",
                         vec![eir::ir::Argument::new("x", reference_type.clone())],
                         eir::ir::RecordElement::new(reference_type, 0, eir::ir::Variable::new("x")),
-                        eir::types::Primitive::Float64,
+                        eir::types::Primitive::Number,
                     )],
                 ));
             }
@@ -741,14 +738,14 @@ mod tests {
                         "foo",
                         eir::types::Record::new(vec![
                             eir::types::Primitive::Boolean.into(),
-                            eir::types::Primitive::Float64.into(),
+                            eir::types::Primitive::Number.into(),
                         ]),
                     )],
                     vec![eir::ir::Definition::new(
                         "f",
                         vec![eir::ir::Argument::new("x", reference_type.clone())],
                         eir::ir::RecordElement::new(reference_type, 1, eir::ir::Variable::new("x")),
-                        eir::types::Primitive::Float64,
+                        eir::types::Primitive::Number,
                     )],
                 ));
             }
@@ -762,10 +759,10 @@ mod tests {
                 compile_module(&create_module_with_definitions(vec![
                     eir::ir::Definition::new(
                         "f",
-                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Float64)],
+                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
                         eir::ir::Variant::new(
-                            eir::types::Primitive::Float64,
-                            eir::ir::Primitive::Float64(42.0),
+                            eir::types::Primitive::Number,
+                            eir::ir::Primitive::Number(42.0),
                         ),
                         eir::types::Type::Variant,
                     ),
@@ -800,7 +797,7 @@ mod tests {
                 compile_module(&create_module_with_type_definitions(
                     vec![eir::ir::TypeDefinition::new(
                         "foo",
-                        eir::types::Record::new(vec![eir::types::Primitive::Float64.into()]),
+                        eir::types::Record::new(vec![eir::types::Primitive::Number.into()]),
                     )],
                     vec![eir::ir::Definition::new(
                         "f",
@@ -809,7 +806,7 @@ mod tests {
                             reference_type.clone(),
                             eir::ir::Record::new(
                                 reference_type,
-                                vec![eir::ir::Primitive::Float64(42.0).into()],
+                                vec![eir::ir::Primitive::Number(42.0).into()],
                             ),
                         ),
                         eir::types::Type::Variant,
@@ -826,18 +823,18 @@ mod tests {
                 compile_module(&create_module_with_definitions(vec![
                     eir::ir::Definition::new(
                         "f",
-                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Float64)],
+                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
                         eir::ir::Variable::new("x"),
-                        eir::types::Primitive::Float64,
+                        eir::types::Primitive::Number,
                     ),
                     eir::ir::Definition::new(
                         "g",
-                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Float64)],
+                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
                         eir::ir::FunctionApplication::new(
                             eir::ir::Variable::new("f"),
-                            eir::ir::Primitive::Float64(42.0),
+                            eir::ir::Primitive::Number(42.0),
                         ),
-                        eir::types::Primitive::Float64,
+                        eir::types::Primitive::Number,
                     ),
                 ]));
             }
@@ -848,23 +845,20 @@ mod tests {
                     eir::ir::Definition::new(
                         "f",
                         vec![
-                            eir::ir::Argument::new("x", eir::types::Primitive::Float64),
-                            eir::ir::Argument::new("y", eir::types::Primitive::Integer32),
+                            eir::ir::Argument::new("x", eir::types::Primitive::Number),
+                            eir::ir::Argument::new("y", eir::types::Primitive::Boolean),
                         ],
                         eir::ir::Variable::new("x"),
-                        eir::types::Primitive::Float64,
+                        eir::types::Primitive::Number,
                     ),
                     eir::ir::Definition::new(
                         "g",
-                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Float64)],
+                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
                         eir::ir::FunctionApplication::new(
-                            eir::ir::FunctionApplication::new(
-                                eir::ir::Variable::new("f"),
-                                eir::ir::Primitive::Float64(42.0),
-                            ),
-                            eir::ir::Primitive::Integer32(42),
+                            eir::ir::FunctionApplication::new(eir::ir::Variable::new("f"), 42.0),
+                            true,
                         ),
-                        eir::types::Primitive::Float64,
+                        eir::types::Primitive::Number,
                     ),
                 ]));
             }
@@ -875,27 +869,27 @@ mod tests {
                     eir::ir::Definition::new(
                         "f",
                         vec![
-                            eir::ir::Argument::new("x", eir::types::Primitive::Float64),
-                            eir::ir::Argument::new("y", eir::types::Primitive::Integer32),
-                            eir::ir::Argument::new("z", eir::types::Primitive::Integer64),
+                            eir::ir::Argument::new("x", eir::types::Primitive::Number),
+                            eir::ir::Argument::new("y", eir::types::Primitive::Boolean),
+                            eir::ir::Argument::new("z", eir::types::Type::String),
                         ],
                         eir::ir::Variable::new("x"),
-                        eir::types::Primitive::Float64,
+                        eir::types::Primitive::Number,
                     ),
                     eir::ir::Definition::new(
                         "g",
-                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Float64)],
+                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
                         eir::ir::FunctionApplication::new(
                             eir::ir::FunctionApplication::new(
                                 eir::ir::FunctionApplication::new(
                                     eir::ir::Variable::new("f"),
-                                    eir::ir::Primitive::Float64(111.0),
+                                    42.0,
                                 ),
-                                eir::ir::Primitive::Integer32(222),
+                                true,
                             ),
-                            eir::ir::Primitive::Integer64(333),
+                            eir::ir::EirString::new("foo".into()),
                         ),
-                        eir::types::Primitive::Float64,
+                        eir::types::Primitive::Number,
                     ),
                 ]));
             }
@@ -906,22 +900,22 @@ mod tests {
                     eir::ir::Definition::new(
                         "f",
                         vec![
-                            eir::ir::Argument::new("x", eir::types::Primitive::Float64),
-                            eir::ir::Argument::new("y", eir::types::Primitive::Integer32),
+                            eir::ir::Argument::new("x", eir::types::Primitive::Number),
+                            eir::ir::Argument::new("y", eir::types::Primitive::Boolean),
                         ],
                         eir::ir::Variable::new("x"),
-                        eir::types::Primitive::Float64,
+                        eir::types::Primitive::Number,
                     ),
                     eir::ir::Definition::new(
                         "g",
-                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Float64)],
+                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
                         eir::ir::FunctionApplication::new(
                             eir::ir::Variable::new("f"),
-                            eir::ir::Primitive::Float64(42.0),
+                            eir::ir::Primitive::Number(42.0),
                         ),
                         eir::types::Function::new(
-                            eir::types::Primitive::Integer32,
-                            eir::types::Primitive::Float64,
+                            eir::types::Primitive::Boolean,
+                            eir::types::Primitive::Number,
                         ),
                     ),
                 ]));
@@ -933,25 +927,25 @@ mod tests {
                     eir::ir::Definition::new(
                         "f",
                         vec![
-                            eir::ir::Argument::new("x", eir::types::Primitive::Float64),
-                            eir::ir::Argument::new("y", eir::types::Primitive::Integer32),
-                            eir::ir::Argument::new("z", eir::types::Primitive::Integer64),
+                            eir::ir::Argument::new("x", eir::types::Primitive::Number),
+                            eir::ir::Argument::new("y", eir::types::Primitive::Boolean),
+                            eir::ir::Argument::new("z", eir::types::Type::String),
                         ],
                         eir::ir::Variable::new("x"),
-                        eir::types::Primitive::Float64,
+                        eir::types::Primitive::Number,
                     ),
                     eir::ir::Definition::new(
                         "g",
-                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Float64)],
+                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
                         eir::ir::FunctionApplication::new(
                             eir::ir::Variable::new("f"),
-                            eir::ir::Primitive::Float64(42.0),
+                            eir::ir::Primitive::Number(42.0),
                         ),
                         eir::types::Function::new(
-                            eir::types::Primitive::Integer32,
+                            eir::types::Primitive::Boolean,
                             eir::types::Function::new(
-                                eir::types::Primitive::Integer64,
-                                eir::types::Primitive::Float64,
+                                eir::types::Type::String,
+                                eir::types::Primitive::Number,
                             ),
                         ),
                     ),
@@ -964,26 +958,23 @@ mod tests {
                     eir::ir::Definition::new(
                         "f",
                         vec![
-                            eir::ir::Argument::new("x", eir::types::Primitive::Float64),
-                            eir::ir::Argument::new("y", eir::types::Primitive::Integer32),
-                            eir::ir::Argument::new("z", eir::types::Primitive::Integer64),
+                            eir::ir::Argument::new("x", eir::types::Primitive::Number),
+                            eir::ir::Argument::new("y", eir::types::Primitive::Boolean),
+                            eir::ir::Argument::new("z", eir::types::Type::String),
                         ],
                         eir::ir::Variable::new("x"),
-                        eir::types::Primitive::Float64,
+                        eir::types::Primitive::Number,
                     ),
                     eir::ir::Definition::new(
                         "g",
-                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Float64)],
+                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
                         eir::ir::FunctionApplication::new(
-                            eir::ir::FunctionApplication::new(
-                                eir::ir::Variable::new("f"),
-                                eir::ir::Primitive::Float64(111.0),
-                            ),
-                            eir::ir::Primitive::Integer32(222),
+                            eir::ir::FunctionApplication::new(eir::ir::Variable::new("f"), 42.0),
+                            true,
                         ),
                         eir::types::Function::new(
-                            eir::types::Primitive::Integer64,
-                            eir::types::Primitive::Float64,
+                            eir::types::Type::String,
+                            eir::types::Primitive::Number,
                         ),
                     ),
                 ]));
@@ -994,36 +985,36 @@ mod tests {
                 compile_module(&create_module_with_definitions(vec![
                     eir::ir::Definition::new(
                         "f",
-                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Float64)],
+                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
                         eir::ir::LetRecursive::new(
                             vec![eir::ir::Definition::new(
                                 "g",
-                                vec![eir::ir::Argument::new("y", eir::types::Primitive::Float64)],
+                                vec![eir::ir::Argument::new("y", eir::types::Primitive::Number)],
                                 eir::ir::ArithmeticOperation::new(
                                     eir::ir::ArithmeticOperator::Add,
                                     eir::ir::Variable::new("x"),
                                     eir::ir::Variable::new("y"),
                                 ),
-                                eir::types::Primitive::Float64,
+                                eir::types::Primitive::Number,
                             )],
                             eir::ir::Variable::new("g"),
                         ),
                         eir::types::Function::new(
-                            eir::types::Primitive::Float64,
-                            eir::types::Primitive::Float64,
+                            eir::types::Primitive::Number,
+                            eir::types::Primitive::Number,
                         ),
                     ),
                     eir::ir::Definition::new(
                         "g",
-                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Float64)],
+                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
                         eir::ir::FunctionApplication::new(
                             eir::ir::FunctionApplication::new(
                                 eir::ir::Variable::new("f"),
-                                eir::ir::Primitive::Float64(111.0),
+                                eir::ir::Primitive::Number(111.0),
                             ),
-                            eir::ir::Primitive::Float64(222.0),
+                            eir::ir::Primitive::Number(222.0),
                         ),
-                        eir::types::Primitive::Float64,
+                        eir::types::Primitive::Number,
                     ),
                 ]));
             }
