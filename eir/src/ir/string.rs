@@ -5,9 +5,7 @@ pub struct EirString {
 
 impl EirString {
     pub fn new(value: Vec<u8>) -> Self {
-        Self {
-            value: value.into(),
-        }
+        Self { value }
     }
 
     pub fn value(&self) -> &[u8] {
