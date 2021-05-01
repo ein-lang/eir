@@ -19,13 +19,14 @@ pub enum Expression {
     ArithmeticOperation(ArithmeticOperation),
     Case(Case),
     ComparisonOperation(ComparisonOperation),
-    String(EirString),
     FunctionApplication(FunctionApplication),
     Let(Let),
     LetRecursive(LetRecursive),
+    None,
     Primitive(Primitive),
     Record(Record),
     RecordElement(RecordElement),
+    String(EirString),
     Variable(Variable),
     Variant(Variant),
 }
@@ -52,7 +53,7 @@ impl Expression {
             Self::RecordElement(element) => element.find_variables(),
             Self::Variable(variable) => variable.find_variables(),
             Self::Variant(variant) => variant.find_variables(),
-            Self::Primitive(_) | Self::String(_) => HashSet::new(),
+            Self::None | Self::Primitive(_) | Self::String(_) => HashSet::new(),
         }
     }
 }
