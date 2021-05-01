@@ -565,6 +565,26 @@ mod tests {
                     )],
                 ));
             }
+
+            #[test]
+            fn compile_with_string() {
+                compile_module(&create_module_with_definitions(vec![
+                    eir::ir::Definition::new(
+                        "f",
+                        vec![eir::ir::Argument::new("x", eir::types::Type::Variant)],
+                        eir::ir::VariantCase::new(
+                            eir::ir::Variable::new("x"),
+                            vec![eir::ir::VariantAlternative::new(
+                                eir::types::Type::String,
+                                "y",
+                                eir::ir::Variable::new("y"),
+                            )],
+                            None,
+                        ),
+                        eir::types::Type::String,
+                    ),
+                ]));
+            }
         }
 
         mod primitive_cases {
