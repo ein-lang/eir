@@ -136,7 +136,7 @@ pub fn compile(
 
                     instruction_builder.store(string, pointer.clone());
 
-                    pointer.into()
+                    pointer
                 } else {
                     compile(variant.payload(), variables)?
                 },
