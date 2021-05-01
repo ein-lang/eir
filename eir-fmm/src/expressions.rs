@@ -106,23 +106,23 @@ pub fn compile(
                 element.index(),
             )?
         }
-        eir::ir::Expression::String(string) => fmm::build::bit_cast(
-            types::compile_string(),
-            module_builder.define_anonymous_variable(
-                fmm::build::record(
-                    vec![fmm::ir::Primitive::PointerInteger(string.value().len() as i64).into()]
-                        .into_iter()
-                        .chain(
-                            string
-                                .value()
-                                .iter()
-                                .map(|&byte| fmm::ir::Primitive::Integer8(byte).into()),
-                        )
-                        .collect(),
+        eir::ir::Expression::String(string) => fmm::build::record(vec![
+            fmm::ir::Primitive::PointerInteger(string.value().len() as i64).into(),
+            fmm::build::bit_cast(
+                fmm::types::Pointer::new(fmm::types::Primitive::Integer8),
+                module_builder.define_anonymous_variable(
+                    fmm::build::record(
+                        string
+                            .value()
+                            .iter()
+                            .map(|&byte| fmm::ir::Primitive::Integer8(byte).into())
+                            .collect(),
+                    ),
+                    false,
                 ),
-                false,
-            ),
-        )
+            )
+            .into(),
+        ])
         .into(),
         eir::ir::Expression::Variable(variable) => variables[variable.name()].clone(),
         eir::ir::Expression::Variant(variant) => fmm::build::record(vec![
@@ -130,7 +130,16 @@ pub fn compile(
             compile_payload_bit_cast(
                 instruction_builder,
                 types::compile_variant_payload(),
-                compile(variant.payload(), variables)?,
+                if variant.type_() == &eir::types::Type::String {
+                    let string = compile(variant.payload(), variables)?;
+                    let pointer = instruction_builder.allocate_heap(string.type_().clone());
+
+                    instruction_builder.store(string, pointer.clone());
+
+                    pointer.into()
+                } else {
+                    compile(variant.payload(), variables)?
+                },
             )?,
         ])
         .into(),

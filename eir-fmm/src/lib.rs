@@ -815,6 +815,22 @@ mod tests {
                     )],
                 ));
             }
+
+            #[test]
+            fn compile_with_string() {
+                compile_module(&create_module_with_type_definitions(
+                    vec![],
+                    vec![eir::ir::Definition::new(
+                        "f",
+                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
+                        eir::ir::Variant::new(
+                            eir::types::Type::String,
+                            eir::ir::EirString::new("foo"),
+                        ),
+                        eir::types::Type::Variant,
+                    )],
+                ));
+            }
         }
 
         mod function_applications {
