@@ -62,6 +62,8 @@ pub fn compile_reference(
     reference: &eir::types::Reference,
     types: &HashMap<String, eir::types::Record>,
 ) -> fmm::types::Type {
+    dbg!(types);
+    dbg!(reference);
     compile_record(&types[reference.name()], types)
 }
 
