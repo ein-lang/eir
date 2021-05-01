@@ -5,7 +5,6 @@ use super::reference::Reference;
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum Type {
     Function(Function),
-    None,
     Primitive(Primitive),
     Reference(Reference),
     String,
