@@ -5,13 +5,13 @@ use std::sync::Arc;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct RecordElement {
-    type_: types::Reference,
+    type_: types::Record,
     index: usize,
     record: Arc<Expression>,
 }
 
 impl RecordElement {
-    pub fn new(type_: types::Reference, index: usize, record: impl Into<Expression>) -> Self {
+    pub fn new(type_: types::Record, index: usize, record: impl Into<Expression>) -> Self {
         Self {
             type_,
             index,
@@ -19,7 +19,7 @@ impl RecordElement {
         }
     }
 
-    pub fn type_(&self) -> &types::Reference {
+    pub fn type_(&self) -> &types::Record {
         &self.type_
     }
 

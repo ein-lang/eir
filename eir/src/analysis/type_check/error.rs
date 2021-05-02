@@ -9,7 +9,7 @@ pub enum TypeCheckError {
     ForeignDefinitionNotFound(ForeignDefinition),
     FunctionExpected(Expression),
     NoAlternativeFound(Case),
-    TypeNotFound(types::Reference),
+    TypeNotFound(types::Record),
     TypesNotMatched(Type, Type),
     VariableNotFound(Variable),
     VariantInVariant(Variant),

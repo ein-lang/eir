@@ -15,7 +15,7 @@ pub fn compile(
             fmm::types::Pointer::new(compile_unsized_closure(function, types)).into()
         }
         eir::types::Type::Primitive(primitive) => compile_primitive(primitive),
-        eir::types::Type::Reference(reference) => compile_reference(reference, types),
+        eir::types::Type::Record(record) => compile_record(record, types),
         eir::types::Type::String => compile_string().into(),
         eir::types::Type::Variant => compile_variant().into(),
     }
@@ -58,49 +58,31 @@ pub fn compile_type_id(type_: &eir::types::Type) -> String {
     format!("{:?}", type_)
 }
 
-pub fn compile_reference(
-    reference: &eir::types::Reference,
-    types: &HashMap<String, eir::types::RecordContent>,
-) -> fmm::types::Type {
-    compile_record(&types[reference.name()], types)
-}
-
 pub fn compile_record(
-    record: &eir::types::RecordContent,
+    record: &eir::types::Record,
     types: &HashMap<String, eir::types::RecordContent>,
 ) -> fmm::types::Type {
-    if is_record_boxed(record) {
+    if is_record_boxed(record, types) {
         fmm::types::Pointer::new(fmm::types::Record::new(vec![])).into()
     } else {
         compile_unboxed_record(record, types).into()
     }
 }
 
-pub fn is_reference_boxed(
-    reference: &eir::types::Reference,
+// TODO Unbox small non-recursive records.
+pub fn is_record_boxed(
+    record: &eir::types::Record,
     types: &HashMap<String, eir::types::RecordContent>,
 ) -> bool {
-    is_record_boxed(&types[reference.name()])
+    !types[record.name()].elements().is_empty()
 }
 
-// TODO Unbox small non-recursive records.
-pub fn is_record_boxed(record: &eir::types::RecordContent) -> bool {
-    !record.elements().is_empty()
-}
-
-pub fn compile_unboxed_reference(
-    reference: &eir::types::Reference,
-    types: &HashMap<String, eir::types::RecordContent>,
-) -> fmm::types::Record {
-    compile_unboxed_record(&types[reference.name()], types)
-}
-
-fn compile_unboxed_record(
-    record: &eir::types::RecordContent,
+pub fn compile_unboxed_record(
+    record: &eir::types::Record,
     types: &HashMap<String, eir::types::RecordContent>,
 ) -> fmm::types::Record {
     fmm::types::Record::new(
-        record
+        types[record.name()]
             .elements()
             .iter()
             .map(|type_| compile(type_, types))

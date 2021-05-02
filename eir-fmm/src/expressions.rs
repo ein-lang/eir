@@ -77,12 +77,12 @@ pub fn compile(
                     .collect::<Result<_, _>>()?,
             );
 
-            if types::is_reference_boxed(record.type_(), types) {
+            if types::is_record_boxed(record.type_(), types) {
                 let pointer = instruction_builder.allocate_heap(unboxed.type_().clone());
 
                 instruction_builder.store(unboxed, pointer.clone());
 
-                fmm::build::bit_cast(types::compile_reference(record.type_(), types), pointer)
+                fmm::build::bit_cast(types::compile_record(record.type_(), types), pointer)
                     .into()
             } else {
                 unboxed.into()
@@ -92,9 +92,9 @@ pub fn compile(
             let record = compile(element.record(), variables)?;
 
             instruction_builder.deconstruct_record(
-                if types::is_reference_boxed(element.type_(), types) {
+                if types::is_record_boxed(element.type_(), types) {
                     instruction_builder.load(fmm::build::bit_cast(
-                        fmm::types::Pointer::new(types::compile_unboxed_reference(
+                        fmm::types::Pointer::new(types::compile_unboxed_record(
                             element.type_(),
                             types,
                         )),

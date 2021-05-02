@@ -1,9 +1,9 @@
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
-pub struct Reference {
+pub struct Record {
     name: String,
 }
 
-impl Reference {
+impl Record {
     pub fn new(name: impl Into<String>) -> Self {
         Self { name: name.into() }
     }
