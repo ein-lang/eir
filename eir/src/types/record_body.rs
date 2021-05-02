@@ -1,13 +1,13 @@
 use super::type_::Type;
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
-pub struct RecordContent {
+pub struct RecordBody {
     elements: Vec<Type>,
 }
 
-impl RecordContent {
+impl RecordBody {
     pub const fn new(elements: Vec<Type>) -> Self {
-        RecordContent { elements }
+        RecordBody { elements }
     }
 
     pub fn elements(&self) -> &[Type] {

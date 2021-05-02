@@ -81,7 +81,7 @@ pub fn compile(module: &eir::ir::Module) -> Result<fmm::ir::Module, CompileError
 
 fn compile_global_variables(
     module: &eir::ir::Module,
-    types: &HashMap<String, eir::types::RecordContent>,
+    types: &HashMap<String, eir::types::RecordBody>,
 ) -> HashMap<String, fmm::build::TypedExpression> {
     module
         .foreign_declarations()
@@ -521,7 +521,7 @@ mod tests {
                 compile_module(&create_module_with_type_definitions(
                     vec![eir::ir::TypeDefinition::new(
                         "foo",
-                        eir::types::RecordContent::new(vec![eir::types::Primitive::Number.into()]),
+                        eir::types::RecordBody::new(vec![eir::types::Primitive::Number.into()]),
                     )],
                     vec![eir::ir::Definition::new(
                         "f",
@@ -547,7 +547,7 @@ mod tests {
                 compile_module(&create_module_with_type_definitions(
                     vec![eir::ir::TypeDefinition::new(
                         "foo",
-                        eir::types::RecordContent::new(vec![eir::types::Primitive::Number.into()]),
+                        eir::types::RecordBody::new(vec![eir::types::Primitive::Number.into()]),
                     )],
                     vec![eir::ir::Definition::new(
                         "f",
@@ -652,7 +652,7 @@ mod tests {
                 compile_module(&create_module_with_type_definitions(
                     vec![eir::ir::TypeDefinition::new(
                         "foo",
-                        eir::types::RecordContent::new(vec![]),
+                        eir::types::RecordBody::new(vec![]),
                     )],
                     vec![eir::ir::Definition::new(
                         "f",
@@ -670,7 +670,7 @@ mod tests {
                 compile_module(&create_module_with_type_definitions(
                     vec![eir::ir::TypeDefinition::new(
                         "foo",
-                        eir::types::RecordContent::new(vec![eir::types::Primitive::Number.into()]),
+                        eir::types::RecordBody::new(vec![eir::types::Primitive::Number.into()]),
                     )],
                     vec![eir::ir::Definition::new(
                         "f",
@@ -691,7 +691,7 @@ mod tests {
                 compile_module(&create_module_with_type_definitions(
                     vec![eir::ir::TypeDefinition::new(
                         "foo",
-                        eir::types::RecordContent::new(vec![
+                        eir::types::RecordBody::new(vec![
                             eir::types::Primitive::Number.into(),
                             eir::types::Primitive::Boolean.into(),
                         ]),
@@ -715,7 +715,7 @@ mod tests {
                 compile_module(&create_module_with_type_definitions(
                     vec![eir::ir::TypeDefinition::new(
                         "foo",
-                        eir::types::RecordContent::new(vec![eir::types::Primitive::Number.into()]),
+                        eir::types::RecordBody::new(vec![eir::types::Primitive::Number.into()]),
                     )],
                     vec![eir::ir::Definition::new(
                         "f",
@@ -740,7 +740,7 @@ mod tests {
                 compile_module(&create_module_with_type_definitions(
                     vec![eir::ir::TypeDefinition::new(
                         "foo",
-                        eir::types::RecordContent::new(vec![eir::types::Primitive::Number.into()]),
+                        eir::types::RecordBody::new(vec![eir::types::Primitive::Number.into()]),
                     )],
                     vec![eir::ir::Definition::new(
                         "f",
@@ -758,7 +758,7 @@ mod tests {
                 compile_module(&create_module_with_type_definitions(
                     vec![eir::ir::TypeDefinition::new(
                         "foo",
-                        eir::types::RecordContent::new(vec![
+                        eir::types::RecordBody::new(vec![
                             eir::types::Primitive::Boolean.into(),
                             eir::types::Primitive::Number.into(),
                         ]),
@@ -798,7 +798,7 @@ mod tests {
                 compile_module(&create_module_with_type_definitions(
                     vec![eir::ir::TypeDefinition::new(
                         "foo",
-                        eir::types::RecordContent::new(vec![]),
+                        eir::types::RecordBody::new(vec![]),
                     )],
                     vec![eir::ir::Definition::new(
                         "f",
@@ -819,7 +819,7 @@ mod tests {
                 compile_module(&create_module_with_type_definitions(
                     vec![eir::ir::TypeDefinition::new(
                         "foo",
-                        eir::types::RecordContent::new(vec![eir::types::Primitive::Number.into()]),
+                        eir::types::RecordBody::new(vec![eir::types::Primitive::Number.into()]),
                     )],
                     vec![eir::ir::Definition::new(
                         "f",
