@@ -699,10 +699,7 @@ mod tests {
                     vec![eir::ir::Definition::new(
                         "f",
                         vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
-                        eir::ir::Record::new(
-                            record_type.clone(),
-                            vec![42.0.into(), true.into()],
-                        ),
+                        eir::ir::Record::new(record_type.clone(), vec![42.0.into(), true.into()]),
                         record_type,
                     )],
                 ));

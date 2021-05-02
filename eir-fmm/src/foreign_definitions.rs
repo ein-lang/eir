@@ -1,5 +1,4 @@
-use crate::function_applications;
-use crate::types;
+use crate::{function_applications, types};
 use std::collections::HashMap;
 
 pub fn compile_foreign_definition(

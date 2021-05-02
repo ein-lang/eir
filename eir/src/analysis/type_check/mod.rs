@@ -1,7 +1,9 @@
 mod error;
 
-use crate::ir::*;
-use crate::types::{self, Type};
+use crate::{
+    ir::*,
+    types::{self, Type},
+};
 pub use error::TypeCheckError;
 use std::collections::*;
 
@@ -280,10 +282,11 @@ fn check_equality(one: &Type, other: &Type) -> Result<(), TypeCheckError> {
 
 #[cfg(test)]
 mod tests {
-    use super::check_types;
-    use super::error::*;
-    use crate::ir::*;
-    use crate::types::{self, Type};
+    use super::{check_types, error::*};
+    use crate::{
+        ir::*,
+        types::{self, Type},
+    };
 
     fn create_module_from_definitions(definitions: Vec<Definition>) -> Module {
         Module::new(vec![], vec![], vec![], vec![], definitions)
@@ -722,10 +725,7 @@ mod tests {
 
             assert_eq!(
                 check_types(&create_module_with_records(
-                    vec![TypeDefinition::new(
-                        "foo",
-                        types::RecordBody::new(vec![])
-                    )],
+                    vec![TypeDefinition::new("foo", types::RecordBody::new(vec![]))],
                     vec![Definition::with_environment(
                         "f",
                         vec![],

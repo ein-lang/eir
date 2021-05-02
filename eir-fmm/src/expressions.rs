@@ -1,7 +1,4 @@
-use crate::closures;
-use crate::entry_functions;
-use crate::function_applications;
-use crate::types;
+use crate::{closures, entry_functions, function_applications, types};
 use std::collections::HashMap;
 
 pub fn compile_arity(arity: usize) -> fmm::ir::Primitive {
@@ -82,8 +79,7 @@ pub fn compile(
 
                 instruction_builder.store(unboxed, pointer.clone());
 
-                fmm::build::bit_cast(types::compile_record(record.type_(), types), pointer)
-                    .into()
+                fmm::build::bit_cast(types::compile_record(record.type_(), types), pointer).into()
             } else {
                 unboxed.into()
             }

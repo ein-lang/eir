@@ -1,6 +1,4 @@
-use super::function::Function;
-use super::primitive::Primitive;
-use super::record::Record;
+use super::{function::Function, primitive::Primitive, record::Record};
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum Type {

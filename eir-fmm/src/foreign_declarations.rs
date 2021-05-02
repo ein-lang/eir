@@ -1,5 +1,7 @@
-use crate::expressions;
-use crate::types::{self, FUNCTION_ARGUMENT_OFFSET};
+use crate::{
+    expressions,
+    types::{self, FUNCTION_ARGUMENT_OFFSET},
+};
 use std::collections::HashMap;
 
 pub fn compile_foreign_declaration(
