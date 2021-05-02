@@ -8,7 +8,7 @@ pub fn get_arity(type_: &fmm::types::Function) -> usize {
 
 pub fn compile(
     type_: &eir::types::Type,
-    types: &HashMap<String, eir::types::Record>,
+    types: &HashMap<String, eir::types::RecordContent>,
 ) -> fmm::types::Type {
     match type_ {
         eir::types::Type::Function(function) => {
@@ -60,14 +60,14 @@ pub fn compile_type_id(type_: &eir::types::Type) -> String {
 
 pub fn compile_reference(
     reference: &eir::types::Reference,
-    types: &HashMap<String, eir::types::Record>,
+    types: &HashMap<String, eir::types::RecordContent>,
 ) -> fmm::types::Type {
     compile_record(&types[reference.name()], types)
 }
 
 pub fn compile_record(
-    record: &eir::types::Record,
-    types: &HashMap<String, eir::types::Record>,
+    record: &eir::types::RecordContent,
+    types: &HashMap<String, eir::types::RecordContent>,
 ) -> fmm::types::Type {
     if is_record_boxed(record) {
         fmm::types::Pointer::new(fmm::types::Record::new(vec![])).into()
@@ -78,26 +78,26 @@ pub fn compile_record(
 
 pub fn is_reference_boxed(
     reference: &eir::types::Reference,
-    types: &HashMap<String, eir::types::Record>,
+    types: &HashMap<String, eir::types::RecordContent>,
 ) -> bool {
     is_record_boxed(&types[reference.name()])
 }
 
 // TODO Unbox small non-recursive records.
-pub fn is_record_boxed(record: &eir::types::Record) -> bool {
+pub fn is_record_boxed(record: &eir::types::RecordContent) -> bool {
     !record.elements().is_empty()
 }
 
 pub fn compile_unboxed_reference(
     reference: &eir::types::Reference,
-    types: &HashMap<String, eir::types::Record>,
+    types: &HashMap<String, eir::types::RecordContent>,
 ) -> fmm::types::Record {
     compile_unboxed_record(&types[reference.name()], types)
 }
 
 fn compile_unboxed_record(
-    record: &eir::types::Record,
-    types: &HashMap<String, eir::types::Record>,
+    record: &eir::types::RecordContent,
+    types: &HashMap<String, eir::types::RecordContent>,
 ) -> fmm::types::Record {
     fmm::types::Record::new(
         record
@@ -110,7 +110,7 @@ fn compile_unboxed_record(
 
 pub fn compile_sized_closure(
     definition: &eir::ir::Definition,
-    types: &HashMap<String, eir::types::Record>,
+    types: &HashMap<String, eir::types::RecordContent>,
 ) -> fmm::types::Record {
     compile_raw_closure(
         compile_entry_function_from_definition(definition, types),
@@ -120,7 +120,7 @@ pub fn compile_sized_closure(
 
 pub fn compile_closure_payload(
     definition: &eir::ir::Definition,
-    types: &HashMap<String, eir::types::Record>,
+    types: &HashMap<String, eir::types::RecordContent>,
 ) -> fmm::types::Type {
     if definition.is_thunk() {
         fmm::types::Type::Union(fmm::types::Union::new(
@@ -136,7 +136,7 @@ pub fn compile_closure_payload(
 
 pub fn compile_unsized_closure(
     function: &eir::types::Function,
-    types: &HashMap<String, eir::types::Record>,
+    types: &HashMap<String, eir::types::RecordContent>,
 ) -> fmm::types::Record {
     compile_raw_closure(
         compile_entry_function(function.arguments(), function.last_result(), types),
@@ -157,7 +157,7 @@ pub fn compile_raw_closure(
 
 pub fn compile_environment(
     definition: &eir::ir::Definition,
-    types: &HashMap<String, eir::types::Record>,
+    types: &HashMap<String, eir::types::RecordContent>,
 ) -> fmm::types::Record {
     compile_raw_environment(
         definition
@@ -205,7 +205,7 @@ pub fn compile_curried_entry_function(
 
 pub fn compile_entry_function_from_definition(
     definition: &eir::ir::Definition,
-    types: &HashMap<String, eir::types::Record>,
+    types: &HashMap<String, eir::types::RecordContent>,
 ) -> fmm::types::Function {
     compile_entry_function(
         definition
@@ -220,7 +220,7 @@ pub fn compile_entry_function_from_definition(
 pub fn compile_entry_function<'a>(
     arguments: impl IntoIterator<Item = &'a eir::types::Type>,
     result: &eir::types::Type,
-    types: &HashMap<String, eir::types::Record>,
+    types: &HashMap<String, eir::types::RecordContent>,
 ) -> fmm::types::Function {
     fmm::types::Function::new(
         vec![fmm::types::Pointer::new(compile_unsized_environment()).into()]
@@ -235,7 +235,7 @@ pub fn compile_entry_function<'a>(
 pub fn compile_foreign_function(
     function: &eir::types::Function,
     calling_convention: eir::ir::CallingConvention,
-    types: &HashMap<String, eir::types::Record>,
+    types: &HashMap<String, eir::types::RecordContent>,
 ) -> fmm::types::Function {
     fmm::types::Function::new(
         function

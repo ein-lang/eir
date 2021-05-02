@@ -43,7 +43,7 @@ pub fn check_types(module: &Module) -> Result<(), TypeCheckError> {
 fn check_definition(
     definition: &Definition,
     variables: &HashMap<&str, Type>,
-    types: &HashMap<&str, &types::Record>,
+    types: &HashMap<&str, &types::RecordContent>,
 ) -> Result<(), TypeCheckError> {
     let mut variables = variables.clone();
 
@@ -64,7 +64,7 @@ fn check_definition(
 fn check_expression(
     expression: &Expression,
     variables: &HashMap<&str, Type>,
-    types: &HashMap<&str, &types::Record>,
+    types: &HashMap<&str, &types::RecordContent>,
 ) -> Result<Type, TypeCheckError> {
     let check_expression = |expression, variables| check_expression(expression, variables, types);
 
@@ -178,7 +178,7 @@ fn check_expression(
 fn check_case(
     case: &Case,
     variables: &HashMap<&str, Type>,
-    types: &HashMap<&str, &types::Record>,
+    types: &HashMap<&str, &types::RecordContent>,
 ) -> Result<Type, TypeCheckError> {
     let check_expression = |expression: &Expression, variables: &HashMap<&str, Type>| {
         check_expression(expression, variables, types)
@@ -722,7 +722,10 @@ mod tests {
 
             assert_eq!(
                 check_types(&create_module_with_records(
-                    vec![TypeDefinition::new("foo", types::Record::new(vec![]))],
+                    vec![TypeDefinition::new(
+                        "foo",
+                        types::RecordContent::new(vec![])
+                    )],
                     vec![Definition::with_environment(
                         "f",
                         vec![],
@@ -743,7 +746,7 @@ mod tests {
                 check_types(&create_module_with_records(
                     vec![TypeDefinition::new(
                         "foo",
-                        types::Record::new(vec![types::Primitive::Number.into()])
+                        types::RecordContent::new(vec![types::Primitive::Number.into()])
                     )],
                     vec![Definition::with_environment(
                         "f",
@@ -764,7 +767,7 @@ mod tests {
             let module = create_module_with_records(
                 vec![TypeDefinition::new(
                     "foo",
-                    types::Record::new(vec![types::Primitive::Number.into()]),
+                    types::RecordContent::new(vec![types::Primitive::Number.into()]),
                 )],
                 vec![Definition::with_environment(
                     "f",
@@ -788,7 +791,7 @@ mod tests {
             let module = create_module_with_records(
                 vec![TypeDefinition::new(
                     "foo",
-                    types::Record::new(vec![types::Primitive::Number.into()]),
+                    types::RecordContent::new(vec![types::Primitive::Number.into()]),
                 )],
                 vec![Definition::with_environment(
                     "f",
@@ -813,7 +816,7 @@ mod tests {
                 check_types(&create_module_with_records(
                     vec![TypeDefinition::new(
                         "foo",
-                        types::Record::new(vec![types::Primitive::Number.into()])
+                        types::RecordContent::new(vec![types::Primitive::Number.into()])
                     )],
                     vec![Definition::with_environment(
                         "f",

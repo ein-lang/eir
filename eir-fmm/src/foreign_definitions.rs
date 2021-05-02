@@ -7,7 +7,7 @@ pub fn compile_foreign_definition(
     definition: &eir::ir::ForeignDefinition,
     function_type: &eir::types::Function,
     global_variable: &fmm::build::TypedExpression,
-    types: &HashMap<String, eir::types::Record>,
+    types: &HashMap<String, eir::types::RecordContent>,
 ) -> Result<(), fmm::build::BuildError> {
     // TODO Support a target calling convention.
     let foreign_function_type =

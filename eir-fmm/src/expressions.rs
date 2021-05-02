@@ -13,7 +13,7 @@ pub fn compile(
     instruction_builder: &fmm::build::InstructionBuilder,
     expression: &eir::ir::Expression,
     variables: &HashMap<String, fmm::build::TypedExpression>,
-    types: &HashMap<String, eir::types::Record>,
+    types: &HashMap<String, eir::types::RecordContent>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
     let compile = |expression, variables| {
         compile(
@@ -142,7 +142,7 @@ fn compile_case(
     instruction_builder: &fmm::build::InstructionBuilder,
     case: &eir::ir::Case,
     variables: &HashMap<String, fmm::build::TypedExpression>,
-    types: &HashMap<String, eir::types::Record>,
+    types: &HashMap<String, eir::types::RecordContent>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
     Ok(match case {
         eir::ir::Case::Primitive(case) => {
@@ -159,7 +159,7 @@ fn compile_variant_case(
     instruction_builder: &fmm::build::InstructionBuilder,
     case: &eir::ir::VariantCase,
     variables: &HashMap<String, fmm::build::TypedExpression>,
-    types: &HashMap<String, eir::types::Record>,
+    types: &HashMap<String, eir::types::RecordContent>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
     let argument = compile(
         module_builder,
@@ -188,7 +188,7 @@ fn compile_variant_alternatives(
     alternatives: &[eir::ir::VariantAlternative],
     default_alternative: Option<&eir::ir::Expression>,
     variables: &HashMap<String, fmm::build::TypedExpression>,
-    types: &HashMap<String, eir::types::Record>,
+    types: &HashMap<String, eir::types::RecordContent>,
 ) -> Result<Option<fmm::build::TypedExpression>, fmm::build::BuildError> {
     Ok(match alternatives {
         [] => default_alternative
@@ -285,7 +285,7 @@ fn compile_unboxed_payload(
     builder: &fmm::build::InstructionBuilder,
     payload: &fmm::build::TypedExpression,
     variant_type: &eir::types::Type,
-    types: &HashMap<String, eir::types::Record>,
+    types: &HashMap<String, eir::types::RecordContent>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
     Ok(if variant_type == &eir::types::Type::String {
         builder.load(fmm::build::bit_cast(
@@ -328,7 +328,7 @@ fn compile_primitive_case(
     instruction_builder: &fmm::build::InstructionBuilder,
     case: &eir::ir::PrimitiveCase,
     variables: &HashMap<String, fmm::build::TypedExpression>,
-    types: &HashMap<String, eir::types::Record>,
+    types: &HashMap<String, eir::types::RecordContent>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
     let argument = compile(
         module_builder,
@@ -357,7 +357,7 @@ fn compile_primitive_alternatives(
     alternatives: &[eir::ir::PrimitiveAlternative],
     default_alternative: Option<&eir::ir::Expression>,
     variables: &HashMap<String, fmm::build::TypedExpression>,
-    types: &HashMap<String, eir::types::Record>,
+    types: &HashMap<String, eir::types::RecordContent>,
 ) -> Result<Option<fmm::build::TypedExpression>, fmm::build::BuildError> {
     let compile = |expression| {
         compile(
@@ -406,7 +406,7 @@ fn compile_let(
     instruction_builder: &fmm::build::InstructionBuilder,
     let_: &eir::ir::Let,
     variables: &HashMap<String, fmm::build::TypedExpression>,
-    types: &HashMap<String, eir::types::Record>,
+    types: &HashMap<String, eir::types::RecordContent>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
     let compile = |expression, variables| {
         compile(
@@ -436,7 +436,7 @@ fn compile_let_recursive(
     instruction_builder: &fmm::build::InstructionBuilder,
     let_: &eir::ir::LetRecursive,
     variables: &HashMap<String, fmm::build::TypedExpression>,
-    types: &HashMap<String, eir::types::Record>,
+    types: &HashMap<String, eir::types::RecordContent>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
     let mut variables = variables.clone();
     let mut closure_pointers = HashMap::new();
@@ -484,7 +484,7 @@ fn compile_arithmetic_operation(
     instruction_builder: &fmm::build::InstructionBuilder,
     operation: &eir::ir::ArithmeticOperation,
     variables: &HashMap<String, fmm::build::TypedExpression>,
-    types: &HashMap<String, eir::types::Record>,
+    types: &HashMap<String, eir::types::RecordContent>,
 ) -> Result<fmm::ir::ArithmeticOperation, fmm::build::BuildError> {
     let compile = |expression| {
         compile(
@@ -520,7 +520,7 @@ fn compile_comparison_operation(
     instruction_builder: &fmm::build::InstructionBuilder,
     operation: &eir::ir::ComparisonOperation,
     variables: &HashMap<String, fmm::build::TypedExpression>,
-    types: &HashMap<String, eir::types::Record>,
+    types: &HashMap<String, eir::types::RecordContent>,
 ) -> Result<fmm::ir::ComparisonOperation, fmm::build::BuildError> {
     let compile = |expression| {
         compile(
