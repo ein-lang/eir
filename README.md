@@ -1,8 +1,8 @@
 # eir
 
-[![GitHub Action](https://img.shields.io/github/workflow/status/raviqqe/eir/test?style=flat-square)](https://github.com/raviqqe/eir/actions?query=workflow%3Atest)
-[![Codecov](https://img.shields.io/codecov/c/github/raviqqe/eir.svg?style=flat-square)](https://codecov.io/gh/raviqqe/eir)
-[![License](https://img.shields.io/github/license/raviqqe/eir.svg?style=flat-square)](LICENSE)
+[![GitHub Action](https://img.shields.io/github/workflow/status/ein-lang/eir/test?style=flat-square)](https://github.com/ein-lang/eir/actions?query=workflow%3Atest)
+[![Codecov](https://img.shields.io/codecov/c/github/ein-lang/eir.svg?style=flat-square)](https://codecov.io/gh/ein-lang/eir)
+[![License](https://img.shields.io/github/license/ein-lang/eir.svg?style=flat-square)](LICENSE)
 
 Ein Intermediate Representation
 
@@ -11,8 +11,8 @@ Ein Intermediate Representation
 In your `Cargo.toml`,
 
 ```
-eir = { git = "https://github.com/raviqqe/eir", branch = "master" }
-eir-fmm = { git = "https://github.com/raviqqe/eir", branch = "master" }
+eir = { git = "https://github.com/ein-lang/eir", branch = "master" }
+eir-fmm = { git = "https://github.com/ein-lang/eir", branch = "master" }
 ```
 
 ## Features
