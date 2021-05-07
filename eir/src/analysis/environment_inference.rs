@@ -65,9 +65,10 @@ fn infer_in_expression(expression: &Expression, variables: &HashMap<String, Type
         Expression::Record(record) => infer_in_record(record, variables).into(),
         Expression::RecordElement(element) => infer_in_record_element(element, variables).into(),
         Expression::Variant(variant) => infer_in_variant(variant, variables).into(),
-        Expression::Primitive(_) | Expression::ByteString(_) | Expression::Variable(_) => {
-            expression.clone()
-        }
+        Expression::Boolean(_)
+        | Expression::ByteString(_)
+        | Expression::Number(_)
+        | Expression::Variable(_) => expression.clone(),
     }
 }
 
@@ -206,7 +207,6 @@ fn infer_in_variant(variant: &Variant, variables: &HashMap<String, Type>) -> Var
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types;
 
     #[test]
     fn infer_empty_environment() {
@@ -214,18 +214,18 @@ mod tests {
             infer_in_definition(
                 &Definition::new(
                     "f",
-                    vec![Argument::new("x", types::Primitive::Number)],
+                    vec![Argument::new("x", Type::Number)],
                     42.0,
-                    types::Primitive::Number
+                    Type::Number
                 ),
                 &Default::default()
             ),
             Definition::with_environment(
                 "f",
                 vec![],
-                vec![Argument::new("x", types::Primitive::Number)],
+                vec![Argument::new("x", Type::Number)],
                 42.0,
-                types::Primitive::Number
+                Type::Number
             )
         );
     }
@@ -236,38 +236,34 @@ mod tests {
             infer_in_definition(
                 &Definition::new(
                     "f",
-                    vec![Argument::new("x", types::Primitive::Number)],
+                    vec![Argument::new("x", Type::Number)],
                     Variable::new("y"),
-                    types::Primitive::Number
+                    Type::Number
                 ),
-                &vec![("y".into(), types::Primitive::Number.into())]
-                    .drain(..)
-                    .collect()
+                &vec![("y".into(), Type::Number)].drain(..).collect()
             ),
             Definition::with_environment(
                 "f",
-                vec![Argument::new("y", types::Primitive::Number)],
-                vec![Argument::new("x", types::Primitive::Number)],
+                vec![Argument::new("y", Type::Number)],
+                vec![Argument::new("x", Type::Number)],
                 Variable::new("y"),
-                types::Primitive::Number
+                Type::Number
             )
         );
     }
 
     #[test]
     fn infer_environment_idempotently() {
-        let variables = vec![("y".into(), types::Primitive::Number.into())]
-            .drain(..)
-            .collect();
+        let variables = vec![("y".into(), Type::Number)].drain(..).collect();
 
         assert_eq!(
             infer_in_definition(
                 &infer_in_definition(
                     &Definition::new(
                         "f",
-                        vec![Argument::new("x", types::Primitive::Number)],
+                        vec![Argument::new("x", Type::Number)],
                         Variable::new("y"),
-                        types::Primitive::Number
+                        Type::Number
                     ),
                     &variables
                 ),
@@ -275,10 +271,10 @@ mod tests {
             ),
             Definition::with_environment(
                 "f",
-                vec![Argument::new("y", types::Primitive::Number)],
-                vec![Argument::new("x", types::Primitive::Number)],
+                vec![Argument::new("y", Type::Number)],
+                vec![Argument::new("x", Type::Number)],
                 Variable::new("y"),
-                types::Primitive::Number
+                Type::Number
             )
         );
     }

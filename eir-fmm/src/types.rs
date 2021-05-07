@@ -11,20 +11,14 @@ pub fn compile(
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> fmm::types::Type {
     match type_ {
+        eir::types::Type::Boolean => fmm::types::Primitive::Boolean.into(),
         eir::types::Type::Function(function) => {
             fmm::types::Pointer::new(compile_unsized_closure(function, types)).into()
         }
-        eir::types::Type::Primitive(primitive) => compile_primitive(primitive),
+        eir::types::Type::Number => fmm::types::Primitive::Float64.into(),
         eir::types::Type::Record(record) => compile_record(record, types),
         eir::types::Type::ByteString => compile_string().into(),
         eir::types::Type::Variant => compile_variant().into(),
-    }
-}
-
-pub fn compile_primitive(primitive: &eir::types::Primitive) -> fmm::types::Type {
-    match primitive {
-        eir::types::Primitive::Boolean => fmm::types::Primitive::Boolean.into(),
-        eir::types::Primitive::Number => fmm::types::Primitive::Float64.into(),
     }
 }
 

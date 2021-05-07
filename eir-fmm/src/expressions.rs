@@ -31,6 +31,7 @@ pub fn compile(
             types,
         )?
         .into(),
+        eir::ir::Expression::Boolean(boolean) => fmm::ir::Primitive::Boolean(*boolean).into(),
         eir::ir::Expression::Case(case) => {
             compile_case(module_builder, instruction_builder, case, variables, types)?
         }
@@ -67,7 +68,7 @@ pub fn compile(
             variables,
             types,
         )?,
-        eir::ir::Expression::Primitive(primitive) => compile_primitive(*primitive).into(),
+        eir::ir::Expression::Number(number) => fmm::ir::Primitive::Float64(*number).into(),
         eir::ir::Expression::Record(record) => {
             let unboxed = fmm::build::record(
                 record
@@ -483,11 +484,4 @@ fn compile_comparison_operation(
         lhs,
         rhs,
     )
-}
-
-fn compile_primitive(primitive: eir::ir::Primitive) -> fmm::ir::Primitive {
-    match primitive {
-        eir::ir::Primitive::Boolean(boolean) => fmm::ir::Primitive::Boolean(boolean),
-        eir::ir::Primitive::Number(number) => fmm::ir::Primitive::Float64(number),
-    }
 }

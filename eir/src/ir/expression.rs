@@ -1,13 +1,14 @@
 use super::{
     arithmetic_operation::ArithmeticOperation, case::Case,
     comparison_operation::ComparisonOperation, function_application::FunctionApplication, if_::If,
-    let_::Let, let_recursive::LetRecursive, primitive::Primitive, record::Record,
-    record_element::RecordElement, string::ByteString, variable::Variable, variant::Variant,
+    let_::Let, let_recursive::LetRecursive, record::Record, record_element::RecordElement,
+    string::ByteString, variable::Variable, variant::Variant,
 };
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Expression {
     ArithmeticOperation(ArithmeticOperation),
+    Boolean(bool),
     ByteString(ByteString),
     Case(Case),
     ComparisonOperation(ComparisonOperation),
@@ -15,7 +16,7 @@ pub enum Expression {
     If(If),
     Let(Let),
     LetRecursive(LetRecursive),
-    Primitive(Primitive),
+    Number(f64),
     Record(Record),
     RecordElement(RecordElement),
     Variable(Variable),
@@ -25,6 +26,12 @@ pub enum Expression {
 impl From<ArithmeticOperation> for Expression {
     fn from(operation: ArithmeticOperation) -> Self {
         Self::ArithmeticOperation(operation)
+    }
+}
+
+impl From<bool> for Expression {
+    fn from(bool: bool) -> Self {
+        Self::Boolean(bool)
     }
 }
 
@@ -58,15 +65,15 @@ impl From<Let> for Expression {
     }
 }
 
-impl From<ByteString> for Expression {
-    fn from(string: ByteString) -> Self {
-        Self::ByteString(string)
+impl From<f64> for Expression {
+    fn from(number: f64) -> Self {
+        Self::Number(number)
     }
 }
 
-impl<T: Into<Primitive>> From<T> for Expression {
-    fn from(primitive: T) -> Self {
-        Self::Primitive(primitive.into())
+impl From<ByteString> for Expression {
+    fn from(string: ByteString) -> Self {
+        Self::ByteString(string)
     }
 }
 

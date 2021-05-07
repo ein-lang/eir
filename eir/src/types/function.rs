@@ -48,55 +48,48 @@ impl Function {
 
 #[cfg(test)]
 mod tests {
-    use super::{super::primitive::Primitive, *};
+    use super::*;
 
     #[test]
     fn argument() {
         assert_eq!(
-            Function::new(Primitive::Number, Primitive::Number).argument(),
-            &Primitive::Number.into()
+            Function::new(Type::Number, Type::Number).argument(),
+            &Type::Number
         );
     }
 
     #[test]
     fn result() {
         assert_eq!(
-            Function::new(Primitive::Number, Primitive::Number).result(),
-            &Primitive::Number.into()
+            Function::new(Type::Number, Type::Number).result(),
+            &Type::Number
         );
     }
 
     #[test]
     fn arguments() {
         assert_eq!(
-            Function::new(Primitive::Number, Primitive::Number,)
+            Function::new(Type::Number, Type::Number,)
                 .arguments()
                 .into_iter()
                 .collect::<Vec<&Type>>(),
-            vec![&Primitive::Number.into()]
+            vec![&Type::Number]
         );
 
         assert_eq!(
-            Function::new(
-                Primitive::Number,
-                Function::new(Primitive::Number, Primitive::Number)
-            )
-            .arguments()
-            .into_iter()
-            .collect::<Vec<&Type>>(),
-            vec![&Primitive::Number.into(), &Primitive::Number.into()]
+            Function::new(Type::Number, Function::new(Type::Number, Type::Number))
+                .arguments()
+                .into_iter()
+                .collect::<Vec<&Type>>(),
+            vec![&Type::Number, &Type::Number]
         );
     }
 
     #[test]
     fn last_result() {
         assert_eq!(
-            Function::new(
-                Primitive::Number,
-                Function::new(Primitive::Number, Primitive::Number)
-            )
-            .last_result(),
-            &Primitive::Number.into()
+            Function::new(Type::Number, Function::new(Type::Number, Type::Number)).last_result(),
+            &Type::Number
         );
     }
 }
