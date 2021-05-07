@@ -3,9 +3,9 @@ use std::collections::HashMap;
 
 pub fn compile_definition(
     module_builder: &fmm::build::ModuleBuilder,
-    definition: &pir::ir::Definition,
+    definition: &eir::ir::Definition,
     global_variables: &HashMap<String, fmm::build::TypedExpression>,
-    types: &HashMap<String, pir::types::RecordBody>,
+    types: &HashMap<String, eir::types::RecordBody>,
 ) -> Result<(), fmm::build::BuildError> {
     module_builder.define_variable(
         definition.name(),

@@ -1,5 +1,5 @@
 [workspace]
 members = [
-  "pir",
-  "pir-fmm",
+  "eir",
+  "eir-fmm",
 ]

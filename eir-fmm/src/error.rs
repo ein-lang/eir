@@ -6,7 +6,7 @@ use std::{
 #[derive(Clone, Debug, PartialEq)]
 pub enum CompileError {
     FmmBuild(fmm::build::BuildError),
-    TypeCheck(pir::analysis::TypeCheckError),
+    TypeCheck(eir::analysis::TypeCheckError),
 }
 
 impl Display for CompileError {
@@ -23,8 +23,8 @@ impl From<fmm::build::BuildError> for CompileError {
     }
 }
 
-impl From<pir::analysis::TypeCheckError> for CompileError {
-    fn from(error: pir::analysis::TypeCheckError) -> Self {
+impl From<eir::analysis::TypeCheckError> for CompileError {
+    fn from(error: eir::analysis::TypeCheckError) -> Self {
         Self::TypeCheck(error)
     }
 }

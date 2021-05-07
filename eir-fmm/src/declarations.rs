@@ -3,8 +3,8 @@ use std::collections::HashMap;
 
 pub fn compile_declaration(
     module_builder: &fmm::build::ModuleBuilder,
-    declaration: &pir::ir::Declaration,
-    types: &HashMap<String, pir::types::RecordBody>,
+    declaration: &eir::ir::Declaration,
+    types: &HashMap<String, eir::types::RecordBody>,
 ) {
     module_builder.declare_variable(
         declaration.name(),

@@ -259,20 +259,20 @@ dependencies = [
 ]
 
 [[package]]
-name = "pir"
+name = "eir"
 version = "0.1.0"
 dependencies = [
  "pretty_assertions",
 ]
 
 [[package]]
-name = "pir-fmm"
+name = "eir-fmm"
 version = "0.1.0"
 dependencies = [
  "fmm",
  "fmm-c",
  "fmm-llvm",
- "pir",
+ "eir",
  "tempfile",
 ]
 
