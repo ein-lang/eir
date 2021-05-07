@@ -189,10 +189,7 @@ mod tests {
                 vec![eir::ir::ForeignDeclaration::new(
                     "f",
                     "g",
-                    eir::types::Function::new(
-                        eir::types::Primitive::Number,
-                        eir::types::Primitive::Number,
-                    ),
+                    eir::types::Function::new(eir::types::Type::Number, eir::types::Type::Number),
                     eir::ir::CallingConvention::Target,
                 )],
                 vec![],
@@ -209,10 +206,10 @@ mod tests {
                     "f",
                     "g",
                     eir::types::Function::new(
-                        eir::types::Primitive::Number,
+                        eir::types::Type::Number,
                         eir::types::Function::new(
-                            eir::types::Primitive::Number,
-                            eir::types::Primitive::Number,
+                            eir::types::Type::Number,
+                            eir::types::Type::Number,
                         ),
                     ),
                     eir::ir::CallingConvention::Target,
@@ -230,10 +227,7 @@ mod tests {
                 vec![eir::ir::ForeignDeclaration::new(
                     "f",
                     "g",
-                    eir::types::Function::new(
-                        eir::types::Primitive::Number,
-                        eir::types::Primitive::Number,
-                    ),
+                    eir::types::Function::new(eir::types::Type::Number, eir::types::Type::Number),
                     eir::ir::CallingConvention::Source,
                 )],
                 vec![],
@@ -253,10 +247,7 @@ mod tests {
                 vec![eir::ir::ForeignDeclaration::new(
                     "f",
                     "g",
-                    eir::types::Function::new(
-                        eir::types::Primitive::Number,
-                        eir::types::Primitive::Number,
-                    ),
+                    eir::types::Function::new(eir::types::Type::Number, eir::types::Type::Number),
                     eir::ir::CallingConvention::Target,
                 )],
                 vec![eir::ir::ForeignDefinition::new("f", "h")],
@@ -273,10 +264,7 @@ mod tests {
                 vec![eir::ir::ForeignDefinition::new("f", "g")],
                 vec![eir::ir::Declaration::new(
                     "f",
-                    eir::types::Function::new(
-                        eir::types::Primitive::Number,
-                        eir::types::Primitive::Number,
-                    ),
+                    eir::types::Function::new(eir::types::Type::Number, eir::types::Type::Number),
                 )],
                 vec![],
             ));
@@ -291,9 +279,9 @@ mod tests {
                 vec![],
                 vec![eir::ir::Definition::new(
                     "f",
-                    vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
+                    vec![eir::ir::Argument::new("x", eir::types::Type::Number)],
                     eir::ir::Variable::new("x"),
-                    eir::types::Primitive::Number,
+                    eir::types::Type::Number,
                 )],
             ));
         }
@@ -310,10 +298,7 @@ mod tests {
                 vec![],
                 vec![eir::ir::Declaration::new(
                     "f",
-                    eir::types::Function::new(
-                        eir::types::Primitive::Number,
-                        eir::types::Primitive::Number,
-                    ),
+                    eir::types::Function::new(eir::types::Type::Number, eir::types::Type::Number),
                 )],
                 vec![],
             ));
@@ -328,10 +313,10 @@ mod tests {
                 vec![eir::ir::Declaration::new(
                     "f",
                     eir::types::Function::new(
-                        eir::types::Primitive::Number,
+                        eir::types::Type::Number,
                         eir::types::Function::new(
-                            eir::types::Primitive::Number,
-                            eir::types::Primitive::Number,
+                            eir::types::Type::Number,
+                            eir::types::Type::Number,
                         ),
                     ),
                 )],
@@ -348,9 +333,9 @@ mod tests {
             compile_module(&create_module_with_definitions(vec![
                 eir::ir::Definition::new(
                     "f",
-                    vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
+                    vec![eir::ir::Argument::new("x", eir::types::Type::Number)],
                     eir::ir::Variable::new("x"),
-                    eir::types::Primitive::Number,
+                    eir::types::Type::Number,
                 ),
             ]));
         }
@@ -361,15 +346,15 @@ mod tests {
                 eir::ir::Definition::new(
                     "f",
                     vec![
-                        eir::ir::Argument::new("x", eir::types::Primitive::Number),
-                        eir::ir::Argument::new("y", eir::types::Primitive::Number),
+                        eir::ir::Argument::new("x", eir::types::Type::Number),
+                        eir::ir::Argument::new("y", eir::types::Type::Number),
                     ],
                     eir::ir::ArithmeticOperation::new(
                         eir::ir::ArithmeticOperator::Add,
                         eir::ir::Variable::new("x"),
                         eir::ir::Variable::new("y"),
                     ),
-                    eir::types::Primitive::Number,
+                    eir::types::Type::Number,
                 ),
             ]));
         }
@@ -379,18 +364,18 @@ mod tests {
             compile_module(&create_module_with_definitions(vec![
                 eir::ir::Definition::thunk(
                     "f",
-                    vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
+                    vec![eir::ir::Argument::new("x", eir::types::Type::Number)],
                     eir::ir::Variable::new("x"),
-                    eir::types::Primitive::Number,
+                    eir::types::Type::Number,
                 ),
                 eir::ir::Definition::new(
                     "g",
-                    vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
+                    vec![eir::ir::Argument::new("x", eir::types::Type::Number)],
                     eir::ir::FunctionApplication::new(
                         eir::ir::Variable::new("f"),
                         eir::ir::Variable::new("x"),
                     ),
-                    eir::types::Primitive::Number,
+                    eir::types::Type::Number,
                 ),
             ]));
         }
@@ -404,14 +389,14 @@ mod tests {
             compile_module(&create_module_with_definitions(vec![
                 eir::ir::Definition::new(
                     "f",
-                    vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
+                    vec![eir::ir::Argument::new("x", eir::types::Type::Number)],
                     eir::ir::Let::new(
                         "y",
-                        eir::types::Primitive::Number,
+                        eir::types::Type::Number,
                         eir::ir::Variable::new("x"),
                         eir::ir::Variable::new("y"),
                     ),
-                    eir::types::Primitive::Number,
+                    eir::types::Type::Number,
                 ),
             ]));
         }
@@ -421,24 +406,21 @@ mod tests {
             compile_module(&create_module_with_definitions(vec![
                 eir::ir::Definition::new(
                     "f",
-                    vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
+                    vec![eir::ir::Argument::new("x", eir::types::Type::Number)],
                     eir::ir::LetRecursive::new(
                         vec![eir::ir::Definition::new(
                             "g",
-                            vec![eir::ir::Argument::new("y", eir::types::Primitive::Number)],
+                            vec![eir::ir::Argument::new("y", eir::types::Type::Number)],
                             eir::ir::ArithmeticOperation::new(
                                 eir::ir::ArithmeticOperator::Add,
                                 eir::ir::Variable::new("x"),
                                 eir::ir::Variable::new("y"),
                             ),
-                            eir::types::Primitive::Number,
+                            eir::types::Type::Number,
                         )],
-                        eir::ir::FunctionApplication::new(
-                            eir::ir::Variable::new("g"),
-                            eir::ir::Primitive::Number(42.0),
-                        ),
+                        eir::ir::FunctionApplication::new(eir::ir::Variable::new("g"), 42.0),
                     ),
-                    eir::types::Primitive::Number,
+                    eir::types::Type::Number,
                 ),
             ]));
         }
@@ -448,18 +430,15 @@ mod tests {
             compile_module(&create_module_with_definitions(vec![
                 eir::ir::Definition::new(
                     "f",
-                    vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
+                    vec![eir::ir::Argument::new("x", eir::types::Type::Number)],
                     eir::ir::LetRecursive::new(
                         vec![eir::ir::Definition::new(
                             "g",
-                            vec![eir::ir::Argument::new("y", eir::types::Primitive::Number)],
+                            vec![eir::ir::Argument::new("y", eir::types::Type::Number)],
                             eir::ir::LetRecursive::new(
                                 vec![eir::ir::Definition::new(
                                     "h",
-                                    vec![eir::ir::Argument::new(
-                                        "z",
-                                        eir::types::Primitive::Number,
-                                    )],
+                                    vec![eir::ir::Argument::new("z", eir::types::Type::Number)],
                                     eir::ir::ArithmeticOperation::new(
                                         eir::ir::ArithmeticOperator::Add,
                                         eir::ir::ArithmeticOperation::new(
@@ -469,24 +448,21 @@ mod tests {
                                         ),
                                         eir::ir::Variable::new("z"),
                                     ),
-                                    eir::types::Primitive::Number,
+                                    eir::types::Type::Number,
                                 )],
                                 eir::ir::Variable::new("h"),
                             ),
                             eir::types::Function::new(
-                                eir::types::Primitive::Number,
-                                eir::types::Primitive::Number,
+                                eir::types::Type::Number,
+                                eir::types::Type::Number,
                             ),
                         )],
                         eir::ir::FunctionApplication::new(
-                            eir::ir::FunctionApplication::new(
-                                eir::ir::Variable::new("g"),
-                                eir::ir::Primitive::Number(42.0),
-                            ),
-                            eir::ir::Primitive::Number(42.0),
+                            eir::ir::FunctionApplication::new(eir::ir::Variable::new("g"), 42.0),
+                            42.0,
                         ),
                     ),
-                    eir::types::Primitive::Number,
+                    eir::types::Type::Number,
                 ),
             ]));
         }
@@ -503,13 +479,13 @@ mod tests {
                         eir::ir::Case::new(
                             eir::ir::Variable::new("x"),
                             vec![eir::ir::Alternative::new(
-                                eir::types::Primitive::Number,
+                                eir::types::Type::Number,
                                 "y",
                                 eir::ir::Variable::new("y"),
                             )],
                             None,
                         ),
-                        eir::types::Primitive::Number,
+                        eir::types::Type::Number,
                     ),
                 ]));
             }
@@ -521,7 +497,7 @@ mod tests {
                 compile_module(&create_module_with_type_definitions(
                     vec![eir::ir::TypeDefinition::new(
                         "foo",
-                        eir::types::RecordBody::new(vec![eir::types::Primitive::Number.into()]),
+                        eir::types::RecordBody::new(vec![eir::types::Type::Number]),
                     )],
                     vec![eir::ir::Definition::new(
                         "f",
@@ -547,7 +523,7 @@ mod tests {
                 compile_module(&create_module_with_type_definitions(
                     vec![eir::ir::TypeDefinition::new(
                         "foo",
-                        eir::types::RecordBody::new(vec![eir::types::Primitive::Number.into()]),
+                        eir::types::RecordBody::new(vec![eir::types::Type::Number]),
                     )],
                     vec![eir::ir::Definition::new(
                         "f",
@@ -601,7 +577,7 @@ mod tests {
                     )],
                     vec![eir::ir::Definition::new(
                         "f",
-                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
+                        vec![eir::ir::Argument::new("x", eir::types::Type::Number)],
                         eir::ir::Record::new(record_type.clone(), vec![]),
                         record_type,
                     )],
@@ -615,15 +591,12 @@ mod tests {
                 compile_module(&create_module_with_type_definitions(
                     vec![eir::ir::TypeDefinition::new(
                         "foo",
-                        eir::types::RecordBody::new(vec![eir::types::Primitive::Number.into()]),
+                        eir::types::RecordBody::new(vec![eir::types::Type::Number]),
                     )],
                     vec![eir::ir::Definition::new(
                         "f",
-                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
-                        eir::ir::Record::new(
-                            record_type.clone(),
-                            vec![eir::ir::Primitive::Number(42.0).into()],
-                        ),
+                        vec![eir::ir::Argument::new("x", eir::types::Type::Number)],
+                        eir::ir::Record::new(record_type.clone(), vec![42.0.into()]),
                         record_type,
                     )],
                 ));
@@ -637,13 +610,13 @@ mod tests {
                     vec![eir::ir::TypeDefinition::new(
                         "foo",
                         eir::types::RecordBody::new(vec![
-                            eir::types::Primitive::Number.into(),
-                            eir::types::Primitive::Boolean.into(),
+                            eir::types::Type::Number,
+                            eir::types::Type::Boolean,
                         ]),
                     )],
                     vec![eir::ir::Definition::new(
                         "f",
-                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
+                        vec![eir::ir::Argument::new("x", eir::types::Type::Number)],
                         eir::ir::Record::new(record_type.clone(), vec![42.0.into(), true.into()]),
                         record_type,
                     )],
@@ -657,15 +630,12 @@ mod tests {
                 compile_module(&create_module_with_type_definitions(
                     vec![eir::ir::TypeDefinition::new(
                         "foo",
-                        eir::types::RecordBody::new(vec![eir::types::Primitive::Number.into()]),
+                        eir::types::RecordBody::new(vec![eir::types::Type::Number]),
                     )],
                     vec![eir::ir::Definition::new(
                         "f",
-                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
-                        eir::ir::Record::new(
-                            record_type.clone(),
-                            vec![eir::ir::Primitive::Number(42.0).into()],
-                        ),
+                        vec![eir::ir::Argument::new("x", eir::types::Type::Number)],
+                        eir::ir::Record::new(record_type.clone(), vec![42.0.into()]),
                         record_type,
                     )],
                 ));
@@ -682,13 +652,13 @@ mod tests {
                 compile_module(&create_module_with_type_definitions(
                     vec![eir::ir::TypeDefinition::new(
                         "foo",
-                        eir::types::RecordBody::new(vec![eir::types::Primitive::Number.into()]),
+                        eir::types::RecordBody::new(vec![eir::types::Type::Number]),
                     )],
                     vec![eir::ir::Definition::new(
                         "f",
                         vec![eir::ir::Argument::new("x", record_type.clone())],
                         eir::ir::RecordElement::new(record_type, 0, eir::ir::Variable::new("x")),
-                        eir::types::Primitive::Number,
+                        eir::types::Type::Number,
                     )],
                 ));
             }
@@ -701,15 +671,15 @@ mod tests {
                     vec![eir::ir::TypeDefinition::new(
                         "foo",
                         eir::types::RecordBody::new(vec![
-                            eir::types::Primitive::Boolean.into(),
-                            eir::types::Primitive::Number.into(),
+                            eir::types::Type::Boolean,
+                            eir::types::Type::Number,
                         ]),
                     )],
                     vec![eir::ir::Definition::new(
                         "f",
                         vec![eir::ir::Argument::new("x", record_type.clone())],
                         eir::ir::RecordElement::new(record_type, 1, eir::ir::Variable::new("x")),
-                        eir::types::Primitive::Number,
+                        eir::types::Type::Number,
                     )],
                 ));
             }
@@ -723,11 +693,8 @@ mod tests {
                 compile_module(&create_module_with_definitions(vec![
                     eir::ir::Definition::new(
                         "f",
-                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
-                        eir::ir::Variant::new(
-                            eir::types::Primitive::Number,
-                            eir::ir::Primitive::Number(42.0),
-                        ),
+                        vec![eir::ir::Argument::new("x", eir::types::Type::Number)],
+                        eir::ir::Variant::new(eir::types::Type::Number, 42.0),
                         eir::types::Type::Variant,
                     ),
                 ]));
@@ -761,17 +728,14 @@ mod tests {
                 compile_module(&create_module_with_type_definitions(
                     vec![eir::ir::TypeDefinition::new(
                         "foo",
-                        eir::types::RecordBody::new(vec![eir::types::Primitive::Number.into()]),
+                        eir::types::RecordBody::new(vec![eir::types::Type::Number]),
                     )],
                     vec![eir::ir::Definition::new(
                         "f",
                         vec![eir::ir::Argument::new("x", record_type.clone())],
                         eir::ir::Variant::new(
                             record_type.clone(),
-                            eir::ir::Record::new(
-                                record_type,
-                                vec![eir::ir::Primitive::Number(42.0).into()],
-                            ),
+                            eir::ir::Record::new(record_type, vec![42.0.into()]),
                         ),
                         eir::types::Type::Variant,
                     )],
@@ -784,7 +748,7 @@ mod tests {
                     vec![],
                     vec![eir::ir::Definition::new(
                         "f",
-                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
+                        vec![eir::ir::Argument::new("x", eir::types::Type::Number)],
                         eir::ir::Variant::new(
                             eir::types::Type::ByteString,
                             eir::ir::ByteString::new("foo"),
@@ -803,18 +767,15 @@ mod tests {
                 compile_module(&create_module_with_definitions(vec![
                     eir::ir::Definition::new(
                         "f",
-                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
+                        vec![eir::ir::Argument::new("x", eir::types::Type::Number)],
                         eir::ir::Variable::new("x"),
-                        eir::types::Primitive::Number,
+                        eir::types::Type::Number,
                     ),
                     eir::ir::Definition::new(
                         "g",
-                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
-                        eir::ir::FunctionApplication::new(
-                            eir::ir::Variable::new("f"),
-                            eir::ir::Primitive::Number(42.0),
-                        ),
-                        eir::types::Primitive::Number,
+                        vec![eir::ir::Argument::new("x", eir::types::Type::Number)],
+                        eir::ir::FunctionApplication::new(eir::ir::Variable::new("f"), 42.0),
+                        eir::types::Type::Number,
                     ),
                 ]));
             }
@@ -825,20 +786,20 @@ mod tests {
                     eir::ir::Definition::new(
                         "f",
                         vec![
-                            eir::ir::Argument::new("x", eir::types::Primitive::Number),
-                            eir::ir::Argument::new("y", eir::types::Primitive::Boolean),
+                            eir::ir::Argument::new("x", eir::types::Type::Number),
+                            eir::ir::Argument::new("y", eir::types::Type::Boolean),
                         ],
                         eir::ir::Variable::new("x"),
-                        eir::types::Primitive::Number,
+                        eir::types::Type::Number,
                     ),
                     eir::ir::Definition::new(
                         "g",
-                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
+                        vec![eir::ir::Argument::new("x", eir::types::Type::Number)],
                         eir::ir::FunctionApplication::new(
                             eir::ir::FunctionApplication::new(eir::ir::Variable::new("f"), 42.0),
                             true,
                         ),
-                        eir::types::Primitive::Number,
+                        eir::types::Type::Number,
                     ),
                 ]));
             }
@@ -849,16 +810,16 @@ mod tests {
                     eir::ir::Definition::new(
                         "f",
                         vec![
-                            eir::ir::Argument::new("x", eir::types::Primitive::Number),
-                            eir::ir::Argument::new("y", eir::types::Primitive::Boolean),
+                            eir::ir::Argument::new("x", eir::types::Type::Number),
+                            eir::ir::Argument::new("y", eir::types::Type::Boolean),
                             eir::ir::Argument::new("z", eir::types::Type::ByteString),
                         ],
                         eir::ir::Variable::new("x"),
-                        eir::types::Primitive::Number,
+                        eir::types::Type::Number,
                     ),
                     eir::ir::Definition::new(
                         "g",
-                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
+                        vec![eir::ir::Argument::new("x", eir::types::Type::Number)],
                         eir::ir::FunctionApplication::new(
                             eir::ir::FunctionApplication::new(
                                 eir::ir::FunctionApplication::new(
@@ -869,7 +830,7 @@ mod tests {
                             ),
                             eir::ir::ByteString::new("foo"),
                         ),
-                        eir::types::Primitive::Number,
+                        eir::types::Type::Number,
                     ),
                 ]));
             }
@@ -880,22 +841,19 @@ mod tests {
                     eir::ir::Definition::new(
                         "f",
                         vec![
-                            eir::ir::Argument::new("x", eir::types::Primitive::Number),
-                            eir::ir::Argument::new("y", eir::types::Primitive::Boolean),
+                            eir::ir::Argument::new("x", eir::types::Type::Number),
+                            eir::ir::Argument::new("y", eir::types::Type::Boolean),
                         ],
                         eir::ir::Variable::new("x"),
-                        eir::types::Primitive::Number,
+                        eir::types::Type::Number,
                     ),
                     eir::ir::Definition::new(
                         "g",
-                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
-                        eir::ir::FunctionApplication::new(
-                            eir::ir::Variable::new("f"),
-                            eir::ir::Primitive::Number(42.0),
-                        ),
+                        vec![eir::ir::Argument::new("x", eir::types::Type::Number)],
+                        eir::ir::FunctionApplication::new(eir::ir::Variable::new("f"), 42.0),
                         eir::types::Function::new(
-                            eir::types::Primitive::Boolean,
-                            eir::types::Primitive::Number,
+                            eir::types::Type::Boolean,
+                            eir::types::Type::Number,
                         ),
                     ),
                 ]));
@@ -907,25 +865,22 @@ mod tests {
                     eir::ir::Definition::new(
                         "f",
                         vec![
-                            eir::ir::Argument::new("x", eir::types::Primitive::Number),
-                            eir::ir::Argument::new("y", eir::types::Primitive::Boolean),
+                            eir::ir::Argument::new("x", eir::types::Type::Number),
+                            eir::ir::Argument::new("y", eir::types::Type::Boolean),
                             eir::ir::Argument::new("z", eir::types::Type::ByteString),
                         ],
                         eir::ir::Variable::new("x"),
-                        eir::types::Primitive::Number,
+                        eir::types::Type::Number,
                     ),
                     eir::ir::Definition::new(
                         "g",
-                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
-                        eir::ir::FunctionApplication::new(
-                            eir::ir::Variable::new("f"),
-                            eir::ir::Primitive::Number(42.0),
-                        ),
+                        vec![eir::ir::Argument::new("x", eir::types::Type::Number)],
+                        eir::ir::FunctionApplication::new(eir::ir::Variable::new("f"), 42.0),
                         eir::types::Function::new(
-                            eir::types::Primitive::Boolean,
+                            eir::types::Type::Boolean,
                             eir::types::Function::new(
                                 eir::types::Type::ByteString,
-                                eir::types::Primitive::Number,
+                                eir::types::Type::Number,
                             ),
                         ),
                     ),
@@ -938,23 +893,23 @@ mod tests {
                     eir::ir::Definition::new(
                         "f",
                         vec![
-                            eir::ir::Argument::new("x", eir::types::Primitive::Number),
-                            eir::ir::Argument::new("y", eir::types::Primitive::Boolean),
+                            eir::ir::Argument::new("x", eir::types::Type::Number),
+                            eir::ir::Argument::new("y", eir::types::Type::Boolean),
                             eir::ir::Argument::new("z", eir::types::Type::ByteString),
                         ],
                         eir::ir::Variable::new("x"),
-                        eir::types::Primitive::Number,
+                        eir::types::Type::Number,
                     ),
                     eir::ir::Definition::new(
                         "g",
-                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
+                        vec![eir::ir::Argument::new("x", eir::types::Type::Number)],
                         eir::ir::FunctionApplication::new(
                             eir::ir::FunctionApplication::new(eir::ir::Variable::new("f"), 42.0),
                             true,
                         ),
                         eir::types::Function::new(
                             eir::types::Type::ByteString,
-                            eir::types::Primitive::Number,
+                            eir::types::Type::Number,
                         ),
                     ),
                 ]));
@@ -965,36 +920,33 @@ mod tests {
                 compile_module(&create_module_with_definitions(vec![
                     eir::ir::Definition::new(
                         "f",
-                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
+                        vec![eir::ir::Argument::new("x", eir::types::Type::Number)],
                         eir::ir::LetRecursive::new(
                             vec![eir::ir::Definition::new(
                                 "g",
-                                vec![eir::ir::Argument::new("y", eir::types::Primitive::Number)],
+                                vec![eir::ir::Argument::new("y", eir::types::Type::Number)],
                                 eir::ir::ArithmeticOperation::new(
                                     eir::ir::ArithmeticOperator::Add,
                                     eir::ir::Variable::new("x"),
                                     eir::ir::Variable::new("y"),
                                 ),
-                                eir::types::Primitive::Number,
+                                eir::types::Type::Number,
                             )],
                             eir::ir::Variable::new("g"),
                         ),
                         eir::types::Function::new(
-                            eir::types::Primitive::Number,
-                            eir::types::Primitive::Number,
+                            eir::types::Type::Number,
+                            eir::types::Type::Number,
                         ),
                     ),
                     eir::ir::Definition::new(
                         "g",
-                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
+                        vec![eir::ir::Argument::new("x", eir::types::Type::Number)],
                         eir::ir::FunctionApplication::new(
-                            eir::ir::FunctionApplication::new(
-                                eir::ir::Variable::new("f"),
-                                eir::ir::Primitive::Number(111.0),
-                            ),
-                            eir::ir::Primitive::Number(222.0),
+                            eir::ir::FunctionApplication::new(eir::ir::Variable::new("f"), 111.0),
+                            222.0,
                         ),
-                        eir::types::Primitive::Number,
+                        eir::types::Type::Number,
                     ),
                 ]));
             }
@@ -1005,9 +957,9 @@ mod tests {
             compile_module(&create_module_with_definitions(vec![
                 eir::ir::Definition::new(
                     "f",
-                    vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
+                    vec![eir::ir::Argument::new("x", eir::types::Type::Number)],
                     eir::ir::If::new(true, 42.0, 42.0),
-                    eir::types::Primitive::Number,
+                    eir::types::Type::Number,
                 ),
             ]));
         }

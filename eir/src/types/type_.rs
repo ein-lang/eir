@@ -1,29 +1,19 @@
-use super::{function::Function, primitive::Primitive, record::Record};
+use super::{function::Function, record::Record};
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum Type {
+    Boolean,
     ByteString,
     Function(Function),
-    Primitive(Primitive),
+    Number,
     Record(Record),
     Variant,
 }
 
 impl Type {
-    pub fn is_primitive(&self) -> bool {
-        matches!(self, Self::Primitive(_))
-    }
-
     pub fn into_function(self) -> Option<Function> {
         match self {
             Self::Function(function) => Some(function),
-            _ => None,
-        }
-    }
-
-    pub fn into_primitive(self) -> Option<Primitive> {
-        match self {
-            Self::Primitive(primitive) => Some(primitive),
             _ => None,
         }
     }
@@ -39,12 +29,6 @@ impl Type {
 impl From<Function> for Type {
     fn from(function: Function) -> Self {
         Self::Function(function)
-    }
-}
-
-impl From<Primitive> for Type {
-    fn from(primitive: Primitive) -> Self {
-        Self::Primitive(primitive)
     }
 }
 

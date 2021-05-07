@@ -55,9 +55,10 @@ fn collect_from_expression(expression: &Expression) -> HashSet<Type> {
             .into_iter()
             .chain(collect_from_expression(variant.payload()))
             .collect(),
-        Expression::Primitive(_) | Expression::ByteString(_) | Expression::Variable(_) => {
-            Default::default()
-        }
+        Expression::Boolean(_)
+        | Expression::ByteString(_)
+        | Expression::Number(_)
+        | Expression::Variable(_) => Default::default(),
     }
 }
 
