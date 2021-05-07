@@ -502,7 +502,7 @@ mod tests {
                         vec![eir::ir::Argument::new("x", eir::types::Type::Variant)],
                         eir::ir::Case::new(
                             eir::ir::Variable::new("x"),
-                            vec![eir::ir::VariantAlternative::new(
+                            vec![eir::ir::Alternative::new(
                                 eir::types::Primitive::Number,
                                 "y",
                                 eir::ir::Variable::new("y"),
@@ -528,7 +528,7 @@ mod tests {
                         vec![eir::ir::Argument::new("x", eir::types::Type::Variant)],
                         eir::ir::Case::new(
                             eir::ir::Variable::new("x"),
-                            vec![eir::ir::VariantAlternative::new(
+                            vec![eir::ir::Alternative::new(
                                 record_type.clone(),
                                 "x",
                                 eir::ir::Variable::new("x"),
@@ -554,7 +554,7 @@ mod tests {
                         vec![eir::ir::Argument::new("x", eir::types::Type::Variant)],
                         eir::ir::Case::new(
                             eir::ir::Variable::new("x"),
-                            vec![eir::ir::VariantAlternative::new(
+                            vec![eir::ir::Alternative::new(
                                 record_type.clone(),
                                 "x",
                                 eir::ir::Variable::new("x"),
@@ -574,7 +574,7 @@ mod tests {
                         vec![eir::ir::Argument::new("x", eir::types::Type::Variant)],
                         eir::ir::Case::new(
                             eir::ir::Variable::new("x"),
-                            vec![eir::ir::VariantAlternative::new(
+                            vec![eir::ir::Alternative::new(
                                 eir::types::Type::ByteString,
                                 "y",
                                 eir::ir::Variable::new("y"),
