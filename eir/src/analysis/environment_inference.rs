@@ -159,18 +159,14 @@ fn infer_in_let_recursive(let_: &LetRecursive, variables: &HashMap<String, Type>
     let variables = variables
         .clone()
         .drain()
-        .chain(
-            let_.definitions()
-                .iter()
-                .map(|definition| (definition.name().into(), definition.type_().clone().into())),
-        )
+        .chain(vec![(
+            let_.definition().name().into(),
+            let_.definition().type_().clone().into(),
+        )])
         .collect();
 
     LetRecursive::new(
-        let_.definitions()
-            .iter()
-            .map(|definition| infer_in_definition(definition, &variables))
-            .collect(),
+        infer_in_definition(let_.definition(), &variables),
         infer_in_expression(let_.expression(), &variables),
     )
 }

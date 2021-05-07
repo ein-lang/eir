@@ -25,14 +25,10 @@ fn find_in_expression(expression: &Expression) -> HashSet<String> {
             .chain(find_in_expression(if_.then()))
             .chain(find_in_expression(if_.else_()))
             .collect(),
-        Expression::LetRecursive(let_) => find_in_expression(let_.expression())
+        Expression::LetRecursive(let_) => find_in_definition(let_.definition())
             .into_iter()
-            .chain(let_.definitions().iter().flat_map(find_in_definition))
-            .filter(|variable| {
-                let_.definitions()
-                    .iter()
-                    .all(|definition| definition.name() != variable)
-            })
+            .chain(find_in_expression(let_.expression()))
+            .filter(|variable| variable != let_.definition().name())
             .collect(),
         Expression::Let(let_) => find_in_expression(let_.bound_expression())
             .into_iter()
