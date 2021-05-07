@@ -54,6 +54,9 @@ pub fn compile(
                     .collect::<Result<Vec<_>, _>>()?,
             )?
         }
+        eir::ir::Expression::If(if_) => {
+            compile_if(module_builder, instruction_builder, if_, variables, types)?
+        }
         eir::ir::Expression::Let(let_) => {
             compile_let(module_builder, instruction_builder, let_, variables, types)?
         }
@@ -102,7 +105,7 @@ pub fn compile(
                 element.index(),
             )?
         }
-        eir::ir::Expression::String(string) => fmm::build::record(vec![
+        eir::ir::Expression::ByteString(string) => fmm::build::record(vec![
             fmm::build::bit_cast(
                 fmm::types::Pointer::new(fmm::types::Primitive::Integer8),
                 module_builder.define_anonymous_variable(
@@ -133,27 +136,38 @@ pub fn compile(
     })
 }
 
+fn compile_if(
+    module_builder: &fmm::build::ModuleBuilder,
+    instruction_builder: &fmm::build::InstructionBuilder,
+    if_: &eir::ir::If,
+    variables: &HashMap<String, fmm::build::TypedExpression>,
+    types: &HashMap<String, eir::types::RecordBody>,
+) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
+    let compile = |instruction_builder: &fmm::build::InstructionBuilder, expression| {
+        compile(
+            module_builder,
+            instruction_builder,
+            expression,
+            variables,
+            types,
+        )
+    };
+
+    instruction_builder.if_(
+        compile(instruction_builder, if_.condition())?,
+        |instruction_builder| {
+            Ok(instruction_builder.branch(compile(&instruction_builder, if_.then())?))
+        },
+        |instruction_builder| {
+            Ok(instruction_builder.branch(compile(&instruction_builder, if_.else_())?))
+        },
+    )
+}
+
 fn compile_case(
     module_builder: &fmm::build::ModuleBuilder,
     instruction_builder: &fmm::build::InstructionBuilder,
     case: &eir::ir::Case,
-    variables: &HashMap<String, fmm::build::TypedExpression>,
-    types: &HashMap<String, eir::types::RecordBody>,
-) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
-    Ok(match case {
-        eir::ir::Case::Primitive(case) => {
-            compile_primitive_case(module_builder, instruction_builder, case, variables, types)?
-        }
-        eir::ir::Case::Variant(case) => {
-            compile_variant_case(module_builder, instruction_builder, case, variables, types)?
-        }
-    })
-}
-
-fn compile_variant_case(
-    module_builder: &fmm::build::ModuleBuilder,
-    instruction_builder: &fmm::build::InstructionBuilder,
-    case: &eir::ir::VariantCase,
     variables: &HashMap<String, fmm::build::TypedExpression>,
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
@@ -165,7 +179,7 @@ fn compile_variant_case(
         types,
     )?;
 
-    Ok(compile_variant_alternatives(
+    Ok(compile_alternatives(
         module_builder,
         instruction_builder,
         argument,
@@ -177,11 +191,11 @@ fn compile_variant_case(
     .unwrap())
 }
 
-fn compile_variant_alternatives(
+fn compile_alternatives(
     module_builder: &fmm::build::ModuleBuilder,
     instruction_builder: &fmm::build::InstructionBuilder,
     argument: fmm::build::TypedExpression,
-    alternatives: &[eir::ir::VariantAlternative],
+    alternatives: &[eir::ir::Alternative],
     default_alternative: Option<&eir::ir::Expression>,
     variables: &HashMap<String, fmm::build::TypedExpression>,
     types: &HashMap<String, eir::types::RecordBody>,
@@ -233,7 +247,7 @@ fn compile_variant_alternatives(
             },
             |instruction_builder| {
                 Ok(
-                    if let Some(expression) = compile_variant_alternatives(
+                    if let Some(expression) = compile_alternatives(
                         module_builder,
                         &instruction_builder,
                         argument.clone(),
@@ -265,7 +279,7 @@ fn compile_boxed_payload(
         builder,
         types::compile_variant_payload(),
         // Strings have two words.
-        if variant_type == &eir::types::Type::String {
+        if variant_type == &eir::types::Type::ByteString {
             let pointer = builder.allocate_heap(payload.type_().clone());
 
             builder.store(payload.clone(), pointer.clone());
@@ -283,7 +297,7 @@ fn compile_unboxed_payload(
     variant_type: &eir::types::Type,
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
-    Ok(if variant_type == &eir::types::Type::String {
+    Ok(if variant_type == &eir::types::Type::ByteString {
         builder.load(fmm::build::bit_cast(
             fmm::types::Pointer::new(types::compile(variant_type, types)),
             payload.clone(),
@@ -316,84 +330,6 @@ fn compile_union_bit_cast(
             ),
             1,
         )?
-    })
-}
-
-fn compile_primitive_case(
-    module_builder: &fmm::build::ModuleBuilder,
-    instruction_builder: &fmm::build::InstructionBuilder,
-    case: &eir::ir::PrimitiveCase,
-    variables: &HashMap<String, fmm::build::TypedExpression>,
-    types: &HashMap<String, eir::types::RecordBody>,
-) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
-    let argument = compile(
-        module_builder,
-        instruction_builder,
-        case.argument(),
-        variables,
-        types,
-    )?;
-
-    Ok(compile_primitive_alternatives(
-        module_builder,
-        instruction_builder,
-        argument,
-        case.alternatives(),
-        case.default_alternative(),
-        variables,
-        types,
-    )?
-    .unwrap())
-}
-
-fn compile_primitive_alternatives(
-    module_builder: &fmm::build::ModuleBuilder,
-    instruction_builder: &fmm::build::InstructionBuilder,
-    argument: fmm::build::TypedExpression,
-    alternatives: &[eir::ir::PrimitiveAlternative],
-    default_alternative: Option<&eir::ir::Expression>,
-    variables: &HashMap<String, fmm::build::TypedExpression>,
-    types: &HashMap<String, eir::types::RecordBody>,
-) -> Result<Option<fmm::build::TypedExpression>, fmm::build::BuildError> {
-    let compile = |expression| {
-        compile(
-            module_builder,
-            instruction_builder,
-            expression,
-            variables,
-            types,
-        )
-    };
-
-    Ok(match alternatives {
-        [] => default_alternative.map(compile).transpose()?,
-        [alternative, ..] => Some(instruction_builder.if_(
-            fmm::build::comparison_operation(
-                fmm::ir::ComparisonOperator::Equal,
-                argument.clone(),
-                compile_primitive(alternative.primitive()),
-            )?,
-            |instruction_builder| {
-                Ok(instruction_builder.branch(compile(alternative.expression())?))
-            },
-            |instruction_builder| {
-                Ok(
-                    if let Some(expression) = compile_primitive_alternatives(
-                        module_builder,
-                        &instruction_builder,
-                        argument.clone(),
-                        &alternatives[1..],
-                        default_alternative,
-                        variables,
-                        types,
-                    )? {
-                        instruction_builder.branch(expression)
-                    } else {
-                        instruction_builder.unreachable()
-                    },
-                )
-            },
-        )?),
     })
 }
 

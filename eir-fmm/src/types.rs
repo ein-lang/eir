@@ -16,7 +16,7 @@ pub fn compile(
         }
         eir::types::Type::Primitive(primitive) => compile_primitive(primitive),
         eir::types::Type::Record(record) => compile_record(record, types),
-        eir::types::Type::String => compile_string().into(),
+        eir::types::Type::ByteString => compile_string().into(),
         eir::types::Type::Variant => compile_variant().into(),
     }
 }
