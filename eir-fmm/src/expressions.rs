@@ -380,7 +380,6 @@ fn compile_let_recursive(
             let_.definition()
                 .environment()
                 .iter()
-                .filter(|free_variable| free_variable.name() != let_.definition().name())
                 .map(|free_variable| variables[free_variable.name()].clone())
                 .collect(),
         ),
