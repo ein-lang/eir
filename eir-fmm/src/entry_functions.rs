@@ -290,7 +290,7 @@ fn compile_closure_pointer(
         ),
         fmm::build::bit_cast(
             fmm::types::Primitive::PointerInteger,
-            instruction_builder.record_address(closure_pointer.clone(), 2)?,
+            instruction_builder.record_address(closure_pointer, 2)?,
         ),
     )?;
 
