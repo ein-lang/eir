@@ -426,6 +426,41 @@ mod tests {
         }
 
         #[test]
+        fn compile_nested_let_recursive() {
+            compile_module(&create_module_with_definitions(vec![
+                eir::ir::Definition::new(
+                    "f",
+                    vec![eir::ir::Argument::new("x", eir::types::Type::Number)],
+                    eir::ir::LetRecursive::new(
+                        eir::ir::Definition::new(
+                            "g",
+                            vec![eir::ir::Argument::new("y", eir::types::Type::Number)],
+                            eir::ir::ArithmeticOperation::new(
+                                eir::ir::ArithmeticOperator::Add,
+                                eir::ir::Variable::new("x"),
+                                eir::ir::Variable::new("y"),
+                            ),
+                            eir::types::Type::Number,
+                        ),
+                        eir::ir::LetRecursive::new(
+                            eir::ir::Definition::new(
+                                "h",
+                                vec![eir::ir::Argument::new("z", eir::types::Type::Number)],
+                                eir::ir::FunctionApplication::new(
+                                    eir::ir::Variable::new("g"),
+                                    eir::ir::Variable::new("z"),
+                                ),
+                                eir::types::Type::Number,
+                            ),
+                            eir::ir::FunctionApplication::new(eir::ir::Variable::new("h"), 42.0),
+                        ),
+                    ),
+                    eir::types::Type::Number,
+                ),
+            ]));
+        }
+
+        #[test]
         fn compile_let_recursive_with_curried_function() {
             compile_module(&create_module_with_definitions(vec![
                 eir::ir::Definition::new(

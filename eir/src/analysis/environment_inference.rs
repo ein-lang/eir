@@ -182,7 +182,17 @@ fn infer_in_let(let_: &Let, variables: &HashMap<String, Type>) -> Let {
 fn infer_in_let_recursive(let_: &LetRecursive, variables: &HashMap<String, Type>) -> LetRecursive {
     LetRecursive::new(
         infer_in_local_definition(let_.definition(), &variables),
-        infer_in_expression(let_.expression(), &variables),
+        infer_in_expression(
+            let_.expression(),
+            &variables
+                .clone()
+                .drain()
+                .chain(vec![(
+                    let_.definition().name().into(),
+                    let_.definition().type_().clone().into(),
+                )])
+                .collect(),
+        ),
     )
 }
 
@@ -218,6 +228,7 @@ fn infer_in_variant(variant: &Variant, variables: &HashMap<String, Type>) -> Var
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::types;
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -314,6 +325,48 @@ mod tests {
                 FunctionApplication::new(Variable::new("f"), Variable::new("x")),
                 Type::Number
             )
+        );
+    }
+
+    #[test]
+    fn infer_environment_for_nested_function_definitions() {
+        assert_eq!(
+            infer_in_let_recursive(
+                &LetRecursive::new(
+                    Definition::new(
+                        "f",
+                        vec![Argument::new("x", Type::Number)],
+                        42.0,
+                        Type::Number
+                    ),
+                    LetRecursive::new(
+                        Definition::new(
+                            "g",
+                            vec![Argument::new("x", Type::Number)],
+                            FunctionApplication::new(Variable::new("f"), Variable::new("x")),
+                            Type::Number
+                        ),
+                        42.0,
+                    )
+                ),
+                &Default::default(),
+            )
+            .expression(),
+            &LetRecursive::new(
+                Definition::with_options(
+                    "g",
+                    vec![Argument::new(
+                        "f",
+                        types::Function::new(Type::Number, Type::Number)
+                    )],
+                    vec![Argument::new("x", Type::Number)],
+                    FunctionApplication::new(Variable::new("f"), Variable::new("x")),
+                    Type::Number,
+                    false
+                ),
+                42.0,
+            )
+            .into()
         );
     }
 }
