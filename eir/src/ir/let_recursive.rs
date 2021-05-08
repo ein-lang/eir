@@ -3,20 +3,20 @@ use std::sync::Arc;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct LetRecursive {
-    definitions: Vec<Definition>,
+    definition: Arc<Definition>,
     expression: Arc<Expression>,
 }
 
 impl LetRecursive {
-    pub fn new(definitions: Vec<Definition>, expression: impl Into<Expression>) -> Self {
+    pub fn new(definition: Definition, expression: impl Into<Expression>) -> Self {
         Self {
-            definitions,
+            definition: definition.into(),
             expression: Arc::new(expression.into()),
         }
     }
 
-    pub fn definitions(&self) -> &[Definition] {
-        &self.definitions
+    pub fn definition(&self) -> &Definition {
+        &self.definition
     }
 
     pub fn expression(&self) -> &Expression {

@@ -39,10 +39,8 @@ fn collect_from_expression(expression: &Expression) -> HashSet<Type> {
             .drain()
             .chain(collect_from_expression(let_.expression()))
             .collect(),
-        Expression::LetRecursive(let_) => let_
-            .definitions()
-            .iter()
-            .flat_map(collect_from_definition)
+        Expression::LetRecursive(let_) => collect_from_definition(let_.definition())
+            .into_iter()
             .chain(collect_from_expression(let_.expression()))
             .collect(),
         Expression::Record(record) => record

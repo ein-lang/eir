@@ -11,12 +11,33 @@ pub fn infer_environment(module: &Module) -> Module {
         module
             .definitions()
             .iter()
-            .map(|definition| infer_in_definition(definition, &Default::default()))
+            .map(|definition| infer_in_global_definition(definition))
             .collect(),
     )
 }
 
-fn infer_in_definition(definition: &Definition, variables: &HashMap<String, Type>) -> Definition {
+fn infer_in_global_definition(definition: &Definition) -> Definition {
+    Definition::with_options(
+        definition.name(),
+        vec![],
+        definition.arguments().to_vec(),
+        infer_in_expression(
+            definition.body(),
+            &definition
+                .arguments()
+                .iter()
+                .map(|argument| (argument.name().into(), argument.type_().clone()))
+                .collect(),
+        ),
+        definition.result_type().clone(),
+        definition.is_thunk(),
+    )
+}
+
+fn infer_in_local_definition(
+    definition: &Definition,
+    variables: &HashMap<String, Type>,
+) -> Definition {
     Definition::with_options(
         definition.name(),
         find_free_variables(definition.body())
@@ -28,12 +49,15 @@ fn infer_in_definition(definition: &Definition, variables: &HashMap<String, Type
             })
             .collect(),
         definition.arguments().to_vec(),
-        // Do not include this function itself in variables as it can be global.
         infer_in_expression(
             definition.body(),
             &variables
                 .clone()
                 .drain()
+                .chain(vec![(
+                    definition.name().into(),
+                    definition.type_().clone().into(),
+                )])
                 .chain(
                     definition
                         .arguments()
@@ -156,21 +180,8 @@ fn infer_in_let(let_: &Let, variables: &HashMap<String, Type>) -> Let {
 }
 
 fn infer_in_let_recursive(let_: &LetRecursive, variables: &HashMap<String, Type>) -> LetRecursive {
-    let variables = variables
-        .clone()
-        .drain()
-        .chain(
-            let_.definitions()
-                .iter()
-                .map(|definition| (definition.name().into(), definition.type_().clone().into())),
-        )
-        .collect();
-
     LetRecursive::new(
-        let_.definitions()
-            .iter()
-            .map(|definition| infer_in_definition(definition, &variables))
-            .collect(),
+        infer_in_local_definition(let_.definition(), &variables),
         infer_in_expression(let_.expression(), &variables),
     )
 }
@@ -207,11 +218,12 @@ fn infer_in_variant(variant: &Variant, variables: &HashMap<String, Type>) -> Var
 #[cfg(test)]
 mod tests {
     use super::*;
+    use pretty_assertions::assert_eq;
 
     #[test]
     fn infer_empty_environment() {
         assert_eq!(
-            infer_in_definition(
+            infer_in_local_definition(
                 &Definition::new(
                     "f",
                     vec![Argument::new("x", Type::Number)],
@@ -233,7 +245,7 @@ mod tests {
     #[test]
     fn infer_environment() {
         assert_eq!(
-            infer_in_definition(
+            infer_in_local_definition(
                 &Definition::new(
                     "f",
                     vec![Argument::new("x", Type::Number)],
@@ -257,8 +269,8 @@ mod tests {
         let variables = vec![("y".into(), Type::Number)].drain(..).collect();
 
         assert_eq!(
-            infer_in_definition(
-                &infer_in_definition(
+            infer_in_local_definition(
+                &infer_in_local_definition(
                     &Definition::new(
                         "f",
                         vec![Argument::new("x", Type::Number)],
@@ -274,6 +286,32 @@ mod tests {
                 vec![Argument::new("y", Type::Number)],
                 vec![Argument::new("x", Type::Number)],
                 Variable::new("y"),
+                Type::Number
+            )
+        );
+    }
+
+    #[test]
+    fn infer_environment_for_recursive_definition() {
+        assert_eq!(
+            infer_in_let_recursive(
+                &LetRecursive::new(
+                    Definition::new(
+                        "f",
+                        vec![Argument::new("x", Type::Number)],
+                        FunctionApplication::new(Variable::new("f"), Variable::new("x")),
+                        Type::Number
+                    ),
+                    Expression::Number(42.0)
+                ),
+                &Default::default(),
+            )
+            .definition(),
+            &Definition::with_environment(
+                "f",
+                vec![],
+                vec![Argument::new("x", Type::Number)],
+                FunctionApplication::new(Variable::new("f"), Variable::new("x")),
                 Type::Number
             )
         );

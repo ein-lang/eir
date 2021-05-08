@@ -124,18 +124,18 @@ fn check_expression(
 
             then
         }
-        Expression::LetRecursive(let_recursive) => {
-            let mut variables = variables.clone();
+        Expression::LetRecursive(let_) => {
+            let variables = variables
+                .clone()
+                .into_iter()
+                .chain(vec![(
+                    let_.definition().name(),
+                    let_.definition().type_().clone().into(),
+                )])
+                .collect();
 
-            for definition in let_recursive.definitions() {
-                variables.insert(definition.name(), definition.type_().clone().into());
-            }
-
-            for definition in let_recursive.definitions() {
-                check_definition(definition, &variables, &types)?;
-            }
-
-            check_expression(let_recursive.expression(), &variables)?
+            check_definition(let_.definition(), &variables, &types)?;
+            check_expression(let_.expression(), &variables)?
         }
         Expression::Let(let_) => {
             check_equality(

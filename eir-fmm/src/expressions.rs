@@ -371,43 +371,40 @@ fn compile_let_recursive(
     variables: &HashMap<String, fmm::build::TypedExpression>,
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
-    let mut variables = variables.clone();
-    let mut closure_pointers = HashMap::new();
+    let closure_pointer =
+        instruction_builder.allocate_heap(types::compile_sized_closure(let_.definition(), types));
 
-    for definition in let_.definitions() {
-        let closure_pointer =
-            instruction_builder.allocate_heap(types::compile_sized_closure(definition, types));
-
-        variables.insert(
-            definition.name().into(),
-            fmm::build::bit_cast(
-                fmm::types::Pointer::new(types::compile_unsized_closure(definition.type_(), types)),
-                closure_pointer.clone(),
-            )
-            .into(),
-        );
-        closure_pointers.insert(definition.name(), closure_pointer);
-    }
-
-    for definition in let_.definitions() {
-        instruction_builder.store(
-            closures::compile_closure_content(
-                entry_functions::compile(module_builder, definition, &variables, types)?,
-                definition
-                    .environment()
-                    .iter()
-                    .map(|free_variable| variables[free_variable.name()].clone())
-                    .collect(),
-            ),
-            closure_pointers[definition.name()].clone(),
-        );
-    }
+    instruction_builder.store(
+        closures::compile_closure_content(
+            entry_functions::compile(module_builder, let_.definition(), &variables, types)?,
+            let_.definition()
+                .environment()
+                .iter()
+                .map(|free_variable| variables[free_variable.name()].clone())
+                .collect(),
+        ),
+        closure_pointer.clone(),
+    );
 
     compile(
         module_builder,
         instruction_builder,
         let_.expression(),
-        &variables,
+        &variables
+            .clone()
+            .into_iter()
+            .chain(vec![(
+                let_.definition().name().into(),
+                fmm::build::bit_cast(
+                    fmm::types::Pointer::new(types::compile_unsized_closure(
+                        let_.definition().type_(),
+                        types,
+                    )),
+                    closure_pointer,
+                )
+                .into(),
+            )])
+            .collect(),
         &types,
     )
 }
