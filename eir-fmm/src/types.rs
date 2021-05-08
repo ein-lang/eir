@@ -1,4 +1,3 @@
-use crate::utilities;
 use std::collections::HashMap;
 
 pub const FUNCTION_ARGUMENT_OFFSET: usize = 1;
@@ -136,7 +135,8 @@ pub fn compile_environment(
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> fmm::types::Record {
     fmm::types::Record::new(
-        utilities::get_environment_from_definition(definition)
+        definition
+            .environment()
             .iter()
             .map(|argument| compile(argument.type_(), types))
             .collect(),

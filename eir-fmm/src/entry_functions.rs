@@ -1,4 +1,4 @@
-use crate::{expressions, types, utilities};
+use crate::{expressions, types};
 use std::collections::HashMap;
 
 const ENVIRONMENT_NAME: &str = "_env";
@@ -69,7 +69,8 @@ fn compile_body(
             .clone()
             .into_iter()
             .chain(
-                utilities::get_environment_from_definition(definition)
+                definition
+                    .environment()
                     .iter()
                     .enumerate()
                     .map(|(index, free_variable)| {

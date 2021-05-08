@@ -1,4 +1,4 @@
-use crate::{closures, entry_functions, function_applications, types, utilities};
+use crate::{closures, entry_functions, function_applications, types};
 use std::collections::HashMap;
 
 pub fn compile_arity(arity: usize) -> fmm::ir::Primitive {
@@ -377,7 +377,8 @@ fn compile_let_recursive(
     instruction_builder.store(
         closures::compile_closure_content(
             entry_functions::compile(module_builder, let_.definition(), &variables, types)?,
-            utilities::get_environment_from_definition(let_.definition())
+            let_.definition()
+                .environment()
                 .iter()
                 .filter(|free_variable| free_variable.name() != let_.definition().name())
                 .map(|free_variable| variables[free_variable.name()].clone())

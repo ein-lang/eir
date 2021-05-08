@@ -9,7 +9,6 @@ mod foreign_definitions;
 mod function_applications;
 mod type_information;
 mod types;
-mod utilities;
 
 use declarations::compile_declaration;
 use definitions::compile_definition;
