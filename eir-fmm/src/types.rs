@@ -1,3 +1,4 @@
+use crate::utilities;
 use std::collections::HashMap;
 
 pub const FUNCTION_ARGUMENT_OFFSET: usize = 1;
@@ -99,12 +100,11 @@ pub fn compile_closure_payload(
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> fmm::types::Type {
     if definition.is_thunk() {
-        fmm::types::Type::Union(fmm::types::Union::new(
-            vec![compile_environment(definition, types).into()]
-                .into_iter()
-                .chain(vec![compile(definition.result_type(), types)])
-                .collect(),
-        ))
+        fmm::types::Union::new(vec![
+            compile_environment(definition, types).into(),
+            compile(definition.result_type(), types),
+        ])
+        .into()
     } else {
         compile_environment(definition, types).into()
     }
@@ -135,18 +135,12 @@ pub fn compile_environment(
     definition: &eir::ir::Definition,
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> fmm::types::Record {
-    compile_raw_environment(
-        definition
-            .environment()
+    fmm::types::Record::new(
+        utilities::get_environment_from_definition(definition)
             .iter()
-            .map(|argument| compile(argument.type_(), types)),
+            .map(|argument| compile(argument.type_(), types))
+            .collect(),
     )
-}
-
-pub fn compile_raw_environment(
-    types: impl IntoIterator<Item = fmm::types::Type>,
-) -> fmm::types::Record {
-    fmm::types::Record::new(types.into_iter().collect())
 }
 
 pub fn compile_unsized_environment() -> fmm::types::Record {

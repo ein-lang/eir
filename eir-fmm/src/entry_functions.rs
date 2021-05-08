@@ -1,4 +1,4 @@
-use crate::{expressions, types};
+use crate::{expressions, types, utilities};
 use std::collections::HashMap;
 
 const ENVIRONMENT_NAME: &str = "_env";
@@ -69,8 +69,7 @@ fn compile_body(
             .clone()
             .into_iter()
             .chain(
-                definition
-                    .environment()
+                utilities::get_environment_from_definition(definition)
                     .iter()
                     .enumerate()
                     .map(|(index, free_variable)| {
@@ -89,6 +88,10 @@ fn compile_body(
                     })
                     .collect::<Result<Vec<_>, _>>()?,
             )
+            .chain(vec![(
+                definition.name().into(),
+                compile_closure_pointer(instruction_builder, definition, types)?,
+            )])
             .chain(definition.arguments().iter().map(|argument| {
                 (
                     argument.name().into(),
@@ -259,18 +262,49 @@ fn compile_entry_function_pointer_pointer(
     definition: &eir::ir::Definition,
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
-    // TODO Calculate entry function pointer properly.
-    // The offset should be calculated by allocating a record of
-    // { pointer, { pointer, arity, environment } }.
-    instruction_builder.pointer_address(
-        fmm::build::bit_cast(
-            fmm::types::Pointer::new(types::compile_entry_function_from_definition(
-                definition, types,
-            )),
-            compile_environment_pointer(),
-        ),
-        fmm::ir::Primitive::PointerInteger(-2),
+    Ok(fmm::build::bit_cast(
+        fmm::types::Pointer::new(types::compile_entry_function_from_definition(
+            definition, types,
+        )),
+        instruction_builder.record_address(
+            compile_closure_pointer(instruction_builder, definition, types)?,
+            0,
+        )?,
     )
+    .into())
+}
+
+fn compile_closure_pointer(
+    instruction_builder: &fmm::build::InstructionBuilder,
+    definition: &eir::ir::Definition,
+    types: &HashMap<String, eir::types::RecordBody>,
+) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
+    let closure_type = types::compile_unsized_closure(definition.type_(), types);
+
+    let closure_pointer = instruction_builder.allocate_stack(closure_type.clone());
+    let offset = fmm::build::arithmetic_operation(
+        fmm::ir::ArithmeticOperator::Subtract,
+        fmm::build::bit_cast(
+            fmm::types::Primitive::PointerInteger,
+            closure_pointer.clone(),
+        ),
+        fmm::build::bit_cast(
+            fmm::types::Primitive::PointerInteger,
+            instruction_builder.record_address(closure_pointer.clone(), 2)?,
+        ),
+    )?;
+
+    Ok(fmm::build::bit_cast(
+        fmm::types::Pointer::new(closure_type),
+        instruction_builder.pointer_address(
+            fmm::build::bit_cast(
+                fmm::types::Pointer::new(fmm::types::Primitive::Integer8),
+                compile_environment_pointer(),
+            ),
+            offset,
+        )?,
+    )
+    .into())
 }
 
 fn compile_arguments(

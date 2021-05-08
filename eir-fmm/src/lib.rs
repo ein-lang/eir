@@ -9,6 +9,7 @@ mod foreign_definitions;
 mod function_applications;
 mod type_information;
 mod types;
+mod utilities;
 
 use declarations::compile_declaration;
 use definitions::compile_definition;
@@ -408,7 +409,7 @@ mod tests {
                     "f",
                     vec![eir::ir::Argument::new("x", eir::types::Type::Number)],
                     eir::ir::LetRecursive::new(
-                        vec![eir::ir::Definition::new(
+                        eir::ir::Definition::new(
                             "g",
                             vec![eir::ir::Argument::new("y", eir::types::Type::Number)],
                             eir::ir::ArithmeticOperation::new(
@@ -417,7 +418,7 @@ mod tests {
                                 eir::ir::Variable::new("y"),
                             ),
                             eir::types::Type::Number,
-                        )],
+                        ),
                         eir::ir::FunctionApplication::new(eir::ir::Variable::new("g"), 42.0),
                     ),
                     eir::types::Type::Number,
@@ -432,11 +433,11 @@ mod tests {
                     "f",
                     vec![eir::ir::Argument::new("x", eir::types::Type::Number)],
                     eir::ir::LetRecursive::new(
-                        vec![eir::ir::Definition::new(
+                        eir::ir::Definition::new(
                             "g",
                             vec![eir::ir::Argument::new("y", eir::types::Type::Number)],
                             eir::ir::LetRecursive::new(
-                                vec![eir::ir::Definition::new(
+                                eir::ir::Definition::new(
                                     "h",
                                     vec![eir::ir::Argument::new("z", eir::types::Type::Number)],
                                     eir::ir::ArithmeticOperation::new(
@@ -449,14 +450,14 @@ mod tests {
                                         eir::ir::Variable::new("z"),
                                     ),
                                     eir::types::Type::Number,
-                                )],
+                                ),
                                 eir::ir::Variable::new("h"),
                             ),
                             eir::types::Function::new(
                                 eir::types::Type::Number,
                                 eir::types::Type::Number,
                             ),
-                        )],
+                        ),
                         eir::ir::FunctionApplication::new(
                             eir::ir::FunctionApplication::new(eir::ir::Variable::new("g"), 42.0),
                             42.0,
@@ -922,7 +923,7 @@ mod tests {
                         "f",
                         vec![eir::ir::Argument::new("x", eir::types::Type::Number)],
                         eir::ir::LetRecursive::new(
-                            vec![eir::ir::Definition::new(
+                            eir::ir::Definition::new(
                                 "g",
                                 vec![eir::ir::Argument::new("y", eir::types::Type::Number)],
                                 eir::ir::ArithmeticOperation::new(
@@ -931,7 +932,7 @@ mod tests {
                                     eir::ir::Variable::new("y"),
                                 ),
                                 eir::types::Type::Number,
-                            )],
+                            ),
                             eir::ir::Variable::new("g"),
                         ),
                         eir::types::Function::new(
