@@ -99,11 +99,3 @@ fn convert_expression(expression: &Expression) -> Expression {
         }
     }
 }
-
-fn clone_expression(expression: &Expression) -> Expression {
-    todo!()
-}
-
-fn drop_expression(expression: &Expression) -> Expression {
-    todo!()
-}
