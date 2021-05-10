@@ -27,19 +27,83 @@ fn convert_definition(definition: &Definition) -> Definition {
 
 fn convert_expression(expression: &Expression) -> Expression {
     match expression {
-        Expression::ArithmeticOperation(_) => todo!(),
-        Expression::Boolean(_) => todo!(),
-        Expression::ByteString(_) => todo!(),
-        Expression::Case(_) => todo!(),
-        Expression::ComparisonOperation(_) => todo!(),
-        Expression::FunctionApplication(_) => todo!(),
-        Expression::If(_) => todo!(),
-        Expression::Let(_) => todo!(),
-        Expression::LetRecursive(_) => todo!(),
-        Expression::Number(_) => todo!(),
-        Expression::Record(_) => todo!(),
-        Expression::RecordElement(_) => todo!(),
-        Expression::Variable(_) => todo!(),
-        Expression::Variant(_) => todo!(),
+        Expression::ArithmeticOperation(operation) => ArithmeticOperation::new(
+            operation.operator(),
+            convert_expression(operation.lhs()),
+            convert_expression(operation.rhs()),
+        )
+        .into(),
+        Expression::Case(case) => Case::new(
+            convert_expression(case.argument()),
+            case.alternatives()
+                .iter()
+                .map(|alternative| {
+                    Alternative::new(
+                        alternative.type_().clone(),
+                        alternative.name(),
+                        convert_expression(alternative.expression()),
+                    )
+                })
+                .collect(),
+            case.default_alternative().map(convert_expression),
+        )
+        .into(),
+        Expression::ComparisonOperation(operation) => ComparisonOperation::new(
+            operation.operator(),
+            convert_expression(operation.lhs()),
+            convert_expression(operation.rhs()),
+        )
+        .into(),
+        Expression::FunctionApplication(application) => FunctionApplication::new(
+            convert_expression(application.function()),
+            convert_expression(application.argument()),
+        )
+        .into(),
+        Expression::If(if_) => If::new(
+            convert_expression(if_.condition()),
+            convert_expression(if_.then()),
+            convert_expression(if_.else_()),
+        )
+        .into(),
+        Expression::Let(let_) => Let::new(
+            let_.name(),
+            let_.type_().clone(),
+            convert_expression(let_.bound_expression()),
+            convert_expression(let_.expression()),
+        )
+        .into(),
+        Expression::LetRecursive(let_) => LetRecursive::new(
+            convert_definition(let_.definition()),
+            convert_expression(let_.expression()),
+        )
+        .into(),
+        Expression::Record(record) => Record::new(
+            record.type_().clone(),
+            record.elements().iter().map(convert_expression).collect(),
+        )
+        .into(),
+        Expression::RecordElement(element) => RecordElement::new(
+            element.type_().clone(),
+            element.index(),
+            convert_expression(element.record()),
+        )
+        .into(),
+        Expression::Variable(variable) => variable.clone().into(),
+        Expression::Variant(variant) => Variant::new(
+            variant.type_().clone(),
+            convert_expression(variant.payload()),
+        )
+        .into(),
+        Expression::Boolean(_) | Expression::ByteString(_) | Expression::Number(_) => {
+            expression.clone()
+        }
     }
+}
+
+fn clone_expression(expression: &Expression) -> Expression {
+    todo!()
+}
+
+fn drop_expression(expression: &Expression) -> Expression {
+    todo!()
 }
