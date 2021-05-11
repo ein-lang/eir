@@ -1,5 +1,5 @@
 use super::{
-    arithmetic_operation::ArithmeticOperation, case::Case, clone_variable::CloneVariable,
+    arithmetic_operation::ArithmeticOperation, case::Case, clone_variables::CloneVariables,
     comparison_operation::ComparisonOperation, drop_variables::DropVariables,
     function_application::FunctionApplication, if_::If, let_::Let, let_recursive::LetRecursive,
     record::Record, record_element::RecordElement, string::ByteString, variable::Variable,
@@ -12,7 +12,7 @@ pub enum Expression {
     Boolean(bool),
     ByteString(ByteString),
     Case(Case),
-    CloneVariable(CloneVariable),
+    CloneVariables(CloneVariables),
     ComparisonOperation(ComparisonOperation),
     DropVariables(DropVariables),
     FunctionApplication(FunctionApplication),
@@ -44,9 +44,9 @@ impl From<ComparisonOperation> for Expression {
     }
 }
 
-impl From<CloneVariable> for Expression {
-    fn from(clone: CloneVariable) -> Self {
-        Self::CloneVariable(clone)
+impl From<CloneVariables> for Expression {
+    fn from(clone: CloneVariables) -> Self {
+        Self::CloneVariables(clone)
     }
 }
 

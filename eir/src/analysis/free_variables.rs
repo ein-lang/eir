@@ -12,9 +12,7 @@ fn find_in_expression(expression: &Expression) -> HashSet<String> {
             .chain(find_in_expression(operation.rhs()))
             .collect(),
         Expression::Case(case) => find_in_case(case),
-        Expression::CloneVariable(clone) => {
-            vec![clone.variable().name().into()].into_iter().collect()
-        }
+        Expression::CloneVariables(clone) => find_in_expression(clone.expression()),
         Expression::ComparisonOperation(operation) => find_in_expression(operation.lhs())
             .into_iter()
             .chain(find_in_expression(operation.rhs()))

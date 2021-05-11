@@ -85,7 +85,13 @@ fn check_expression(
         }
         Expression::Boolean(_) => Type::Boolean,
         Expression::Case(case) => check_case(case, variables, types)?,
-        Expression::CloneVariable(clone) => check_variable(clone.variable(), variables)?,
+        Expression::CloneVariables(clone) => {
+            for variable in clone.variables() {
+                check_variable(&Variable::new(variable), variables)?;
+            }
+
+            check_expression(clone.expression(), variables)?
+        }
         Expression::ComparisonOperation(operation) => {
             check_equality(
                 &check_expression(operation.lhs(), variables)?,
