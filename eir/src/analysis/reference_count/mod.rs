@@ -250,16 +250,7 @@ fn convert_expression(
                     .cloned()
                     .chain(vec![let_.definition().name().into()])
                     .collect(),
-                &moved_variables
-                    .into_iter()
-                    .cloned()
-                    .chain(
-                        let_.definition()
-                            .environment()
-                            .iter()
-                            .map(|argument| argument.name().into()),
-                    )
-                    .collect(),
+                &moved_variables,
             )?;
 
             (
