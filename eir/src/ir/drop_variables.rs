@@ -3,12 +3,12 @@ use std::collections::HashSet;
 use std::sync::Arc;
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct DropVariable {
+pub struct DropVariables {
     variables: HashSet<String>,
     expression: Arc<Expression>,
 }
 
-impl DropVariable {
+impl DropVariables {
     pub fn new(variables: HashSet<String>, expression: impl Into<Expression>) -> Self {
         Self {
             variables,

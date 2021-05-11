@@ -19,7 +19,7 @@ fn find_in_expression(expression: &Expression) -> HashSet<String> {
             .into_iter()
             .chain(find_in_expression(operation.rhs()))
             .collect(),
-        Expression::DropVariable(drop) => find_in_expression(drop.expression()),
+        Expression::DropVariables(drop) => find_in_expression(drop.expression()),
         Expression::FunctionApplication(application) => find_in_expression(application.function())
             .into_iter()
             .chain(find_in_expression(application.argument()))

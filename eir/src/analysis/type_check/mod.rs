@@ -98,7 +98,7 @@ fn check_expression(
 
             Type::Boolean
         }
-        Expression::DropVariable(drop) => {
+        Expression::DropVariables(drop) => {
             for variable in drop.variables() {
                 check_variable(&Variable::new(variable), variables)?;
             }

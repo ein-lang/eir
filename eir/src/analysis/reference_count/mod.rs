@@ -329,7 +329,7 @@ fn convert_expression(
         Expression::Boolean(_) | Expression::ByteString(_) | Expression::Number(_) => {
             (expression.clone(), moved_variables.clone())
         }
-        Expression::CloneVariable(_) | Expression::DropVariable(_) => {
+        Expression::CloneVariable(_) | Expression::DropVariables(_) => {
             return Err(ReferenceCountError::ExpressionNotSupported(
                 expression.clone(),
             ));
@@ -341,7 +341,7 @@ fn drop_variables(expression: &Expression, dropped_variables: &HashSet<String>) 
     if dropped_variables.is_empty() {
         expression.clone()
     } else {
-        DropVariable::new(dropped_variables.clone(), expression.clone()).into()
+        DropVariables::new(dropped_variables.clone(), expression.clone()).into()
     }
 }
 
@@ -416,7 +416,7 @@ mod tests {
                     "x",
                     Type::Number,
                     42.0,
-                    DropVariable::new(vec!["x".into()].into_iter().collect(), 42.0)
+                    DropVariables::new(vec!["x".into()].into_iter().collect(), 42.0)
                 )
                 .into(),
             );
@@ -436,7 +436,7 @@ mod tests {
                     "x",
                     Type::Number,
                     CloneVariable::new(Variable::new("y")),
-                    DropVariable::new(vec!["x".into()].into_iter().collect(), Variable::new("y"))
+                    DropVariables::new(vec!["x".into()].into_iter().collect(), Variable::new("y"))
                 )
                 .into(),
             );
@@ -470,7 +470,7 @@ mod tests {
                     Definition::new(
                         "f",
                         vec![Argument::new("x", Type::Number)],
-                        DropVariable::new(
+                        DropVariables::new(
                             vec!["f".into(), "x".into()].into_iter().collect(),
                             42.0,
                         ),
@@ -508,7 +508,7 @@ mod tests {
                     Definition::new(
                         "f",
                         vec![Argument::new("x", Type::Number)],
-                        DropVariable::new(
+                        DropVariables::new(
                             vec!["f".into(), "x".into()].into_iter().collect(),
                             42.0,
                         ),
@@ -549,13 +549,13 @@ mod tests {
                     Definition::new(
                         "f",
                         vec![Argument::new("x", Type::Number)],
-                        DropVariable::new(
+                        DropVariables::new(
                             vec!["f".into(), "x".into()].into_iter().collect(),
                             42.0,
                         ),
                         Type::Number
                     ),
-                    DropVariable::new(
+                    DropVariables::new(
                             vec!["f".into()].into_iter().collect(),
                             42.0,
                         )
@@ -589,7 +589,7 @@ mod tests {
                         "f",
                         vec![Argument::new("y", Type::Number)],
                         vec![Argument::new("x", Type::Number)],
-                        DropVariable::new(
+                        DropVariables::new(
                             vec!["f".into(), "x".into(), "y".into()]
                                 .into_iter()
                                 .collect(),
@@ -621,7 +621,7 @@ mod tests {
                 Definition::new(
                     "f",
                     vec![Argument::new("x", Type::Number)],
-                    DropVariable::new(vec!["f".into(), "x".into()].into_iter().collect(), 42.0),
+                    DropVariables::new(vec!["f".into(), "x".into()].into_iter().collect(), 42.0),
                     Type::Number
                 ),
             );
