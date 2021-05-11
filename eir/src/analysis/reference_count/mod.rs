@@ -387,7 +387,38 @@ fn should_clone_variable(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::Type;
+    use crate::types::{self, Type};
+
+    #[test]
+    fn convert_record() {
+        assert_eq!(
+            convert_expression(
+                &Record::new(
+                    types::Record::new("a"),
+                    vec![Variable::new("x").into(), Variable::new("x").into()]
+                )
+                .into(),
+                &vec!["x".into()].into_iter().collect(),
+                &Default::default()
+            )
+            .unwrap(),
+            (
+                Record::new(
+                    types::Record::new("a"),
+                    vec![
+                        CloneVariables::new(
+                            vec!["x".into()].into_iter().collect(),
+                            Variable::new("x")
+                        )
+                        .into(),
+                        Variable::new("x").into()
+                    ]
+                )
+                .into(),
+                vec!["x".into()].into_iter().collect()
+            ),
+        );
+    }
 
     mod let_ {
         use super::*;
