@@ -75,7 +75,7 @@ fn convert_expression(
 
                     (Some(expression), moved_variables)
                 } else {
-                    (None, Default::default())
+                    (None, moved_variables.clone())
                 };
 
             let alternative_tuples = case
