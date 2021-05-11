@@ -85,7 +85,7 @@ fn convert_expression(
                     let (expression, moved_variables) = convert_expression(
                         alternative.expression(),
                         &owned_variables
-                            .into_iter()
+                            .iter()
                             .cloned()
                             .chain(vec![alternative.name().into()])
                             .collect(),
