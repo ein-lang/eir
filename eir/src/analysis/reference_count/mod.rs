@@ -163,6 +163,7 @@ fn convert_expression(
         Expression::FunctionApplication(application) => {
             let (argument, moved_variables) =
                 convert_expression(application.argument(), owned_variables, moved_variables)?;
+            // TODO Borrow functions.
             let (function, moved_variables) =
                 convert_expression(application.function(), owned_variables, &moved_variables)?;
 
