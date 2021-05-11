@@ -24,6 +24,7 @@ fn collect_from_expression(expression: &Expression) -> HashSet<Type> {
             .drain()
             .chain(collect_from_expression(operation.rhs()))
             .collect(),
+        Expression::DropVariable(drop) => collect_from_expression(drop.expression()),
         Expression::FunctionApplication(application) => {
             collect_from_expression(application.function())
                 .drain()
@@ -55,6 +56,7 @@ fn collect_from_expression(expression: &Expression) -> HashSet<Type> {
             .collect(),
         Expression::Boolean(_)
         | Expression::ByteString(_)
+        | Expression::CloneVariable(_)
         | Expression::Number(_)
         | Expression::Variable(_) => Default::default(),
     }

@@ -12,10 +12,14 @@ fn find_in_expression(expression: &Expression) -> HashSet<String> {
             .chain(find_in_expression(operation.rhs()))
             .collect(),
         Expression::Case(case) => find_in_case(case),
+        Expression::CloneVariable(clone) => {
+            vec![clone.variable().name().into()].into_iter().collect()
+        }
         Expression::ComparisonOperation(operation) => find_in_expression(operation.lhs())
             .into_iter()
             .chain(find_in_expression(operation.rhs()))
             .collect(),
+        Expression::DropVariable(drop) => find_in_expression(drop.expression()),
         Expression::FunctionApplication(application) => find_in_expression(application.function())
             .into_iter()
             .chain(find_in_expression(application.argument()))

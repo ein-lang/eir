@@ -80,6 +80,7 @@ fn infer_in_expression(expression: &Expression, variables: &HashMap<String, Type
         Expression::ComparisonOperation(operation) => {
             infer_in_comparison_operation(operation, variables).into()
         }
+        Expression::DropVariable(drop) => infer_in_drop_variable(drop, variables).into(),
         Expression::FunctionApplication(application) => {
             infer_in_function_application(application, variables).into()
         }
@@ -91,6 +92,7 @@ fn infer_in_expression(expression: &Expression, variables: &HashMap<String, Type
         Expression::Variant(variant) => infer_in_variant(variant, variables).into(),
         Expression::Boolean(_)
         | Expression::ByteString(_)
+        | Expression::CloneVariable(_)
         | Expression::Number(_)
         | Expression::Variable(_) => expression.clone(),
     }
@@ -150,6 +152,13 @@ fn infer_in_comparison_operation(
         operation.operator(),
         infer_in_expression(operation.lhs(), variables),
         infer_in_expression(operation.rhs(), variables),
+    )
+}
+
+fn infer_in_drop_variable(drop: &DropVariable, variables: &HashMap<String, Type>) -> DropVariable {
+    DropVariable::new(
+        drop.variable().clone(),
+        infer_in_expression(drop.expression(), variables),
     )
 }
 

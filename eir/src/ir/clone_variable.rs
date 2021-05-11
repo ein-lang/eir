@@ -1,13 +1,11 @@
-use super::expression::Expression;
-use crate::types::Type;
-use std::sync::Arc;
+use super::variable::Variable;
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct Clone {
+pub struct CloneVariable {
     variable: Variable,
 }
 
-impl Clone {
+impl CloneVariable {
     pub fn new(variable: Variable) -> Self {
         Self { variable }
     }
