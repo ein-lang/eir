@@ -738,5 +738,31 @@ mod tests {
                 ),
             );
         }
+
+        #[test]
+        fn convert_with_dropped_free_variable() {
+            assert_eq!(
+                convert_definition(&Definition::with_environment(
+                    "f",
+                    vec![Argument::new("y", Type::Number)],
+                    vec![Argument::new("x", Type::Number)],
+                    42.0,
+                    Type::Number
+                ))
+                .unwrap(),
+                Definition::with_environment(
+                    "f",
+                    vec![Argument::new("y", Type::Number)],
+                    vec![Argument::new("x", Type::Number)],
+                    DropVariables::new(
+                        vec!["f".into(), "x".into(), "y".into()]
+                            .into_iter()
+                            .collect(),
+                        42.0
+                    ),
+                    Type::Number
+                ),
+            );
+        }
     }
 }
