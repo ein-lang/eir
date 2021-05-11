@@ -572,6 +572,45 @@ mod tests {
                 .into(),
             );
         }
+
+        #[test]
+        fn convert_with_moved_variable_in_environment() {
+            assert_eq!(
+                convert_expression(
+                    &LetRecursive::new(
+                        Definition::with_environment(
+                            "f",
+                            vec![Argument::new("y", Type::Number)],
+                            vec![Argument::new("x", Type::Number)],
+                            42.0,
+                            Type::Number
+                        ),
+                        Variable::new("f")
+                    )
+                    .into(),
+                    &vec!["y".into()].into_iter().collect(),
+                    &Default::default()
+                )
+                .unwrap()
+                .0,
+                LetRecursive::new(
+                    Definition::with_environment(
+                        "f",
+                        vec![Argument::new("y", Type::Number)],
+                        vec![Argument::new("x", Type::Number)],
+                        DropVariable::new(
+                            vec!["f".into(), "x".into(), "y".into()]
+                                .into_iter()
+                                .collect(),
+                            42.0,
+                        ),
+                        Type::Number
+                    ),
+                    Variable::new("f")
+                )
+                .into(),
+            );
+        }
     }
 
     mod definitions {
