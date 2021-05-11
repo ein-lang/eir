@@ -1,23 +1,23 @@
 use super::expression::Expression;
-use super::variable::Variable;
+use std::collections::HashSet;
 use std::sync::Arc;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct DropVariable {
-    variable: Variable,
+    variables: HashSet<String>,
     expression: Arc<Expression>,
 }
 
 impl DropVariable {
-    pub fn new(variable: Variable, expression: impl Into<Expression>) -> Self {
+    pub fn new(variables: HashSet<String>, expression: impl Into<Expression>) -> Self {
         Self {
-            variable,
+            variables,
             expression: expression.into().into(),
         }
     }
 
-    pub fn variable(&self) -> &Variable {
-        &self.variable
+    pub fn variables(&self) -> &HashSet<String> {
+        &self.variables
     }
 
     pub fn expression(&self) -> &Expression {

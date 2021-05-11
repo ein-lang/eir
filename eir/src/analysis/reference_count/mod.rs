@@ -4,6 +4,7 @@ use crate::ir::*;
 pub use error::ReferenceCountError;
 use std::collections::HashSet;
 
+// Closure environments need to be inferred before reference counting.
 pub fn count_references(module: &Module) -> Result<Module, ReferenceCountError> {
     Ok(Module::new(
         module.type_definitions().to_vec(),
@@ -19,27 +20,31 @@ pub fn count_references(module: &Module) -> Result<Module, ReferenceCountError> 
 }
 
 fn convert_definition(definition: &Definition) -> Result<Definition, ReferenceCountError> {
-    // TODO Do not depend on the Definition::environment() API.
-    let (expression, _) = convert_expression(
-        definition.body(),
-        &vec![definition.name().into()]
-            .into_iter()
-            .chain(
-                definition
-                    .environment()
-                    .iter()
-                    .chain(definition.arguments())
-                    .map(|argument| argument.name().into()),
-            )
-            .collect(),
-        &Default::default(),
-    )?;
+    let owned_variables = vec![definition.name().into()]
+        .into_iter()
+        .chain(
+            definition
+                .environment()
+                .iter()
+                .chain(definition.arguments())
+                .map(|argument| argument.name().into()),
+        )
+        .collect();
+
+    let (expression, moved_variables) =
+        convert_expression(definition.body(), &owned_variables, &Default::default())?;
 
     Ok(Definition::with_options(
         definition.name(),
         definition.environment().to_vec(),
         definition.arguments().to_vec(),
-        expression,
+        drop_variables(
+            &expression,
+            &owned_variables
+                .difference(&moved_variables)
+                .cloned()
+                .collect(),
+        ),
         definition.result_type().clone(),
         definition.is_thunk(),
     ))
@@ -157,7 +162,7 @@ fn convert_expression(
         }
         Expression::FunctionApplication(application) => {
             let (argument, moved_variables) =
-                convert_expression(application.function(), owned_variables, moved_variables)?;
+                convert_expression(application.argument(), owned_variables, moved_variables)?;
             let (function, moved_variables) =
                 convert_expression(application.function(), owned_variables, &moved_variables)?;
 
@@ -204,7 +209,7 @@ fn convert_expression(
             )
         }
         Expression::Let(let_) => {
-            let (expression, moved_variables) = convert_expression(
+            let (expression, expression_moved_variables) = convert_expression(
                 let_.expression(),
                 &owned_variables
                     .iter()
@@ -213,15 +218,25 @@ fn convert_expression(
                     .collect(),
                 moved_variables,
             )?;
-            let (bound_expression, moved_variables) =
-                convert_expression(let_.bound_expression(), owned_variables, &moved_variables)?;
+            let (bound_expression, moved_variables) = convert_expression(
+                let_.bound_expression(),
+                owned_variables,
+                &expression_moved_variables,
+            )?;
 
             (
                 Let::new(
                     let_.name(),
                     let_.type_().clone(),
                     bound_expression,
-                    expression,
+                    drop_variables(
+                        &expression,
+                        &if expression_moved_variables.contains(let_.name()) {
+                            Default::default()
+                        } else {
+                            vec![let_.name().into()].into_iter().collect()
+                        },
+                    ),
                 )
                 .into(),
                 moved_variables,
@@ -235,11 +250,31 @@ fn convert_expression(
                     .cloned()
                     .chain(vec![let_.definition().name().into()])
                     .collect(),
-                moved_variables,
+                &moved_variables
+                    .into_iter()
+                    .cloned()
+                    .chain(
+                        let_.definition()
+                            .environment()
+                            .iter()
+                            .map(|argument| argument.name().into()),
+                    )
+                    .collect(),
             )?;
 
             (
-                LetRecursive::new(convert_definition(let_.definition())?, expression).into(),
+                LetRecursive::new(
+                    convert_definition(let_.definition())?,
+                    drop_variables(
+                        &expression,
+                        &if moved_variables.contains(let_.definition().name()) {
+                            Default::default()
+                        } else {
+                            vec![let_.definition().name().into()].into_iter().collect()
+                        },
+                    ),
+                )
+                .into(),
                 moved_variables,
             )
         }
@@ -312,9 +347,254 @@ fn convert_expression(
 }
 
 fn drop_variables(expression: &Expression, dropped_variables: &HashSet<String>) -> Expression {
-    dropped_variables
-        .iter()
-        .fold(expression.clone(), |expression, variable| {
-            DropVariable::new(Variable::new(variable), expression).into()
-        })
+    if dropped_variables.is_empty() {
+        expression.clone()
+    } else {
+        DropVariable::new(dropped_variables.clone(), expression.clone()).into()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::types::Type;
+
+    mod let_ {
+        use super::*;
+        use pretty_assertions::assert_eq;
+
+        #[test]
+        fn convert_with_moved_variable() {
+            assert_eq!(
+                convert_expression(
+                    &Let::new("x", Type::Number, 42.0, Variable::new("x")).into(),
+                    &Default::default(),
+                    &Default::default()
+                )
+                .unwrap()
+                .0,
+                Let::new("x", Type::Number, 42.0, Variable::new("x")).into(),
+            );
+        }
+
+        #[test]
+        fn convert_with_cloned_variable() {
+            assert_eq!(
+                convert_expression(
+                    &Let::new(
+                        "x",
+                        Type::Number,
+                        42.0,
+                        ArithmeticOperation::new(
+                            ArithmeticOperator::Add,
+                            Variable::new("x"),
+                            Variable::new("x")
+                        ),
+                    )
+                    .into(),
+                    &Default::default(),
+                    &Default::default()
+                )
+                .unwrap()
+                .0,
+                Let::new(
+                    "x",
+                    Type::Number,
+                    42.0,
+                    ArithmeticOperation::new(
+                        ArithmeticOperator::Add,
+                        CloneVariable::new(Variable::new("x")),
+                        Variable::new("x")
+                    ),
+                )
+                .into(),
+            );
+        }
+
+        #[test]
+        fn convert_with_dropped_variable() {
+            assert_eq!(
+                convert_expression(
+                    &Let::new("x", Type::Number, 42.0, 42.0,).into(),
+                    &Default::default(),
+                    &Default::default()
+                )
+                .unwrap()
+                .0,
+                Let::new(
+                    "x",
+                    Type::Number,
+                    42.0,
+                    DropVariable::new(vec!["x".into()].into_iter().collect(), 42.0)
+                )
+                .into(),
+            );
+        }
+
+        #[test]
+        fn convert_with_moved_variable_in_bound_expression() {
+            assert_eq!(
+                convert_expression(
+                    &Let::new("x", Type::Number, Variable::new("y"), Variable::new("y")).into(),
+                    &vec!["y".into()].into_iter().collect(),
+                    &Default::default()
+                )
+                .unwrap()
+                .0,
+                Let::new(
+                    "x",
+                    Type::Number,
+                    CloneVariable::new(Variable::new("y")),
+                    DropVariable::new(vec!["x".into()].into_iter().collect(), Variable::new("y"))
+                )
+                .into(),
+            );
+        }
+    }
+
+    mod let_recursive {
+        use super::*;
+        use pretty_assertions::assert_eq;
+
+        #[test]
+        fn convert_with_moved_variable() {
+            assert_eq!(
+                convert_expression(
+                    &LetRecursive::new(
+                        Definition::new(
+                            "f",
+                            vec![Argument::new("x", Type::Number)],
+                            42.0,
+                            Type::Number
+                        ),
+                        Variable::new("f")
+                    )
+                    .into(),
+                    &Default::default(),
+                    &Default::default()
+                )
+                .unwrap()
+                .0,
+                LetRecursive::new(
+                    Definition::new(
+                        "f",
+                        vec![Argument::new("x", Type::Number)],
+                        DropVariable::new(
+                            vec!["f".into(), "x".into()].into_iter().collect(),
+                            42.0,
+                        ),
+                        Type::Number
+                    ),
+                    Variable::new("f")
+                )
+                .into(),
+            );
+        }
+
+        #[test]
+        fn convert_with_cloned_variable() {
+            assert_eq!(
+                convert_expression(
+                    &LetRecursive::new(
+                        Definition::new(
+                            "f",
+                            vec![Argument::new("x", Type::Number)],
+                            42.0,
+                            Type::Number
+                        ),
+                        FunctionApplication::new(
+                            FunctionApplication::new(Variable::new("g"), Variable::new("f")),
+                            Variable::new("f")
+                        )
+                    )
+                    .into(),
+                    &Default::default(),
+                    &Default::default()
+                )
+                .unwrap()
+                .0,
+                LetRecursive::new(
+                    Definition::new(
+                        "f",
+                        vec![Argument::new("x", Type::Number)],
+                        DropVariable::new(
+                            vec!["f".into(), "x".into()].into_iter().collect(),
+                            42.0,
+                        ),
+                        Type::Number
+                    ),
+                    FunctionApplication::new(
+                        FunctionApplication::new(
+                            Variable::new("g"),
+                            CloneVariable::new(Variable::new("f"))
+                        ),
+                        Variable::new("f")
+                    )
+                )
+                .into(),
+            );
+        }
+
+        #[test]
+        fn convert_with_dropped_variable() {
+            assert_eq!(
+                convert_expression(
+                    &LetRecursive::new(
+                        Definition::new(
+                            "f",
+                            vec![Argument::new("x", Type::Number)],
+                            42.0,
+                            Type::Number
+                        ),
+                        42.0,
+                    )
+                    .into(),
+                    &Default::default(),
+                    &Default::default()
+                )
+                .unwrap()
+                .0,
+                LetRecursive::new(
+                    Definition::new(
+                        "f",
+                        vec![Argument::new("x", Type::Number)],
+                        DropVariable::new(
+                            vec!["f".into(), "x".into()].into_iter().collect(),
+                            42.0,
+                        ),
+                        Type::Number
+                    ),
+                    DropVariable::new(
+                            vec!["f".into()].into_iter().collect(),
+                            42.0,
+                        )
+                )
+                .into(),
+            );
+        }
+    }
+
+    mod definitions {
+        use super::*;
+        use pretty_assertions::assert_eq;
+
+        #[test]
+        fn convert_with_dropped_argument() {
+            assert_eq!(
+                convert_definition(&Definition::new(
+                    "f",
+                    vec![Argument::new("x", Type::Number)],
+                    42.0,
+                    Type::Number
+                ))
+                .unwrap(),
+                Definition::new(
+                    "f",
+                    vec![Argument::new("x", Type::Number)],
+                    DropVariable::new(vec!["f".into(), "x".into()].into_iter().collect(), 42.0),
+                    Type::Number
+                ),
+            );
+        }
+    }
 }
