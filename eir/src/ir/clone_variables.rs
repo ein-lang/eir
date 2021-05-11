@@ -1,6 +1,5 @@
 use super::expression::Expression;
-use std::collections::HashSet;
-use std::sync::Arc;
+use std::{collections::HashSet, sync::Arc};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct CloneVariables {

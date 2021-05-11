@@ -155,7 +155,10 @@ fn infer_in_comparison_operation(
     )
 }
 
-fn infer_in_drop_variables(drop: &DropVariables, variables: &HashMap<String, Type>) -> DropVariables {
+fn infer_in_drop_variables(
+    drop: &DropVariables,
+    variables: &HashMap<String, Type>,
+) -> DropVariables {
     DropVariables::new(
         drop.variables().clone(),
         infer_in_expression(drop.expression(), variables),
