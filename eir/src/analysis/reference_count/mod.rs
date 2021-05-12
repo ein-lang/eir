@@ -421,6 +421,67 @@ mod tests {
         );
     }
 
+    mod function_applications {
+        use super::*;
+        use pretty_assertions::assert_eq;
+
+        #[test]
+        fn convert_single() {
+            assert_eq!(
+                convert_expression(
+                    &FunctionApplication::new(Variable::new("f"), Variable::new("x")).into(),
+                    &vec!["f".into(), "x".into()].into_iter().collect(),
+                    &vec!["f".into(), "x".into()].into_iter().collect(),
+                )
+                .unwrap(),
+                (
+                    FunctionApplication::new(
+                        CloneVariables::new(
+                            vec!["f".into()].into_iter().collect(),
+                            Variable::new("f")
+                        ),
+                        CloneVariables::new(
+                            vec!["x".into()].into_iter().collect(),
+                            Variable::new("x")
+                        )
+                    )
+                    .into(),
+                    vec!["f".into(), "x".into()].into_iter().collect()
+                ),
+            );
+        }
+
+        #[test]
+        fn convert_multiple() {
+            assert_eq!(
+                convert_expression(
+                    &FunctionApplication::new(
+                        FunctionApplication::new(Variable::new("f"), Variable::new("x")),
+                        Variable::new("x")
+                    )
+                    .into(),
+                    &vec!["f".into(), "x".into()].into_iter().collect(),
+                    &Default::default(),
+                )
+                .unwrap(),
+                (
+                    FunctionApplication::new(
+                        FunctionApplication::new(
+                            Variable::new("f"),
+                            CloneVariables::new(
+                                vec!["x".into()].into_iter().collect(),
+                                Variable::new("x")
+                            )
+                        ),
+                        Variable::new("x")
+                    )
+                    .into(),
+                    vec!["f".into(), "x".into()].into_iter().collect()
+                ),
+            );
+        }
+    }
+
     mod let_ {
         use super::*;
         use pretty_assertions::assert_eq;
