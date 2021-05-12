@@ -20,6 +20,7 @@ fn collect_from_expression(expression: &Expression) -> HashSet<Type> {
             .chain(collect_from_expression(operation.rhs()))
             .collect(),
         Expression::Case(case) => collect_from_case(case),
+        Expression::CloneVariables(clone) => collect_from_expression(clone.expression()),
         Expression::ComparisonOperation(operation) => collect_from_expression(operation.lhs())
             .drain()
             .chain(collect_from_expression(operation.rhs()))
@@ -56,7 +57,6 @@ fn collect_from_expression(expression: &Expression) -> HashSet<Type> {
             .collect(),
         Expression::Boolean(_)
         | Expression::ByteString(_)
-        | Expression::CloneVariables(_)
         | Expression::Number(_)
         | Expression::Variable(_) => Default::default(),
     }
