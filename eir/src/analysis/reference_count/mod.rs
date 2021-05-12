@@ -39,8 +39,8 @@ fn convert_definition(definition: &Definition) -> Result<Definition, ReferenceCo
         definition.environment().to_vec(),
         definition.arguments().to_vec(),
         drop_variables(
-            &expression,
-            &owned_variables
+            expression,
+            owned_variables
                 .difference(&moved_variables)
                 .cloned()
                 .collect(),
@@ -126,8 +126,8 @@ fn convert_expression(
                                 alternative.type_().clone(),
                                 alternative.name(),
                                 drop_variables(
-                                    alternative.expression(),
-                                    &all_moved_variables
+                                    alternative.expression().clone(),
+                                    all_moved_variables
                                         .difference(&moved_variables)
                                         .cloned()
                                         .collect(),
@@ -137,8 +137,8 @@ fn convert_expression(
                         .collect(),
                     default_alternative.map(|expression| {
                         drop_variables(
-                            &expression,
-                            &all_moved_variables
+                            expression,
+                            all_moved_variables
                                 .difference(&default_alternative_moved_variables)
                                 .cloned()
                                 .collect(),
@@ -191,15 +191,15 @@ fn convert_expression(
                 If::new(
                     condition,
                     drop_variables(
-                        &then,
-                        &all_moved_variables
+                        then,
+                        all_moved_variables
                             .difference(&then_moved_variables)
                             .cloned()
                             .collect(),
                     ),
                     drop_variables(
-                        &else_,
-                        &all_moved_variables
+                        else_,
+                        all_moved_variables
                             .difference(&else_moved_variables)
                             .cloned()
                             .collect(),
@@ -237,7 +237,7 @@ fn convert_expression(
                     if expression_moved_variables.contains(let_.name()) {
                         expression
                     } else {
-                        drop_variables(&expression, &vec![let_.name().into()].into_iter().collect())
+                        drop_variables(expression, vec![let_.name().into()].into_iter().collect())
                     },
                 )
                 .into(),
@@ -273,8 +273,8 @@ fn convert_expression(
                     expression
                 } else {
                     drop_variables(
-                        &expression,
-                        &vec![let_.definition().name().into()].into_iter().collect(),
+                        expression,
+                        vec![let_.definition().name().into()].into_iter().collect(),
                     )
                 },
             );
@@ -290,14 +290,7 @@ fn convert_expression(
                 )
                 .collect::<HashSet<String>>();
 
-            (
-                if cloned_variables.is_empty() {
-                    let_.into()
-                } else {
-                    CloneVariables::new(cloned_variables, let_).into()
-                },
-                moved_variables,
-            )
+            (clone_variables(let_, cloned_variables), moved_variables)
         }
         Expression::Record(record) => {
             let (elements, moved_variables) = record.elements().iter().rev().fold(
@@ -331,11 +324,10 @@ fn convert_expression(
         Expression::Variable(variable) => {
             if should_clone_variable(variable.name(), owned_variables, moved_variables) {
                 (
-                    CloneVariables::new(
-                        vec![variable.name().into()].into_iter().collect(),
+                    clone_variables(
                         variable.clone(),
-                    )
-                    .into(),
+                        vec![variable.name().into()].into_iter().collect(),
+                    ),
                     moved_variables.clone(),
                 )
             } else {
@@ -369,11 +361,29 @@ fn convert_expression(
     })
 }
 
-fn drop_variables(expression: &Expression, dropped_variables: &HashSet<String>) -> Expression {
-    if dropped_variables.is_empty() {
-        expression.clone()
+fn clone_variables(
+    expression: impl Into<Expression>,
+    cloned_variables: HashSet<String>,
+) -> Expression {
+    let expression = expression.into();
+
+    if cloned_variables.is_empty() {
+        expression
     } else {
-        DropVariables::new(dropped_variables.clone(), expression.clone()).into()
+        CloneVariables::new(cloned_variables, expression).into()
+    }
+}
+
+fn drop_variables(
+    expression: impl Into<Expression>,
+    dropped_variables: HashSet<String>,
+) -> Expression {
+    let expression = expression.into();
+
+    if dropped_variables.is_empty() {
+        expression
+    } else {
+        DropVariables::new(dropped_variables, expression).into()
     }
 }
 
