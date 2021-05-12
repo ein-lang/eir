@@ -35,7 +35,13 @@ pub fn compile(
         eir::ir::Expression::Case(case) => {
             compile_case(module_builder, instruction_builder, case, variables, types)?
         }
-        eir::ir::Expression::CloneVariables(_) => todo!(),
+        eir::ir::Expression::CloneVariables(clone) => {
+            for _ in clone.variables() {
+                todo!();
+            }
+
+            compile(clone.expression(), variables)?
+        }
         eir::ir::Expression::ComparisonOperation(operation) => compile_comparison_operation(
             module_builder,
             instruction_builder,
@@ -44,7 +50,13 @@ pub fn compile(
             types,
         )?
         .into(),
-        eir::ir::Expression::DropVariables(_) => todo!(),
+        eir::ir::Expression::DropVariables(drop) => {
+            for _ in drop.variables() {
+                todo!();
+            }
+
+            compile(drop.expression(), variables)?
+        }
         eir::ir::Expression::FunctionApplication(function_application) => {
             function_applications::compile(
                 module_builder,
