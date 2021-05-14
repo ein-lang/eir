@@ -36,8 +36,8 @@ pub fn compile(
             compile_case(module_builder, instruction_builder, case, variables, types)?
         }
         eir::ir::Expression::CloneVariables(clone) => {
-            for _ in clone.variables() {
-                todo!();
+            for (variable, type_) in clone.variables() {
+                clone_variable(instruction_builder, variable, type_);
             }
 
             compile(clone.expression(), variables)?
@@ -51,8 +51,8 @@ pub fn compile(
         )?
         .into(),
         eir::ir::Expression::DropVariables(drop) => {
-            for _ in drop.variables() {
-                todo!();
+            for (variable, type_) in drop.variables() {
+                drop_variable(instruction_builder, variable, type_);
             }
 
             compile(drop.expression(), variables)?
@@ -495,4 +495,20 @@ fn compile_comparison_operation(
         lhs,
         rhs,
     )
+}
+
+fn clone_variable(
+    instruction_builder: &fmm::build::InstructionBuilder,
+    variable: &str,
+    types: &eir::types::Type,
+) -> Result<(), fmm::build::BuildError> {
+    todo!()
+}
+
+fn drop_variable(
+    instruction_builder: &fmm::build::InstructionBuilder,
+    variable: &str,
+    types: &eir::types::Type,
+) -> Result<(), fmm::build::BuildError> {
+    todo!()
 }
