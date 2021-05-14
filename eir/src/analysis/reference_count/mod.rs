@@ -1,7 +1,6 @@
 mod error;
 
-use crate::ir::*;
-use crate::types::Type;
+use crate::{ir::*, types::Type};
 pub use error::ReferenceCountError;
 use std::collections::{HashMap, HashSet};
 
