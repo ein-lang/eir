@@ -500,7 +500,7 @@ fn compile_comparison_operation(
 fn clone_variable(
     instruction_builder: &fmm::build::InstructionBuilder,
     variable: &str,
-    types: &eir::types::Type,
+    type_: &eir::types::Type,
 ) -> Result<(), fmm::build::BuildError> {
     todo!()
 }
@@ -508,7 +508,7 @@ fn clone_variable(
 fn drop_variable(
     instruction_builder: &fmm::build::InstructionBuilder,
     variable: &str,
-    types: &eir::types::Type,
+    type_: &eir::types::Type,
 ) -> Result<(), fmm::build::BuildError> {
     todo!()
 }
