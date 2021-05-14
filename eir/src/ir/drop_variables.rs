@@ -1,21 +1,22 @@
 use super::expression::Expression;
-use std::{collections::HashSet, sync::Arc};
+use crate::types::Type;
+use std::{collections::HashMap, sync::Arc};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct DropVariables {
-    variables: HashSet<String>,
+    variables: HashMap<String, Type>,
     expression: Arc<Expression>,
 }
 
 impl DropVariables {
-    pub fn new(variables: HashSet<String>, expression: impl Into<Expression>) -> Self {
+    pub fn new(variables: HashMap<String, Type>, expression: impl Into<Expression>) -> Self {
         Self {
             variables,
             expression: expression.into().into(),
         }
     }
 
-    pub fn variables(&self) -> &HashSet<String> {
+    pub fn variables(&self) -> &HashMap<String, Type> {
         &self.variables
     }
 

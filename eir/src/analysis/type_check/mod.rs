@@ -86,8 +86,8 @@ fn check_expression(
         Expression::Boolean(_) => Type::Boolean,
         Expression::Case(case) => check_case(case, variables, types)?,
         Expression::CloneVariables(clone) => {
-            for variable in clone.variables() {
-                check_variable(&Variable::new(variable), variables)?;
+            for (variable, type_) in clone.variables() {
+                check_equality(&check_variable(&Variable::new(variable), variables)?, type_)?;
             }
 
             check_expression(clone.expression(), variables)?
@@ -105,8 +105,8 @@ fn check_expression(
             Type::Boolean
         }
         Expression::DropVariables(drop) => {
-            for variable in drop.variables() {
-                check_variable(&Variable::new(variable), variables)?;
+            for (variable, type_) in drop.variables() {
+                check_equality(&check_variable(&Variable::new(variable), variables)?, type_)?;
             }
 
             check_expression(drop.expression(), variables)?
