@@ -1,7 +1,9 @@
 use super::{super::error::CompileError, utilities};
+use crate::{
+    type_information::TYPE_INFORMATION_CLONE_FUNCTION_ELEMENT_INDEX,
+    variants::{VARIANT_PAYLOAD_ELEMENT_INDEX, VARIANT_TAG_ELEMENT_INDEX},
+};
 use std::collections::HashMap;
-
-const TYPE_INFORMATION_CLONE_FUNCTION_ELEMENT_INDEX: usize = 0;
 
 pub fn clone_expression(
     builder: &fmm::build::InstructionBuilder,
@@ -26,10 +28,14 @@ pub fn clone_expression(
         eir::types::Type::Variant => {
             builder.call(
                 builder.deconstruct_record(
-                    builder.load(builder.deconstruct_record(expression.clone(), 0)?)?,
+                    builder.load(
+                        builder
+                            .deconstruct_record(expression.clone(), VARIANT_TAG_ELEMENT_INDEX)?,
+                    )?,
                     TYPE_INFORMATION_CLONE_FUNCTION_ELEMENT_INDEX,
                 )?,
-                vec![builder.deconstruct_record(expression.clone(), 1)?],
+                vec![builder
+                    .deconstruct_record(expression.clone(), VARIANT_PAYLOAD_ELEMENT_INDEX)?],
             )?;
         }
         eir::types::Type::Boolean | eir::types::Type::Number => {}

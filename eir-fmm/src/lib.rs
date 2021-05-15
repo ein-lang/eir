@@ -10,6 +10,7 @@ mod function_applications;
 mod reference_count;
 mod type_information;
 mod types;
+mod variants;
 
 use declarations::compile_declaration;
 use definitions::compile_definition;

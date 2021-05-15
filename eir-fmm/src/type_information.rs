@@ -1,5 +1,8 @@
 use crate::types;
 
+pub const TYPE_INFORMATION_CLONE_FUNCTION_ELEMENT_INDEX: usize = 0;
+pub const TYPE_INFORMATION_DROP_FUNCTION_ELEMENT_INDEX: usize = 1;
+
 pub fn compile_type_information_global_variable(
     module_builder: &fmm::build::ModuleBuilder,
     type_: &eir::types::Type,
