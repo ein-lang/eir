@@ -502,7 +502,15 @@ fn clone_variable(
     variable: &str,
     type_: &eir::types::Type,
 ) -> Result<(), fmm::build::BuildError> {
-    todo!()
+    match type_ {
+        eir::types::Type::ByteString => todo!(),
+        eir::types::Type::Function(_) => todo!(),
+        eir::types::Type::Record(_) => todo!(),
+        eir::types::Type::Variant => todo!(),
+        eir::types::Type::Boolean | eir::types::Type::Number => {}
+    }
+
+    Ok(())
 }
 
 fn drop_variable(
@@ -510,5 +518,13 @@ fn drop_variable(
     variable: &str,
     type_: &eir::types::Type,
 ) -> Result<(), fmm::build::BuildError> {
-    todo!()
+    match type_ {
+        eir::types::Type::ByteString => todo!(),
+        eir::types::Type::Function(_) => todo!(),
+        eir::types::Type::Record(_) => todo!(),
+        eir::types::Type::Variant => todo!(),
+        eir::types::Type::Boolean | eir::types::Type::Number => {}
+    }
+
+    Ok(())
 }
