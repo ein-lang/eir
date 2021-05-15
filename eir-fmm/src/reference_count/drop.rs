@@ -20,7 +20,7 @@ pub fn drop_expression(
             builder.call(
                 fmm::build::variable(
                     records::get_record_drop_function_name(record),
-                    records::create_record_rc_function_type(record, types),
+                    records::compile_record_rc_function_type(record, types),
                 ),
                 vec![expression.clone()],
             )?;

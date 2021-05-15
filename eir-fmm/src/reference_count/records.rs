@@ -9,7 +9,7 @@ pub fn get_record_drop_function_name(record: &eir::types::Record) -> String {
     format!("eir_drop_{}", record.name())
 }
 
-pub fn create_record_rc_function_type(
+pub fn compile_record_rc_function_type(
     record: &eir::types::Record,
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> fmm::types::Function {
