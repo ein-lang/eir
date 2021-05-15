@@ -1,3 +1,4 @@
+use super::error::CompileError;
 use crate::{closures, entry_functions, function_applications, reference_count, types};
 use std::collections::HashMap;
 
@@ -11,7 +12,7 @@ pub fn compile(
     expression: &eir::ir::Expression,
     variables: &HashMap<String, fmm::build::TypedExpression>,
     types: &HashMap<String, eir::types::RecordBody>,
-) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
+) -> Result<fmm::build::TypedExpression, CompileError> {
     let compile = |expression, variables| {
         compile(
             module_builder,
@@ -52,7 +53,12 @@ pub fn compile(
         .into(),
         eir::ir::Expression::DropVariables(drop) => {
             for (variable, type_) in drop.variables() {
-                reference_count::drop_variable(instruction_builder, variable, type_)?;
+                reference_count::drop_expression(
+                    instruction_builder,
+                    &variables[variable],
+                    type_,
+                    types,
+                )?;
             }
 
             compile(drop.expression(), variables)?
@@ -157,7 +163,7 @@ fn compile_if(
     if_: &eir::ir::If,
     variables: &HashMap<String, fmm::build::TypedExpression>,
     types: &HashMap<String, eir::types::RecordBody>,
-) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
+) -> Result<fmm::build::TypedExpression, CompileError> {
     let compile = |instruction_builder: &fmm::build::InstructionBuilder, expression| {
         compile(
             module_builder,
@@ -185,7 +191,7 @@ fn compile_case(
     case: &eir::ir::Case,
     variables: &HashMap<String, fmm::build::TypedExpression>,
     types: &HashMap<String, eir::types::RecordBody>,
-) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
+) -> Result<fmm::build::TypedExpression, CompileError> {
     let argument = compile(
         module_builder,
         instruction_builder,
@@ -214,7 +220,7 @@ fn compile_alternatives(
     default_alternative: Option<&eir::ir::Expression>,
     variables: &HashMap<String, fmm::build::TypedExpression>,
     types: &HashMap<String, eir::types::RecordBody>,
-) -> Result<Option<fmm::build::TypedExpression>, fmm::build::BuildError> {
+) -> Result<Option<fmm::build::TypedExpression>, CompileError> {
     Ok(match alternatives {
         [] => default_alternative
             .map(|default_alternative| {
@@ -239,7 +245,7 @@ fn compile_alternatives(
                     compile_variant_tag(alternative.type_()),
                 ),
             )?,
-            |instruction_builder| {
+            |instruction_builder| -> Result<_, CompileError> {
                 Ok(instruction_builder.branch(compile(
                     module_builder,
                     &instruction_builder,
@@ -354,7 +360,7 @@ fn compile_let(
     let_: &eir::ir::Let,
     variables: &HashMap<String, fmm::build::TypedExpression>,
     types: &HashMap<String, eir::types::RecordBody>,
-) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
+) -> Result<fmm::build::TypedExpression, CompileError> {
     let compile = |expression, variables| {
         compile(
             module_builder,
@@ -384,7 +390,7 @@ fn compile_let_recursive(
     let_: &eir::ir::LetRecursive,
     variables: &HashMap<String, fmm::build::TypedExpression>,
     types: &HashMap<String, eir::types::RecordBody>,
-) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
+) -> Result<fmm::build::TypedExpression, CompileError> {
     let closure_pointer =
         instruction_builder.allocate_heap(types::compile_sized_closure(let_.definition(), types));
 
@@ -429,7 +435,7 @@ fn compile_arithmetic_operation(
     operation: &eir::ir::ArithmeticOperation,
     variables: &HashMap<String, fmm::build::TypedExpression>,
     types: &HashMap<String, eir::types::RecordBody>,
-) -> Result<fmm::ir::ArithmeticOperation, fmm::build::BuildError> {
+) -> Result<fmm::ir::ArithmeticOperation, CompileError> {
     let compile = |expression| {
         compile(
             module_builder,
@@ -465,7 +471,7 @@ fn compile_comparison_operation(
     operation: &eir::ir::ComparisonOperation,
     variables: &HashMap<String, fmm::build::TypedExpression>,
     types: &HashMap<String, eir::types::RecordBody>,
-) -> Result<fmm::ir::ComparisonOperation, fmm::build::BuildError> {
+) -> Result<fmm::ir::ComparisonOperation, CompileError> {
     let compile = |expression| {
         compile(
             module_builder,
@@ -479,7 +485,7 @@ fn compile_comparison_operation(
     let lhs = compile(operation.lhs())?;
     let rhs = compile(operation.rhs())?;
 
-    fmm::build::comparison_operation(
+    Ok(fmm::build::comparison_operation(
         match operation.operator() {
             eir::ir::ComparisonOperator::Equal => fmm::ir::ComparisonOperator::Equal,
             eir::ir::ComparisonOperator::NotEqual => fmm::ir::ComparisonOperator::NotEqual,
@@ -494,5 +500,5 @@ fn compile_comparison_operation(
         },
         lhs,
         rhs,
-    )
+    )?)
 }

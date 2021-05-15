@@ -1,3 +1,4 @@
+use super::error::CompileError;
 use crate::{entry_functions, expressions, types};
 use std::collections::HashMap;
 
@@ -6,7 +7,7 @@ pub fn compile_definition(
     definition: &eir::ir::Definition,
     global_variables: &HashMap<String, fmm::build::TypedExpression>,
     types: &HashMap<String, eir::types::RecordBody>,
-) -> Result<(), fmm::build::BuildError> {
+) -> Result<(), CompileError> {
     module_builder.define_variable(
         definition.name(),
         fmm::build::record(vec![

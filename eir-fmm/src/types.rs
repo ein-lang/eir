@@ -29,7 +29,7 @@ pub fn compile_string() -> fmm::types::Record {
     ])
 }
 
-fn compile_variant() -> fmm::types::Record {
+pub fn compile_variant() -> fmm::types::Record {
     fmm::types::Record::new(vec![
         compile_variant_tag().into(),
         compile_variant_payload().into(),
@@ -37,9 +37,21 @@ fn compile_variant() -> fmm::types::Record {
 }
 
 pub fn compile_variant_tag() -> fmm::types::Pointer {
-    // TODO Add GC functions.
     fmm::types::Pointer::new(fmm::types::Record::new(vec![
-        fmm::types::Primitive::Integer8.into(),
+        // clone function
+        fmm::types::Function::new(
+            vec![fmm::types::Primitive::PointerInteger.into()],
+            fmm::build::VOID_TYPE.clone(),
+            fmm::types::CallingConvention::Target,
+        )
+        .into(),
+        // drop function
+        fmm::types::Function::new(
+            vec![fmm::types::Primitive::PointerInteger.into()],
+            fmm::build::VOID_TYPE.clone(),
+            fmm::types::CallingConvention::Target,
+        )
+        .into(),
     ]))
 }
 

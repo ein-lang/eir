@@ -1,3 +1,4 @@
+use super::error::CompileError;
 use crate::{expressions, types};
 use std::collections::HashMap;
 
@@ -8,7 +9,7 @@ pub fn compile(
     definition: &eir::ir::Definition,
     variables: &HashMap<String, fmm::build::TypedExpression>,
     types: &HashMap<String, eir::types::RecordBody>,
-) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
+) -> Result<fmm::build::TypedExpression, CompileError> {
     Ok(if definition.is_thunk() {
         compile_thunk(module_builder, definition, variables, types)?
     } else {
@@ -21,7 +22,7 @@ fn compile_non_thunk(
     definition: &eir::ir::Definition,
     variables: &HashMap<String, fmm::build::TypedExpression>,
     types: &HashMap<String, eir::types::RecordBody>,
-) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
+) -> Result<fmm::build::TypedExpression, CompileError> {
     module_builder.define_anonymous_function(
         compile_arguments(definition, types),
         |instruction_builder| {
@@ -43,7 +44,7 @@ fn compile_thunk(
     definition: &eir::ir::Definition,
     variables: &HashMap<String, fmm::build::TypedExpression>,
     types: &HashMap<String, eir::types::RecordBody>,
-) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
+) -> Result<fmm::build::TypedExpression, CompileError> {
     compile_first_thunk_entry(
         module_builder,
         definition,
@@ -60,7 +61,7 @@ fn compile_body(
     definition: &eir::ir::Definition,
     variables: &HashMap<String, fmm::build::TypedExpression>,
     types: &HashMap<String, eir::types::RecordBody>,
-) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
+) -> Result<fmm::build::TypedExpression, CompileError> {
     expressions::compile(
         module_builder,
         instruction_builder,
@@ -73,7 +74,7 @@ fn compile_body(
                     .environment()
                     .iter()
                     .enumerate()
-                    .map(|(index, free_variable)| {
+                    .map(|(index, free_variable)| -> Result<_, CompileError> {
                         Ok((
                             free_variable.name().into(),
                             instruction_builder.load(instruction_builder.record_address(
@@ -111,7 +112,7 @@ fn compile_first_thunk_entry(
     lock_entry_function: fmm::build::TypedExpression,
     variables: &HashMap<String, fmm::build::TypedExpression>,
     types: &HashMap<String, eir::types::RecordBody>,
-) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
+) -> Result<fmm::build::TypedExpression, CompileError> {
     let entry_function_name = module_builder.generate_name();
     let entry_function_type = types::compile_entry_function_from_definition(definition, types);
     let arguments = compile_arguments(definition, types);
@@ -130,7 +131,7 @@ fn compile_first_thunk_entry(
                     fmm::build::variable(&entry_function_name, entry_function_type.clone()),
                     lock_entry_function.clone(),
                 ),
-                |instruction_builder| {
+                |instruction_builder| -> Result<_, CompileError> {
                     let value = compile_body(
                         module_builder,
                         &instruction_builder,
