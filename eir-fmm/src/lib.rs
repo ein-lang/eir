@@ -7,6 +7,7 @@ mod expressions;
 mod foreign_declarations;
 mod foreign_definitions;
 mod function_applications;
+mod reference_count;
 mod type_information;
 mod types;
 

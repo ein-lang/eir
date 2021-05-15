@@ -1,4 +1,4 @@
-use crate::{closures, entry_functions, function_applications, types};
+use crate::{closures, entry_functions, function_applications, reference_count, types};
 use std::collections::HashMap;
 
 pub fn compile_arity(arity: usize) -> fmm::ir::Primitive {
@@ -37,7 +37,7 @@ pub fn compile(
         }
         eir::ir::Expression::CloneVariables(clone) => {
             for (variable, type_) in clone.variables() {
-                clone_variable(instruction_builder, variable, type_);
+                reference_count::clone_variable(instruction_builder, variable, type_)?;
             }
 
             compile(clone.expression(), variables)?
@@ -52,7 +52,7 @@ pub fn compile(
         .into(),
         eir::ir::Expression::DropVariables(drop) => {
             for (variable, type_) in drop.variables() {
-                drop_variable(instruction_builder, variable, type_);
+                reference_count::drop_variable(instruction_builder, variable, type_)?;
             }
 
             compile(drop.expression(), variables)?
@@ -495,36 +495,4 @@ fn compile_comparison_operation(
         lhs,
         rhs,
     )
-}
-
-fn clone_variable(
-    instruction_builder: &fmm::build::InstructionBuilder,
-    variable: &str,
-    type_: &eir::types::Type,
-) -> Result<(), fmm::build::BuildError> {
-    match type_ {
-        eir::types::Type::ByteString => todo!(),
-        eir::types::Type::Function(_) => todo!(),
-        eir::types::Type::Record(_) => todo!(),
-        eir::types::Type::Variant => todo!(),
-        eir::types::Type::Boolean | eir::types::Type::Number => {}
-    }
-
-    Ok(())
-}
-
-fn drop_variable(
-    instruction_builder: &fmm::build::InstructionBuilder,
-    variable: &str,
-    type_: &eir::types::Type,
-) -> Result<(), fmm::build::BuildError> {
-    match type_ {
-        eir::types::Type::ByteString => todo!(),
-        eir::types::Type::Function(_) => todo!(),
-        eir::types::Type::Record(_) => todo!(),
-        eir::types::Type::Variant => todo!(),
-        eir::types::Type::Boolean | eir::types::Type::Number => {}
-    }
-
-    Ok(())
 }
