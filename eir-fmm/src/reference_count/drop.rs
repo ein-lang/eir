@@ -1,4 +1,4 @@
-use super::{super::error::CompileError, utilities};
+use super::{super::error::CompileError, pointers, records};
 use crate::{
     type_information::TYPE_INFORMATION_DROP_FUNCTION_ELEMENT_INDEX,
     variants::{VARIANT_PAYLOAD_ELEMENT_INDEX, VARIANT_TAG_ELEMENT_INDEX},
@@ -19,8 +19,8 @@ pub fn drop_expression(
         eir::types::Type::Record(record) => {
             builder.call(
                 fmm::build::variable(
-                    utilities::get_record_drop_function_name(record),
-                    utilities::create_record_rc_function_type(record, types),
+                    records::get_record_drop_function_name(record),
+                    records::create_record_rc_function_type(record, types),
                 ),
                 vec![expression.clone()],
             )?;
@@ -48,13 +48,13 @@ fn drop_pointer(
     builder: &fmm::build::InstructionBuilder,
     expression: &fmm::build::TypedExpression,
 ) -> Result<(), CompileError> {
-    utilities::if_heap_pointer(builder, expression, |builder| {
+    pointers::if_heap_pointer(builder, expression, |builder| {
         builder.if_(
             fmm::build::comparison_operation(
                 fmm::ir::ComparisonOperator::Equal,
                 builder.atomic_operation(
                     fmm::ir::AtomicOperator::Subtract,
-                    utilities::get_counter_pointer(&builder, expression)?,
+                    pointers::get_counter_pointer(&builder, expression)?,
                     fmm::ir::Primitive::PointerInteger(1),
                 )?,
                 fmm::ir::Primitive::PointerInteger(0),

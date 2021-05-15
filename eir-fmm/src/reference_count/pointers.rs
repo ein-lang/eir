@@ -25,3 +25,45 @@ pub fn is_heap_pointer(
     )?
     .into())
 }
+
+pub fn if_heap_pointer(
+    builder: &fmm::build::InstructionBuilder,
+    pointer: &fmm::build::TypedExpression,
+    then: impl Fn(&fmm::build::InstructionBuilder) -> Result<(), CompileError>,
+) -> Result<(), CompileError> {
+    // TODO Remove a null pointer check?
+    builder.if_(
+        fmm::build::comparison_operation(
+            fmm::ir::ComparisonOperator::NotEqual,
+            fmm::build::bit_cast(fmm::types::Primitive::PointerInteger, pointer.clone()),
+            fmm::ir::Undefined::new(fmm::types::Primitive::PointerInteger),
+        )?,
+        |builder| -> Result<_, CompileError> {
+            builder.if_(
+                is_heap_pointer(pointer)?,
+                |builder| -> Result<_, CompileError> {
+                    then(&builder)?;
+                    Ok(builder.branch(fmm::build::VOID_VALUE.clone()))
+                },
+                |builder| Ok(builder.branch(fmm::build::VOID_VALUE.clone())),
+            )?;
+            Ok(builder.branch(fmm::build::VOID_VALUE.clone()))
+        },
+        |builder| Ok(builder.branch(fmm::build::VOID_VALUE.clone())),
+    )?;
+
+    Ok(())
+}
+
+pub fn get_counter_pointer(
+    builder: &fmm::build::InstructionBuilder,
+    heap_pointer: &fmm::build::TypedExpression,
+) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
+    builder.pointer_address(
+        fmm::build::bit_cast(
+            fmm::types::Pointer::new(fmm::types::Primitive::PointerInteger),
+            heap_pointer.clone(),
+        ),
+        fmm::ir::Primitive::PointerInteger(-1),
+    )
+}
