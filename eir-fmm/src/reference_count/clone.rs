@@ -1,5 +1,5 @@
 use super::super::types;
-use super::{super::error::CompileError, pointers, records};
+use super::{super::error::CompileError, pointers, record_utilities};
 use crate::{
     type_information::TYPE_INFORMATION_CLONE_FUNCTION_ELEMENT_INDEX,
     variants::{VARIANT_PAYLOAD_ELEMENT_INDEX, VARIANT_TAG_ELEMENT_INDEX},
@@ -14,14 +14,14 @@ pub fn clone_expression(
 ) -> Result<(), CompileError> {
     match type_ {
         eir::types::Type::ByteString => {
-            clone_pointer(builder, &builder.deconstruct_record(expression.clone(), 0)?)?
+            pointers::clone_pointer(builder, &builder.deconstruct_record(expression.clone(), 0)?)?
         }
         eir::types::Type::Function(_) => todo!(),
         eir::types::Type::Record(record) => {
             builder.call(
                 fmm::build::variable(
-                    records::get_record_clone_function_name(record.name()),
-                    records::compile_record_rc_function_type(record, types),
+                    record_utilities::get_record_clone_function_name(record.name()),
+                    record_utilities::compile_record_rc_function_type(record, types),
                 ),
                 vec![expression.clone()],
             )?;
@@ -54,7 +54,7 @@ pub fn compile_record_clone_function(
     let fmm_record_type = types::compile_record(&record_type, types);
 
     module_builder.define_function(
-        records::get_record_clone_function_name(definition.name()),
+        record_utilities::get_record_clone_function_name(definition.name()),
         vec![fmm::ir::Argument::new("record", fmm_record_type.clone())],
         |builder| -> Result<_, CompileError> {
             for (index, type_) in definition.type_().elements().iter().enumerate() {
@@ -78,23 +78,6 @@ pub fn compile_record_clone_function(
         fmm::types::CallingConvention::Target,
         fmm::ir::Linkage::Weak,
     )?;
-
-    Ok(())
-}
-
-fn clone_pointer(
-    builder: &fmm::build::InstructionBuilder,
-    expression: &fmm::build::TypedExpression,
-) -> Result<(), CompileError> {
-    pointers::if_heap_pointer(builder, expression, |builder| {
-        builder.atomic_operation(
-            fmm::ir::AtomicOperator::Add,
-            pointers::get_counter_pointer(&builder, expression)?,
-            fmm::ir::Primitive::PointerInteger(1),
-        )?;
-
-        Ok(())
-    })?;
 
     Ok(())
 }
