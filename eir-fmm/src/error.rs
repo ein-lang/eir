@@ -6,6 +6,7 @@ use std::{
 #[derive(Clone, Debug, PartialEq)]
 pub enum CompileError {
     FmmBuild(fmm::build::BuildError),
+    NestedVariant,
     TypeCheck(eir::analysis::TypeCheckError),
 }
 

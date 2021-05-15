@@ -34,7 +34,7 @@ pub fn compile(module: &eir::ir::Module) -> Result<fmm::ir::Module, CompileError
         .collect();
 
     for type_ in &eir::analysis::collect_variant_types(&module) {
-        compile_type_information_global_variable(&module_builder, type_)?;
+        compile_type_information_global_variable(&module_builder, type_, &types)?;
     }
 
     for definition in module.type_definitions() {

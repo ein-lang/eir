@@ -1,4 +1,4 @@
-use crate::types;
+use crate::{types, CompileError};
 use std::collections::HashMap;
 
 pub const VARIANT_TAG_ELEMENT_INDEX: usize = 0;
@@ -11,13 +11,13 @@ pub fn compile_tag(type_: &eir::types::Type) -> fmm::build::TypedExpression {
 pub fn compile_boxed_payload(
     builder: &fmm::build::InstructionBuilder,
     payload: &fmm::build::TypedExpression,
-    variant_type: &eir::types::Type,
-) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
-    compile_union_bit_cast(
+    type_: &eir::types::Type,
+) -> Result<fmm::build::TypedExpression, CompileError> {
+    Ok(compile_union_bit_cast(
         builder,
         types::compile_variant_payload(),
         // Strings have two words.
-        if variant_type == &eir::types::Type::ByteString {
+        if is_payload_boxed(type_)? {
             let pointer = builder.allocate_heap(payload.type_().clone());
 
             builder.store(payload.clone(), pointer.clone());
@@ -26,27 +26,34 @@ pub fn compile_boxed_payload(
         } else {
             payload.clone()
         },
-    )
+    )?)
 }
 
 pub fn compile_unboxed_payload(
     builder: &fmm::build::InstructionBuilder,
     payload: &fmm::build::TypedExpression,
-    variant_type: &eir::types::Type,
+    type_: &eir::types::Type,
     types: &HashMap<String, eir::types::RecordBody>,
-) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
-    Ok(if variant_type == &eir::types::Type::ByteString {
+) -> Result<fmm::build::TypedExpression, CompileError> {
+    Ok(if is_payload_boxed(type_)? {
         builder.load(fmm::build::bit_cast(
-            fmm::types::Pointer::new(types::compile(variant_type, types)),
+            fmm::types::Pointer::new(types::compile(type_, types)),
             payload.clone(),
         ))?
     } else {
-        compile_union_bit_cast(
-            builder,
-            types::compile(variant_type, types),
-            payload.clone(),
-        )?
+        compile_union_bit_cast(builder, types::compile(type_, types), payload.clone())?
     })
+}
+
+pub fn is_payload_boxed(type_: &eir::types::Type) -> Result<bool, CompileError> {
+    match type_ {
+        eir::types::Type::ByteString => Ok(true),
+        eir::types::Type::Variant => Err(CompileError::NestedVariant),
+        eir::types::Type::Boolean
+        | eir::types::Type::Function(_)
+        | eir::types::Type::Number
+        | eir::types::Type::Record(_) => Ok(false),
+    }
 }
 
 fn compile_union_bit_cast(

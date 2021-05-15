@@ -40,14 +40,14 @@ pub fn compile_variant_tag() -> fmm::types::Pointer {
     fmm::types::Pointer::new(fmm::types::Record::new(vec![
         // clone function
         fmm::types::Function::new(
-            vec![fmm::types::Primitive::PointerInteger.into()],
+            vec![compile_variant_payload().into()],
             fmm::build::VOID_TYPE.clone(),
             fmm::types::CallingConvention::Target,
         )
         .into(),
         // drop function
         fmm::types::Function::new(
-            vec![fmm::types::Primitive::PointerInteger.into()],
+            vec![compile_variant_payload().into()],
             fmm::build::VOID_TYPE.clone(),
             fmm::types::CallingConvention::Target,
         )
