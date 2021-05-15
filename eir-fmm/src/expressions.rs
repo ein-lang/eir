@@ -1,5 +1,7 @@
 use super::error::CompileError;
-use crate::{closures, entry_functions, function_applications, records, reference_count, types};
+use crate::{
+    closures, entry_functions, function_applications, records, reference_count, types, variants,
+};
 use std::collections::HashMap;
 
 pub fn compile_arity(arity: usize) -> fmm::ir::Primitive {
@@ -140,8 +142,8 @@ pub fn compile(
         .into(),
         eir::ir::Expression::Variable(variable) => variables[variable.name()].clone(),
         eir::ir::Expression::Variant(variant) => fmm::build::record(vec![
-            compile_variant_tag(variant.type_()),
-            compile_boxed_payload(
+            variants::compile_tag(variant.type_()),
+            variants::compile_boxed_payload(
                 instruction_builder,
                 &compile(variant.payload(), variables)?,
                 variant.type_(),
@@ -236,7 +238,7 @@ fn compile_alternatives(
                 ),
                 fmm::build::bit_cast(
                     fmm::types::Primitive::PointerInteger,
-                    compile_variant_tag(alternative.type_()),
+                    variants::compile_tag(alternative.type_()),
                 ),
             )?,
             |instruction_builder| -> Result<_, CompileError> {
@@ -249,7 +251,7 @@ fn compile_alternatives(
                         .into_iter()
                         .chain(vec![(
                             alternative.name().into(),
-                            compile_unboxed_payload(
+                            variants::compile_unboxed_payload(
                                 &instruction_builder,
                                 &instruction_builder.deconstruct_record(argument.clone(), 1)?,
                                 alternative.type_(),
@@ -278,73 +280,6 @@ fn compile_alternatives(
                 )
             },
         )?),
-    })
-}
-
-fn compile_variant_tag(type_: &eir::types::Type) -> fmm::build::TypedExpression {
-    fmm::build::variable(types::compile_type_id(type_), types::compile_variant_tag())
-}
-
-fn compile_boxed_payload(
-    builder: &fmm::build::InstructionBuilder,
-    payload: &fmm::build::TypedExpression,
-    variant_type: &eir::types::Type,
-) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
-    compile_union_bit_cast(
-        builder,
-        types::compile_variant_payload(),
-        // Strings have two words.
-        if variant_type == &eir::types::Type::ByteString {
-            let pointer = builder.allocate_heap(payload.type_().clone());
-
-            builder.store(payload.clone(), pointer.clone());
-
-            pointer
-        } else {
-            payload.clone()
-        },
-    )
-}
-
-fn compile_unboxed_payload(
-    builder: &fmm::build::InstructionBuilder,
-    payload: &fmm::build::TypedExpression,
-    variant_type: &eir::types::Type,
-    types: &HashMap<String, eir::types::RecordBody>,
-) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
-    Ok(if variant_type == &eir::types::Type::ByteString {
-        builder.load(fmm::build::bit_cast(
-            fmm::types::Pointer::new(types::compile(variant_type, types)),
-            payload.clone(),
-        ))?
-    } else {
-        compile_union_bit_cast(
-            builder,
-            types::compile(variant_type, types),
-            payload.clone(),
-        )?
-    })
-}
-
-fn compile_union_bit_cast(
-    builder: &fmm::build::InstructionBuilder,
-    to_type: impl Into<fmm::types::Type>,
-    argument: impl Into<fmm::build::TypedExpression>,
-) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
-    let argument = argument.into();
-    let to_type = to_type.into();
-
-    Ok(if argument.type_() == &to_type {
-        argument
-    } else {
-        builder.deconstruct_union(
-            fmm::ir::Union::new(
-                fmm::types::Union::new(vec![argument.type_().clone(), to_type]),
-                0,
-                argument.expression().clone(),
-            ),
-            1,
-        )?
     })
 }
 
