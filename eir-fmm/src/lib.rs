@@ -37,6 +37,11 @@ pub fn compile(module: &eir::ir::Module) -> Result<fmm::ir::Module, CompileError
         compile_type_information_global_variable(&module_builder, type_)?;
     }
 
+    for definition in module.type_definitions() {
+        reference_count::compile_record_clone_function(&module_builder, definition, &types)?;
+        reference_count::compile_record_drop_function(&module_builder, definition, &types)?;
+    }
+
     for declaration in module.foreign_declarations() {
         compile_foreign_declaration(&module_builder, declaration, &types)?;
     }
