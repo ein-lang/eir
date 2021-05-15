@@ -1,5 +1,6 @@
 use super::super::error::CompileError;
 use super::super::types;
+use super::pointers;
 use std::collections::hash_map::HashMap;
 
 pub fn if_heap_pointer(
