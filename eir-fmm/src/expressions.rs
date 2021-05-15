@@ -1,5 +1,5 @@
 use super::error::CompileError;
-use crate::{closures, entry_functions, function_applications, reference_count, types};
+use crate::{closures, entry_functions, function_applications, records, reference_count, types};
 use std::collections::HashMap;
 
 pub fn compile_arity(arity: usize) -> fmm::ir::Primitive {
@@ -113,24 +113,13 @@ pub fn compile(
                 unboxed.into()
             }
         }
-        eir::ir::Expression::RecordElement(element) => {
-            let record = compile(element.record(), variables)?;
-
-            instruction_builder.deconstruct_record(
-                if types::is_record_boxed(element.type_(), types) {
-                    instruction_builder.load(fmm::build::bit_cast(
-                        fmm::types::Pointer::new(types::compile_unboxed_record(
-                            element.type_(),
-                            types,
-                        )),
-                        record,
-                    ))?
-                } else {
-                    record
-                },
-                element.index(),
-            )?
-        }
+        eir::ir::Expression::RecordElement(element) => records::get_record_element(
+            instruction_builder,
+            &compile(element.record(), variables)?,
+            element.type_(),
+            element.index(),
+            types,
+        )?,
         eir::ir::Expression::ByteString(string) => fmm::build::record(vec![
             fmm::build::bit_cast(
                 fmm::types::Pointer::new(fmm::types::Primitive::Integer8),

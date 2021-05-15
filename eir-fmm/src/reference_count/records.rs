@@ -1,12 +1,12 @@
 use super::super::types;
 use std::collections::hash_map::HashMap;
 
-pub fn get_record_clone_function_name(record: &eir::types::Record) -> String {
-    format!("eir_clone_{}", record.name())
+pub fn get_record_clone_function_name(name: &str) -> String {
+    format!("eir_clone_{}", name)
 }
 
-pub fn get_record_drop_function_name(record: &eir::types::Record) -> String {
-    format!("eir_drop_{}", record.name())
+pub fn get_record_drop_function_name(name: &str) -> String {
+    format!("eir_drop_{}", name)
 }
 
 pub fn compile_record_rc_function_type(
