@@ -33,7 +33,10 @@ pub fn drop_pointer(
                 fmm::ir::Primitive::PointerInteger(0),
             )?,
             |builder| -> Result<_, CompileError> {
-                builder.free_heap(expression.clone())?;
+                builder.free_heap(fmm::build::bit_cast(
+                    fmm::types::Pointer::new(fmm::types::Primitive::Integer8),
+                    expression.clone(),
+                ))?;
 
                 Ok(builder.branch(fmm::build::VOID_VALUE.clone()))
             },

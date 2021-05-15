@@ -16,12 +16,7 @@ pub fn compile_type_information_global_variable(
         types::compile_type_id(type_),
         fmm::build::record(vec![
             reference_count::compile_variant_clone_function(module_builder, type_, types)?.into(),
-            fmm::ir::Undefined::new(fmm::types::Function::new(
-                vec![types::compile_variant_payload().into()],
-                fmm::build::VOID_TYPE.clone(),
-                fmm::types::CallingConvention::Target,
-            ))
-            .into(),
+            reference_count::compile_variant_drop_function(module_builder, type_, types)?.into(),
         ]),
         false,
         fmm::ir::Linkage::Weak,
