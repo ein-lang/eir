@@ -17,18 +17,7 @@ pub fn if_heap_pointer(
         )?,
         |builder| -> Result<_, CompileError> {
             builder.if_(
-                fmm::build::comparison_operation(
-                    fmm::ir::ComparisonOperator::NotEqual,
-                    fmm::build::bitwise_operation(
-                        fmm::ir::BitwiseOperator::And,
-                        fmm::build::bit_cast(
-                            fmm::types::Primitive::PointerInteger,
-                            pointer.clone(),
-                        ),
-                        fmm::ir::Primitive::PointerInteger(1),
-                    )?,
-                    fmm::ir::Primitive::PointerInteger(1),
-                )?,
+                pointers::is_heap_pointer(pointer)?,
                 |builder| -> Result<_, CompileError> {
                     then(&builder)?;
                     Ok(builder.branch(fmm::build::VOID_VALUE.clone()))
