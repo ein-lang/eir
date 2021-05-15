@@ -1,6 +1,5 @@
 use super::super::types;
-use super::clone::clone_expression;
-use super::drop::drop_expression;
+use super::expressions;
 use super::{super::error::CompileError, record_utilities};
 use std::collections::HashMap;
 
@@ -17,7 +16,7 @@ pub fn compile_record_clone_function(
         vec![fmm::ir::Argument::new("record", fmm_record_type.clone())],
         |builder| -> Result<_, CompileError> {
             for (index, type_) in definition.type_().elements().iter().enumerate() {
-                clone_expression(
+                expressions::clone_expression(
                     &builder,
                     &crate::records::get_record_element(
                         &builder,
@@ -54,7 +53,7 @@ pub fn compile_record_drop_function(
         vec![fmm::ir::Argument::new("record", fmm_record_type.clone())],
         |builder| -> Result<_, CompileError> {
             for (index, type_) in definition.type_().elements().iter().enumerate() {
-                drop_expression(
+                expressions::drop_expression(
                     &builder,
                     &crate::records::get_record_element(
                         &builder,
