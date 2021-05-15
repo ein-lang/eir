@@ -38,7 +38,12 @@ pub fn compile(
         }
         eir::ir::Expression::CloneVariables(clone) => {
             for (variable, type_) in clone.variables() {
-                reference_count::clone_variable(instruction_builder, variable, type_)?;
+                reference_count::clone_expression(
+                    instruction_builder,
+                    &variables[variable],
+                    type_,
+                    types,
+                )?;
             }
 
             compile(clone.expression(), variables)?
