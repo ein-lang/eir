@@ -46,7 +46,7 @@ pub fn drop_pointer(
     Ok(())
 }
 
-pub fn get_raw_pointer(
+pub fn get_untagged_pointer(
     pointer: &fmm::build::TypedExpression,
 ) -> Result<fmm::build::TypedExpression, CompileError> {
     Ok(fmm::build::bitwise_operation(
