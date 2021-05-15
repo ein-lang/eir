@@ -1,7 +1,6 @@
 use super::super::error::CompileError;
 use super::super::types;
-use std::collections::hash_map::{DefaultHasher, HashMap};
-use std::hash::{Hash, Hasher};
+use std::collections::hash_map::HashMap;
 
 pub fn if_heap_pointer(
     builder: &fmm::build::InstructionBuilder,
@@ -56,27 +55,8 @@ pub fn get_counter_pointer(
     )
 }
 
-// TODO Consider passing typed expressions instead.
-pub fn extract_record_elements(
-    builder: &fmm::build::InstructionBuilder,
-    variable: &fmm::ir::Variable,
-    record_type: &fmm::types::Record,
-) -> Result<Vec<fmm::build::TypedExpression>, fmm::build::BuildError> {
-    record_type
-        .elements()
-        .iter()
-        .enumerate()
-        .map(|(index, _)| {
-            builder.deconstruct_record(
-                fmm::build::variable(variable.name(), record_type.clone()),
-                index,
-            )
-        })
-        .collect()
-}
-
 pub fn get_record_clone_function_name(record: &eir::types::Record) -> String {
-    format!("eir_drop_{}", record.name())
+    format!("eir_clone_{}", record.name())
 }
 
 pub fn get_record_drop_function_name(record: &eir::types::Record) -> String {
@@ -92,12 +72,4 @@ pub fn create_record_rc_function_type(
         fmm::build::VOID_TYPE.clone(),
         fmm::types::CallingConvention::Target,
     )
-}
-
-fn hash_record_type(record: &fmm::types::Record) -> u64 {
-    let mut hasher = DefaultHasher::new();
-
-    record.hash(&mut hasher);
-
-    hasher.finish()
 }
