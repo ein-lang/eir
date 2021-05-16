@@ -259,6 +259,26 @@ fn compile_normal_body(
     )
 }
 
+fn compile_normal_thunk_drop_function(
+    module_builder: &fmm::build::ModuleBuilder,
+    definition: &eir::ir::Definition,
+    types: &HashMap<String, eir::types::RecordBody>,
+) -> Result<fmm::build::TypedExpression, CompileError> {
+    const ARGUMENT_NAME: &str = "_closure";
+    const ARGUMENT_TYPE: fmm::types::Primitive = fmm::types::Primitive::PointerInteger;
+
+    Ok(module_builder.define_anonymous_function(
+        vec![fmm::ir::Argument::new(ARGUMENT_NAME, ARGUMENT_TYPE)],
+        |builder| -> Result<_, CompileError> {
+            let closure_pointer = fmm::build::variable(ARGUMENT_NAME, ARGUMENT_TYPE);
+
+            Ok(builder.return_(fmm::build::VOID_VALUE.clone()))
+        },
+        fmm::build::VOID_TYPE.clone(),
+        fmm::types::CallingConvention::Target,
+    )?)
+}
+
 fn compile_entry_function_pointer_pointer(
     instruction_builder: &fmm::build::InstructionBuilder,
     definition: &eir::ir::Definition,

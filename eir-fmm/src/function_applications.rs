@@ -121,6 +121,15 @@ fn compile_create_closure(
                 .map(|argument| argument.type_())
                 .collect::<Vec<_>>(),
         )?,
+        compile_partially_applied_drop_function(
+            module_builder,
+            &target_entry_function_type,
+            &closure_pointer.type_(),
+            &arguments
+                .iter()
+                .map(|argument| argument.type_())
+                .collect::<Vec<_>>(),
+        )?,
         vec![closure_pointer]
             .into_iter()
             .chain(arguments.iter().cloned())
@@ -210,6 +219,15 @@ fn compile_partially_applied_entry_function(
         curried_entry_function_type.result().clone(),
         fmm::types::CallingConvention::Source,
     )
+}
+
+fn compile_partially_applied_drop_function(
+    module_builder: &fmm::build::ModuleBuilder,
+    entry_function_type: &fmm::types::Function,
+    closure_pointer_type: &fmm::types::Type,
+    argument_types: &[&fmm::types::Type],
+) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
+    todo!()
 }
 
 fn get_entry_function_type(closure_pointer: &fmm::build::TypedExpression) -> &fmm::types::Function {
