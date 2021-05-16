@@ -122,7 +122,7 @@ fn compile_first_thunk_entry(
         arguments.clone(),
         |instruction_builder| {
             let entry_function_pointer =
-                compile_entry_function_pointer_pointer(&instruction_builder, definition, types)?;
+                compile_entry_function_pointer(&instruction_builder, definition, types)?;
 
             instruction_builder.if_(
                 instruction_builder.compare_and_swap(
@@ -169,13 +169,11 @@ fn compile_first_thunk_entry(
                 |instruction_builder| {
                     Ok(instruction_builder.return_(
                         instruction_builder.call(
-                            instruction_builder.atomic_load(
-                                compile_entry_function_pointer_pointer(
-                                    &instruction_builder,
-                                    definition,
-                                    types,
-                                )?,
-                            )?,
+                            instruction_builder.atomic_load(compile_entry_function_pointer(
+                                &instruction_builder,
+                                definition,
+                                types,
+                            )?)?,
                             arguments
                                 .iter()
                                 .map(|argument| {
@@ -224,7 +222,7 @@ fn compile_locked_thunk_entry(
                     fmm::ir::ComparisonOperator::Equal,
                     fmm::build::bit_cast(
                         fmm::types::Primitive::PointerInteger,
-                        instruction_builder.atomic_load(compile_entry_function_pointer_pointer(
+                        instruction_builder.atomic_load(compile_entry_function_pointer(
                             &instruction_builder,
                             definition,
                             types,
@@ -265,7 +263,7 @@ fn compile_normal_body(
 }
 
 // TODO Move to the closures module.
-fn compile_entry_function_pointer_pointer(
+fn compile_entry_function_pointer(
     instruction_builder: &fmm::build::InstructionBuilder,
     definition: &eir::ir::Definition,
     types: &HashMap<String, eir::types::RecordBody>,
