@@ -141,13 +141,7 @@ fn compile_first_thunk_entry(
 
                     instruction_builder.store(
                         value.clone(),
-                        fmm::build::bit_cast(
-                            fmm::types::Pointer::new(types::compile(
-                                definition.result_type(),
-                                types,
-                            )),
-                            compile_environment_pointer(),
-                        ),
+                        compile_thunk_value_pointer(definition, types),
                     );
 
                     instruction_builder.store(
@@ -254,12 +248,8 @@ fn compile_normal_body(
     definition: &eir::ir::Definition,
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> Result<fmm::ir::Block, fmm::build::BuildError> {
-    Ok(
-        instruction_builder.return_(instruction_builder.load(fmm::build::bit_cast(
-            fmm::types::Pointer::new(types::compile(definition.result_type(), types)),
-            compile_environment_pointer(),
-        ))?),
-    )
+    Ok(instruction_builder
+        .return_(instruction_builder.load(compile_thunk_value_pointer(definition, types))?))
 }
 
 // TODO Move to the closures module.
@@ -339,6 +329,17 @@ fn compile_arguments(
         fmm::ir::Argument::new(argument.name(), types::compile(argument.type_(), types))
     }))
     .collect()
+}
+
+fn compile_thunk_value_pointer(
+    definition: &eir::ir::Definition,
+    types: &HashMap<String, eir::types::RecordBody>,
+) -> fmm::build::TypedExpression {
+    fmm::build::bit_cast(
+        fmm::types::Pointer::new(types::compile(definition.result_type(), types)),
+        compile_environment_pointer(),
+    )
+    .into()
 }
 
 fn compile_environment_pointer() -> fmm::build::TypedExpression {
