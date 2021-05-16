@@ -1,6 +1,9 @@
 use super::{expressions, reference_count, types, CompileError};
 use std::collections::HashMap;
 
+const DROP_FUNCTION_ARGUMENT_NAME: &str = "_closure";
+const DROP_FUNCTION_ARGUMENT_TYPE: fmm::types::Primitive = fmm::types::Primitive::PointerInteger;
+
 pub fn compile_load_entry_pointer(
     builder: &fmm::build::InstructionBuilder,
     closure_pointer: impl Into<fmm::build::TypedExpression>,
@@ -59,24 +62,14 @@ pub fn compile_drop_function(
     definition: &eir::ir::Definition,
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> Result<fmm::build::TypedExpression, CompileError> {
-    const ARGUMENT_NAME: &str = "_closure";
-    const ARGUMENT_TYPE: fmm::types::Primitive = fmm::types::Primitive::PointerInteger;
-
-    Ok(module_builder.define_anonymous_function(
-        vec![fmm::ir::Argument::new(ARGUMENT_NAME, ARGUMENT_TYPE)],
-        |builder| -> Result<_, CompileError> {
+    Ok(compile_drop_function_with_builder(
+        module_builder,
+        definition,
+        types,
+        |builder, environment_pointer| -> Result<_, CompileError> {
             let environment = builder.load(fmm::build::bit_cast(
                 fmm::types::Pointer::new(types::compile_environment(definition, types)),
-                compile_environment_pointer(
-                    &builder,
-                    fmm::build::bit_cast(
-                        fmm::types::Pointer::new(types::compile_unsized_closure(
-                            definition.type_(),
-                            types,
-                        )),
-                        fmm::build::variable(ARGUMENT_NAME, ARGUMENT_TYPE),
-                    ),
-                )?,
+                environment_pointer.clone(),
             ))?;
 
             for (index, free_variable) in definition.environment().iter().enumerate() {
@@ -87,6 +80,71 @@ pub fn compile_drop_function(
                     types,
                 )?;
             }
+
+            Ok(())
+        },
+    )?)
+}
+
+pub fn compile_normal_thunk_drop_function(
+    module_builder: &fmm::build::ModuleBuilder,
+    definition: &eir::ir::Definition,
+    types: &HashMap<String, eir::types::RecordBody>,
+) -> Result<fmm::build::TypedExpression, CompileError> {
+    Ok(compile_drop_function_with_builder(
+        module_builder,
+        definition,
+        types,
+        |builder, environment_pointer| -> Result<_, CompileError> {
+            reference_count::drop_expression(
+                &builder,
+                &builder.load(builder.union_address(
+                    fmm::build::bit_cast(
+                        fmm::types::Pointer::new(types::compile_closure_payload(definition, types)),
+                        environment_pointer.clone(),
+                    ),
+                    1,
+                )?)?,
+                definition.result_type(),
+                types,
+            )?;
+
+            Ok(())
+        },
+    )?)
+}
+
+fn compile_drop_function_with_builder(
+    module_builder: &fmm::build::ModuleBuilder,
+    definition: &eir::ir::Definition,
+    types: &HashMap<String, eir::types::RecordBody>,
+    compile_body: impl Fn(
+        &fmm::build::InstructionBuilder,
+        &fmm::build::TypedExpression,
+    ) -> Result<(), CompileError>,
+) -> Result<fmm::build::TypedExpression, CompileError> {
+    Ok(module_builder.define_anonymous_function(
+        vec![fmm::ir::Argument::new(
+            DROP_FUNCTION_ARGUMENT_NAME,
+            DROP_FUNCTION_ARGUMENT_TYPE,
+        )],
+        |builder| -> Result<_, CompileError> {
+            compile_body(
+                &builder,
+                &compile_environment_pointer(
+                    &builder,
+                    fmm::build::bit_cast(
+                        fmm::types::Pointer::new(types::compile_unsized_closure(
+                            definition.type_(),
+                            types,
+                        )),
+                        fmm::build::variable(
+                            DROP_FUNCTION_ARGUMENT_NAME,
+                            DROP_FUNCTION_ARGUMENT_TYPE,
+                        ),
+                    ),
+                )?,
+            )?;
 
             Ok(builder.return_(fmm::build::VOID_VALUE.clone()))
         },

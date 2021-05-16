@@ -1,5 +1,5 @@
 use super::error::CompileError;
-use crate::{expressions, types};
+use crate::{closures, expressions, types};
 use std::collections::HashMap;
 
 const ENVIRONMENT_NAME: &str = "_env";
@@ -121,13 +121,12 @@ fn compile_first_thunk_entry(
         &entry_function_name,
         arguments.clone(),
         |instruction_builder| {
+            let entry_function_pointer =
+                compile_entry_function_pointer_pointer(&instruction_builder, definition, types)?;
+
             instruction_builder.if_(
                 instruction_builder.compare_and_swap(
-                    compile_entry_function_pointer_pointer(
-                        &instruction_builder,
-                        definition,
-                        types,
-                    )?,
+                    entry_function_pointer.clone(),
                     fmm::build::variable(&entry_function_name, entry_function_type.clone()),
                     lock_entry_function.clone(),
                 ),
@@ -150,13 +149,19 @@ fn compile_first_thunk_entry(
                             compile_environment_pointer(),
                         ),
                     );
-                    instruction_builder.atomic_store(
-                        normal_entry_function.clone(),
-                        compile_entry_function_pointer_pointer(
-                            &instruction_builder,
+
+                    instruction_builder.store(
+                        closures::compile_normal_thunk_drop_function(
+                            module_builder,
                             definition,
                             types,
                         )?,
+                        compile_drop_function_pointer(&instruction_builder, definition, types)?,
+                    );
+
+                    instruction_builder.atomic_store(
+                        normal_entry_function.clone(),
+                        entry_function_pointer.clone(),
                     );
 
                     Ok(instruction_builder.return_(value))
@@ -259,26 +264,7 @@ fn compile_normal_body(
     )
 }
 
-fn compile_normal_thunk_drop_function(
-    module_builder: &fmm::build::ModuleBuilder,
-    definition: &eir::ir::Definition,
-    types: &HashMap<String, eir::types::RecordBody>,
-) -> Result<fmm::build::TypedExpression, CompileError> {
-    const ARGUMENT_NAME: &str = "_closure";
-    const ARGUMENT_TYPE: fmm::types::Primitive = fmm::types::Primitive::PointerInteger;
-
-    Ok(module_builder.define_anonymous_function(
-        vec![fmm::ir::Argument::new(ARGUMENT_NAME, ARGUMENT_TYPE)],
-        |builder| -> Result<_, CompileError> {
-            let closure_pointer = fmm::build::variable(ARGUMENT_NAME, ARGUMENT_TYPE);
-
-            Ok(builder.return_(fmm::build::VOID_VALUE.clone()))
-        },
-        fmm::build::VOID_TYPE.clone(),
-        fmm::types::CallingConvention::Target,
-    )?)
-}
-
+// TODO Move to the closures module.
 fn compile_entry_function_pointer_pointer(
     instruction_builder: &fmm::build::InstructionBuilder,
     definition: &eir::ir::Definition,
@@ -296,6 +282,19 @@ fn compile_entry_function_pointer_pointer(
     .into())
 }
 
+// TODO Move to the closures module.
+fn compile_drop_function_pointer(
+    instruction_builder: &fmm::build::InstructionBuilder,
+    definition: &eir::ir::Definition,
+    types: &HashMap<String, eir::types::RecordBody>,
+) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
+    Ok(instruction_builder.record_address(
+        compile_closure_pointer(instruction_builder, definition, types)?,
+        1,
+    )?)
+}
+
+// TODO Move to the closures module.
 fn compile_closure_pointer(
     instruction_builder: &fmm::build::InstructionBuilder,
     definition: &eir::ir::Definition,
