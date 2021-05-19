@@ -158,6 +158,7 @@ fn infer_in_function_application(
     variables: &HashMap<String, Type>,
 ) -> FunctionApplication {
     FunctionApplication::new(
+        application.type_().clone(),
         infer_in_expression(application.function(), variables),
         infer_in_expression(application.argument(), variables),
     )
@@ -310,7 +311,11 @@ mod tests {
                     Definition::new(
                         "f",
                         vec![Argument::new("x", Type::Number)],
-                        FunctionApplication::new(Variable::new("f"), Variable::new("x")),
+                        FunctionApplication::new(
+                            types::Function::new(Type::Number, Type::Number),
+                            Variable::new("f"),
+                            Variable::new("x")
+                        ),
                         Type::Number
                     ),
                     Expression::Number(42.0)
@@ -322,7 +327,11 @@ mod tests {
                 "f",
                 vec![],
                 vec![Argument::new("x", Type::Number)],
-                FunctionApplication::new(Variable::new("f"), Variable::new("x")),
+                FunctionApplication::new(
+                    types::Function::new(Type::Number, Type::Number),
+                    Variable::new("f"),
+                    Variable::new("x")
+                ),
                 Type::Number
             )
         );
@@ -343,7 +352,11 @@ mod tests {
                         Definition::new(
                             "g",
                             vec![Argument::new("x", Type::Number)],
-                            FunctionApplication::new(Variable::new("f"), Variable::new("x")),
+                            FunctionApplication::new(
+                                types::Function::new(Type::Number, Type::Number),
+                                Variable::new("f"),
+                                Variable::new("x")
+                            ),
                             Type::Number
                         ),
                         42.0,
@@ -360,7 +373,11 @@ mod tests {
                         types::Function::new(Type::Number, Type::Number)
                     )],
                     vec![Argument::new("x", Type::Number)],
-                    FunctionApplication::new(Variable::new("f"), Variable::new("x")),
+                    FunctionApplication::new(
+                        types::Function::new(Type::Number, Type::Number),
+                        Variable::new("f"),
+                        Variable::new("x")
+                    ),
                     Type::Number,
                     false
                 ),
