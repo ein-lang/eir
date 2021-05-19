@@ -2,7 +2,7 @@ use super::{
     arithmetic_operation::ArithmeticOperation, case::Case, clone_variables::CloneVariables,
     comparison_operation::ComparisonOperation, drop_variables::DropVariables,
     function_application::FunctionApplication, if_::If, let_::Let, let_recursive::LetRecursive,
-    record::Record, record_element::RecordElement, string::ByteString, variable::Variable,
+    record::Record, record_element::RecordElement, byte_string::ByteString, variable::Variable,
     variant::Variant,
 };
 

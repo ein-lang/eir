@@ -380,6 +380,10 @@ mod tests {
                     "g",
                     vec![eir::ir::Argument::new("x", eir::types::Type::Number)],
                     eir::ir::FunctionApplication::new(
+                        eir::types::Function::new(
+                            eir::types::Type::Number,
+                            eir::types::Type::Number,
+                        ),
                         eir::ir::Variable::new("f"),
                         eir::ir::Variable::new("x"),
                     ),
@@ -426,7 +430,14 @@ mod tests {
                             ),
                             eir::types::Type::Number,
                         ),
-                        eir::ir::FunctionApplication::new(eir::ir::Variable::new("g"), 42.0),
+                        eir::ir::FunctionApplication::new(
+                            eir::types::Function::new(
+                                eir::types::Type::Number,
+                                eir::types::Type::Number,
+                            ),
+                            eir::ir::Variable::new("g"),
+                            42.0,
+                        ),
                     ),
                     eir::types::Type::Number,
                 ),
@@ -455,12 +466,23 @@ mod tests {
                                 "h",
                                 vec![eir::ir::Argument::new("z", eir::types::Type::Number)],
                                 eir::ir::FunctionApplication::new(
+                                    eir::types::Function::new(
+                                        eir::types::Type::Number,
+                                        eir::types::Type::Number,
+                                    ),
                                     eir::ir::Variable::new("g"),
                                     eir::ir::Variable::new("z"),
                                 ),
                                 eir::types::Type::Number,
                             ),
-                            eir::ir::FunctionApplication::new(eir::ir::Variable::new("h"), 42.0),
+                            eir::ir::FunctionApplication::new(
+                                eir::types::Function::new(
+                                    eir::types::Type::Number,
+                                    eir::types::Type::Number,
+                                ),
+                                eir::ir::Variable::new("h"),
+                                42.0,
+                            ),
                         ),
                     ),
                     eir::types::Type::Number,
@@ -501,7 +523,21 @@ mod tests {
                             ),
                         ),
                         eir::ir::FunctionApplication::new(
-                            eir::ir::FunctionApplication::new(eir::ir::Variable::new("g"), 42.0),
+                            eir::types::Function::new(
+                                eir::types::Type::Number,
+                                eir::types::Type::Number,
+                            ),
+                            eir::ir::FunctionApplication::new(
+                                eir::types::Function::new(
+                                    eir::types::Type::Number,
+                                    eir::types::Function::new(
+                                        eir::types::Type::Number,
+                                        eir::types::Type::Number,
+                                    ),
+                                ),
+                                eir::ir::Variable::new("g"),
+                                42.0,
+                            ),
                             42.0,
                         ),
                     ),
@@ -817,7 +853,14 @@ mod tests {
                     eir::ir::Definition::new(
                         "g",
                         vec![eir::ir::Argument::new("x", eir::types::Type::Number)],
-                        eir::ir::FunctionApplication::new(eir::ir::Variable::new("f"), 42.0),
+                        eir::ir::FunctionApplication::new(
+                            eir::types::Function::new(
+                                eir::types::Type::Number,
+                                eir::types::Type::Number,
+                            ),
+                            eir::ir::Variable::new("f"),
+                            42.0,
+                        ),
                         eir::types::Type::Number,
                     ),
                 ]));
@@ -839,7 +882,21 @@ mod tests {
                         "g",
                         vec![eir::ir::Argument::new("x", eir::types::Type::Number)],
                         eir::ir::FunctionApplication::new(
-                            eir::ir::FunctionApplication::new(eir::ir::Variable::new("f"), 42.0),
+                            eir::types::Function::new(
+                                eir::types::Type::Boolean,
+                                eir::types::Type::Number,
+                            ),
+                            eir::ir::FunctionApplication::new(
+                                eir::types::Function::new(
+                                    eir::types::Type::Number,
+                                    eir::types::Function::new(
+                                        eir::types::Type::Boolean,
+                                        eir::types::Type::Number,
+                                    ),
+                                ),
+                                eir::ir::Variable::new("f"),
+                                42.0,
+                            ),
                             true,
                         ),
                         eir::types::Type::Number,
@@ -864,8 +921,29 @@ mod tests {
                         "g",
                         vec![eir::ir::Argument::new("x", eir::types::Type::Number)],
                         eir::ir::FunctionApplication::new(
+                            eir::types::Function::new(
+                                eir::types::Type::ByteString,
+                                eir::types::Type::Number,
+                            ),
                             eir::ir::FunctionApplication::new(
+                                eir::types::Function::new(
+                                    eir::types::Type::Boolean,
+                                    eir::types::Function::new(
+                                        eir::types::Type::ByteString,
+                                        eir::types::Type::Number,
+                                    ),
+                                ),
                                 eir::ir::FunctionApplication::new(
+                                    eir::types::Function::new(
+                                        eir::types::Type::Number,
+                                        eir::types::Function::new(
+                                            eir::types::Type::Boolean,
+                                            eir::types::Function::new(
+                                                eir::types::Type::ByteString,
+                                                eir::types::Type::Number,
+                                            ),
+                                        ),
+                                    ),
                                     eir::ir::Variable::new("f"),
                                     42.0,
                                 ),
@@ -893,7 +971,17 @@ mod tests {
                     eir::ir::Definition::new(
                         "g",
                         vec![eir::ir::Argument::new("x", eir::types::Type::Number)],
-                        eir::ir::FunctionApplication::new(eir::ir::Variable::new("f"), 42.0),
+                        eir::ir::FunctionApplication::new(
+                            eir::types::Function::new(
+                                eir::types::Type::Number,
+                                eir::types::Function::new(
+                                    eir::types::Type::Boolean,
+                                    eir::types::Type::Number,
+                                ),
+                            ),
+                            eir::ir::Variable::new("f"),
+                            42.0,
+                        ),
                         eir::types::Function::new(
                             eir::types::Type::Boolean,
                             eir::types::Type::Number,
@@ -918,7 +1006,20 @@ mod tests {
                     eir::ir::Definition::new(
                         "g",
                         vec![eir::ir::Argument::new("x", eir::types::Type::Number)],
-                        eir::ir::FunctionApplication::new(eir::ir::Variable::new("f"), 42.0),
+                        eir::ir::FunctionApplication::new(
+                            eir::types::Function::new(
+                                eir::types::Type::Number,
+                                eir::types::Function::new(
+                                    eir::types::Type::Boolean,
+                                    eir::types::Function::new(
+                                        eir::types::Type::ByteString,
+                                        eir::types::Type::Number,
+                                    ),
+                                ),
+                            ),
+                            eir::ir::Variable::new("f"),
+                            42.0,
+                        ),
                         eir::types::Function::new(
                             eir::types::Type::Boolean,
                             eir::types::Function::new(
@@ -947,7 +1048,27 @@ mod tests {
                         "g",
                         vec![eir::ir::Argument::new("x", eir::types::Type::Number)],
                         eir::ir::FunctionApplication::new(
-                            eir::ir::FunctionApplication::new(eir::ir::Variable::new("f"), 42.0),
+                            eir::types::Function::new(
+                                eir::types::Type::Boolean,
+                                eir::types::Function::new(
+                                    eir::types::Type::ByteString,
+                                    eir::types::Type::Number,
+                                ),
+                            ),
+                            eir::ir::FunctionApplication::new(
+                                eir::types::Function::new(
+                                    eir::types::Type::Number,
+                                    eir::types::Function::new(
+                                        eir::types::Type::Boolean,
+                                        eir::types::Function::new(
+                                            eir::types::Type::ByteString,
+                                            eir::types::Type::Number,
+                                        ),
+                                    ),
+                                ),
+                                eir::ir::Variable::new("f"),
+                                42.0,
+                            ),
                             true,
                         ),
                         eir::types::Function::new(
@@ -986,7 +1107,21 @@ mod tests {
                         "g",
                         vec![eir::ir::Argument::new("x", eir::types::Type::Number)],
                         eir::ir::FunctionApplication::new(
-                            eir::ir::FunctionApplication::new(eir::ir::Variable::new("f"), 111.0),
+                            eir::types::Function::new(
+                                eir::types::Type::Number,
+                                eir::types::Type::Number,
+                            ),
+                            eir::ir::FunctionApplication::new(
+                                eir::types::Function::new(
+                                    eir::types::Type::Number,
+                                    eir::types::Function::new(
+                                        eir::types::Type::Number,
+                                        eir::types::Type::Number,
+                                    ),
+                                ),
+                                eir::ir::Variable::new("f"),
+                                111.0,
+                            ),
                             222.0,
                         ),
                         eir::types::Type::Number,
