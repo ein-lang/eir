@@ -1,18 +1,29 @@
 use super::expression::Expression;
+use crate::types;
 use std::sync::Arc;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct FunctionApplication {
+    type_: types::Function,
     function: Arc<Expression>,
     argument: Arc<Expression>,
 }
 
 impl FunctionApplication {
-    pub fn new(function: impl Into<Expression>, argument: impl Into<Expression>) -> Self {
+    pub fn new(
+        type_: types::Function,
+        function: impl Into<Expression>,
+        argument: impl Into<Expression>,
+    ) -> Self {
         Self {
+            type_,
             function: function.into().into(),
             argument: argument.into().into(),
         }
+    }
+
+    pub fn type_(&self) -> &types::Function {
+        &self.type_
     }
 
     pub fn function(&self) -> &Expression {
@@ -51,17 +62,27 @@ impl FunctionApplication {
 #[cfg(test)]
 mod tests {
     use super::{super::variable::Variable, *};
+    use crate::types::Type;
+    use once_cell::sync::Lazy;
+
+    static FAKE_FUNCTION_TYPE: Lazy<types::Function> =
+        Lazy::new(|| types::Function::new(Type::Number, Type::Number));
 
     #[test]
     fn first_function() {
         assert_eq!(
-            FunctionApplication::new(Variable::new("f"), 42.0).first_function(),
+            FunctionApplication::new(FAKE_FUNCTION_TYPE.clone(), Variable::new("f"), 42.0)
+                .first_function(),
             &Variable::new("f").into()
         );
 
         assert_eq!(
-            FunctionApplication::new(FunctionApplication::new(Variable::new("f"), 1.0), 2.0)
-                .first_function(),
+            FunctionApplication::new(
+                FAKE_FUNCTION_TYPE.clone(),
+                FunctionApplication::new(FAKE_FUNCTION_TYPE.clone(), Variable::new("f"), 1.0),
+                2.0
+            )
+            .first_function(),
             &Variable::new("f").into()
         );
     }
@@ -69,7 +90,7 @@ mod tests {
     #[test]
     fn arguments() {
         assert_eq!(
-            FunctionApplication::new(Variable::new("f"), 42.0)
+            FunctionApplication::new(FAKE_FUNCTION_TYPE.clone(), Variable::new("f"), 42.0)
                 .arguments()
                 .into_iter()
                 .cloned()
@@ -78,11 +99,15 @@ mod tests {
         );
 
         assert_eq!(
-            FunctionApplication::new(FunctionApplication::new(Variable::new("f"), 1.0), 2.0)
-                .arguments()
-                .into_iter()
-                .cloned()
-                .collect::<Vec<_>>(),
+            FunctionApplication::new(
+                FAKE_FUNCTION_TYPE.clone(),
+                FunctionApplication::new(FAKE_FUNCTION_TYPE.clone(), Variable::new("f"), 1.0),
+                2.0
+            )
+            .arguments()
+            .into_iter()
+            .cloned()
+            .collect::<Vec<_>>(),
             vec![1.0.into(), 2.0.into()]
         );
     }

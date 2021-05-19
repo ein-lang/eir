@@ -97,15 +97,17 @@ fn check_expression(
 
             Type::Boolean
         }
-        Expression::FunctionApplication(function_application) => {
-            let function_type = check_expression(function_application.function(), variables)?
+        Expression::FunctionApplication(application) => {
+            let function_type = check_expression(application.function(), variables)?
                 .into_function()
-                .ok_or_else(|| {
-                    TypeCheckError::FunctionExpected(function_application.function().clone())
-                })?;
+                .ok_or_else(|| TypeCheckError::FunctionExpected(application.function().clone()))?;
 
             check_equality(
-                &check_expression(function_application.argument(), variables)?,
+                &application.type_().clone().into(),
+                &function_type.clone().into(),
+            )?;
+            check_equality(
+                &check_expression(application.argument(), variables)?,
                 function_type.argument(),
             )?;
 
@@ -364,7 +366,11 @@ mod tests {
             Definition::new(
                 "g",
                 vec![Argument::new("x", Type::Number)],
-                FunctionApplication::new(Variable::new("f"), 42.0),
+                FunctionApplication::new(
+                    types::Function::new(Type::Number, Type::Number),
+                    Variable::new("f"),
+                    42.0,
+                ),
                 Type::Number,
             ),
         ]);
@@ -374,20 +380,12 @@ mod tests {
 
     #[test]
     fn fail_to_check_types_of_function_applications() {
-        let module = create_module_from_definitions(vec![
-            Definition::new(
-                "f",
-                vec![Argument::new("x", Type::Number)],
-                42.0,
-                Type::Number,
-            ),
-            Definition::new(
-                "g",
-                vec![Argument::new("x", Type::Number)],
-                FunctionApplication::new(FunctionApplication::new(Variable::new("f"), 42.0), 42.0),
-                Type::Number,
-            ),
-        ]);
+        let module = create_module_from_definitions(vec![Definition::new(
+            "f",
+            vec![Argument::new("x", Type::Number)],
+            FunctionApplication::new(types::Function::new(Type::Number, Type::Number), 42.0, 42.0),
+            Type::Number,
+        )]);
 
         assert!(matches!(
             check_types(&module),
@@ -463,7 +461,11 @@ mod tests {
             vec![Definition::new(
                 "g",
                 vec![Argument::new("x", Type::Number)],
-                FunctionApplication::new(Variable::new("f"), Variable::new("x")),
+                FunctionApplication::new(
+                    types::Function::new(Type::Number, Type::Number),
+                    Variable::new("f"),
+                    Variable::new("x"),
+                ),
                 Type::Number,
             )],
         );
@@ -804,7 +806,11 @@ mod tests {
                 vec![Definition::new(
                     "g",
                     vec![Argument::new("x", Type::Number)],
-                    FunctionApplication::new(Variable::new("f"), Variable::new("x")),
+                    FunctionApplication::new(
+                        types::Function::new(Type::Number, Type::Number),
+                        Variable::new("f"),
+                        Variable::new("x"),
+                    ),
                     Type::Number,
                 )],
             );
