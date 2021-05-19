@@ -175,7 +175,7 @@ fn convert_expression(
                 convert_expression(application.function(), owned_variables, &moved_variables)?;
 
             (
-                FunctionApplication::new(function, argument).into(),
+                FunctionApplication::new(application.type_().clone(), function, argument).into(),
                 moved_variables,
             )
         }
@@ -474,7 +474,12 @@ mod tests {
         fn convert_single() {
             assert_eq!(
                 convert_expression(
-                    &FunctionApplication::new(Variable::new("f"), Variable::new("x")).into(),
+                    &FunctionApplication::new(
+                        types::Function::new(Type::Number, Type::Number),
+                        Variable::new("f"),
+                        Variable::new("x")
+                    )
+                    .into(),
                     &vec![
                         (
                             "f".into(),
@@ -489,6 +494,7 @@ mod tests {
                 .unwrap(),
                 (
                     FunctionApplication::new(
+                        types::Function::new(Type::Number, Type::Number),
                         CloneVariables::new(
                             vec![(
                                 "f".into(),
@@ -514,14 +520,26 @@ mod tests {
             assert_eq!(
                 convert_expression(
                     &FunctionApplication::new(
-                        FunctionApplication::new(Variable::new("f"), Variable::new("x")),
+                        types::Function::new(Type::Number, Type::Number),
+                        FunctionApplication::new(
+                            types::Function::new(
+                                Type::Number,
+                                types::Function::new(Type::Number, Type::Number)
+                            ),
+                            Variable::new("f"),
+                            Variable::new("x")
+                        ),
                         Variable::new("x")
                     )
                     .into(),
                     &vec![
                         (
                             "f".into(),
-                            types::Function::new(Type::Number, Type::Number).into()
+                            types::Function::new(
+                                Type::Number,
+                                types::Function::new(Type::Number, Type::Number)
+                            )
+                            .into()
                         ),
                         ("x".into(), Type::Number)
                     ]
@@ -532,7 +550,12 @@ mod tests {
                 .unwrap(),
                 (
                     FunctionApplication::new(
+                        types::Function::new(Type::Number, Type::Number),
                         FunctionApplication::new(
+                            types::Function::new(
+                                Type::Number,
+                                types::Function::new(Type::Number, Type::Number)
+                            ),
                             Variable::new("f"),
                             CloneVariables::new(
                                 vec![("x".into(), Type::Number)].into_iter().collect(),
@@ -720,6 +743,15 @@ mod tests {
 
         #[test]
         fn convert_with_cloned_variable() {
+            let f_type = types::Function::new(Type::Number, Type::Number);
+            let g_type = types::Function::new(
+                types::Function::new(Type::Number, Type::Number),
+                types::Function::new(
+                    types::Function::new(Type::Number, Type::Number),
+                    Type::Number,
+                ),
+            );
+
             assert_eq!(
                 convert_expression(
                     &LetRecursive::new(
@@ -730,7 +762,12 @@ mod tests {
                             Type::Number
                         ),
                         FunctionApplication::new(
-                            FunctionApplication::new(Variable::new("g"), Variable::new("f")),
+                            f_type.clone(),
+                            FunctionApplication::new(
+                                g_type.clone(),
+                                Variable::new("g"),
+                                Variable::new("f")
+                            ),
                             Variable::new("f")
                         )
                     )
@@ -759,7 +796,9 @@ mod tests {
                         Type::Number
                     ),
                     FunctionApplication::new(
+                        f_type,
                         FunctionApplication::new(
+                            g_type,
                             Variable::new("g"),
                             CloneVariables::new(
                                 vec![(
@@ -889,7 +928,11 @@ mod tests {
                             42.0,
                             Type::Number
                         ),
-                        FunctionApplication::new(Variable::new("f"), Variable::new("y"))
+                        FunctionApplication::new(
+                            types::Function::new(Type::Number, Type::Number),
+                            Variable::new("f"),
+                            Variable::new("y")
+                        )
                     )
                     .into(),
                     &vec![("y".into(), Type::Number)].into_iter().collect(),
@@ -919,7 +962,11 @@ mod tests {
                                 ),
                                 Type::Number
                             ),
-                            FunctionApplication::new(Variable::new("f"), Variable::new("y"))
+                            FunctionApplication::new(
+                                types::Function::new(Type::Number, Type::Number),
+                                Variable::new("f"),
+                                Variable::new("y")
+                            )
                         )
                     )
                     .into(),
