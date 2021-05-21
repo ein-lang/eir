@@ -1,4 +1,4 @@
-use super::{super::error::CompileError, pointers, record_utilities};
+use super::{super::error::CompileError, functions, pointers, record_utilities};
 use crate::{
     type_information::{
         TYPE_INFORMATION_CLONE_FUNCTION_ELEMENT_INDEX, TYPE_INFORMATION_DROP_FUNCTION_ELEMENT_INDEX,
@@ -17,7 +17,7 @@ pub fn clone_expression(
         eir::types::Type::ByteString => {
             pointers::clone_pointer(builder, &builder.deconstruct_record(expression.clone(), 0)?)?
         }
-        eir::types::Type::Function(_) => todo!(),
+        eir::types::Type::Function(_) => functions::clone_function(builder, expression)?,
         eir::types::Type::Record(record) => {
             builder.call(
                 fmm::build::variable(
@@ -56,7 +56,7 @@ pub fn drop_expression(
         eir::types::Type::ByteString => {
             pointers::drop_pointer(builder, &builder.deconstruct_record(expression.clone(), 0)?)?
         }
-        eir::types::Type::Function(_) => todo!(),
+        eir::types::Type::Function(_) => functions::drop_function(builder, expression)?,
         eir::types::Type::Record(record) => {
             builder.call(
                 fmm::build::variable(
