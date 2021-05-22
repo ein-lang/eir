@@ -1,5 +1,5 @@
 use super::super::error::CompileError;
-use super::heap::COUNTER_TYPE;
+use super::heap::{self, COUNTER_TYPE};
 
 pub fn clone_pointer(
     builder: &fmm::build::InstructionBuilder,
@@ -37,10 +37,13 @@ pub fn drop_pointer(
             |builder| -> Result<_, CompileError> {
                 drop_content(&builder)?;
 
-                builder.free_heap(fmm::build::bit_cast(
-                    fmm::types::Pointer::new(fmm::types::Primitive::Integer8),
-                    expression.clone(),
-                ))?;
+                heap::free_heap(
+                    &builder,
+                    fmm::build::bit_cast(
+                        fmm::types::Pointer::new(fmm::types::Primitive::Integer8),
+                        expression.clone(),
+                    ),
+                )?;
 
                 Ok(builder.branch(fmm::build::VOID_VALUE.clone()))
             },

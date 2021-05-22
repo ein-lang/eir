@@ -14,3 +14,18 @@ pub fn allocate_heap(
         1,
     )?)
 }
+
+pub fn free_heap(
+    builder: &fmm::build::InstructionBuilder,
+    pointer: impl Into<fmm::build::TypedExpression>,
+) -> Result<(), CompileError> {
+    builder.free_heap(builder.pointer_address(
+        fmm::build::bit_cast(
+            fmm::types::Pointer::new(fmm::types::Primitive::PointerInteger),
+            pointer,
+        ),
+        fmm::ir::Primitive::PointerInteger(-1),
+    )?)?;
+
+    Ok(())
+}
