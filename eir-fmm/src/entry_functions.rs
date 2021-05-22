@@ -45,7 +45,7 @@ fn compile_thunk(
     variables: &HashMap<String, fmm::build::TypedExpression>,
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> Result<fmm::build::TypedExpression, CompileError> {
-    compile_first_thunk_entry(
+    compile_initial_thunk_entry(
         module_builder,
         definition,
         compile_normal_thunk_entry(module_builder, definition, types)?,
@@ -107,7 +107,7 @@ fn compile_body(
     )
 }
 
-fn compile_first_thunk_entry(
+fn compile_initial_thunk_entry(
     module_builder: &fmm::build::ModuleBuilder,
     definition: &eir::ir::Definition,
     normal_entry_function: fmm::build::TypedExpression,
