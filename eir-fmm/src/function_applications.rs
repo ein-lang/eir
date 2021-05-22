@@ -93,7 +93,7 @@ fn compile_direct_call(
                 get_entry_function_type(&closure_pointer),
                 arguments.len(),
             ),
-            closures::compile_load_entry_pointer(&instruction_builder, closure_pointer.clone())?,
+            closures::compile_load_entry_function(&instruction_builder, closure_pointer.clone())?,
         ),
         vec![
             fmm::build::bit_cast(types::compile_untyped_closure_pointer(), closure_pointer).into(),

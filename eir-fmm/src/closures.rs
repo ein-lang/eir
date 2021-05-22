@@ -8,7 +8,7 @@ const DROP_FUNCTION_ARGUMENT_TYPE: fmm::types::Primitive = fmm::types::Primitive
 static DUMMY_FUNCTION_TYPE: Lazy<eir::types::Function> =
     Lazy::new(|| eir::types::Function::new(eir::types::Type::Number, eir::types::Type::Number));
 
-pub fn compile_load_entry_pointer(
+pub fn compile_load_entry_function(
     builder: &fmm::build::InstructionBuilder,
     closure_pointer: impl Into<fmm::build::TypedExpression>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
