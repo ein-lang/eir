@@ -207,13 +207,18 @@ fn compile_entry_function<'a>(
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> fmm::types::Function {
     fmm::types::Function::new(
-        vec![fmm::types::Pointer::new(compile_unsized_environment()).into()]
+        vec![compile_untyped_closure_pointer().into()]
             .into_iter()
             .chain(arguments.into_iter().map(|type_| compile(type_, types)))
             .collect(),
         compile(result, types),
         fmm::types::CallingConvention::Source,
     )
+}
+
+// We can't type this strongly as F-- doesn't support recursive types.
+pub fn compile_untyped_closure_pointer() -> fmm::types::Pointer {
+    fmm::types::Pointer::new(fmm::types::Record::new(vec![]))
 }
 
 pub fn compile_foreign_function(

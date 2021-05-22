@@ -35,11 +35,7 @@ pub fn compile_environment_pointer(
     builder: &fmm::build::InstructionBuilder,
     closure_pointer: impl Into<fmm::build::TypedExpression>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
-    Ok(fmm::build::bit_cast(
-        fmm::types::Pointer::new(types::compile_unsized_environment()),
-        builder.record_address(closure_pointer, 3)?,
-    )
-    .into())
+    builder.record_address(closure_pointer, 3)
 }
 
 pub fn compile_closure_content(
