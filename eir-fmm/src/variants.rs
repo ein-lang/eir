@@ -1,4 +1,4 @@
-use crate::{types, CompileError};
+use crate::{reference_count, types, CompileError};
 use std::collections::HashMap;
 
 pub const VARIANT_TAG_ELEMENT_INDEX: usize = 0;
@@ -18,7 +18,7 @@ pub fn compile_boxed_payload(
         types::compile_variant_payload(),
         // Strings have two words.
         if is_payload_boxed(type_)? {
-            let pointer = builder.allocate_heap(payload.type_().clone());
+            let pointer = reference_count::allocate_heap(builder, payload.type_().clone())?;
 
             builder.store(payload.clone(), pointer.clone());
 

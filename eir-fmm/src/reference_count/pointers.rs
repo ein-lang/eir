@@ -1,4 +1,5 @@
 use super::super::error::CompileError;
+use super::heap::COUNTER_TYPE;
 
 pub fn clone_pointer(
     builder: &fmm::build::InstructionBuilder,
@@ -112,10 +113,7 @@ fn get_counter_pointer(
     heap_pointer: &fmm::build::TypedExpression,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
     builder.pointer_address(
-        fmm::build::bit_cast(
-            fmm::types::Pointer::new(fmm::types::Primitive::PointerInteger),
-            heap_pointer.clone(),
-        ),
+        fmm::build::bit_cast(fmm::types::Pointer::new(COUNTER_TYPE), heap_pointer.clone()),
         fmm::ir::Primitive::PointerInteger(-1),
     )
 }

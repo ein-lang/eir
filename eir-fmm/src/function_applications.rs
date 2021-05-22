@@ -1,5 +1,5 @@
 use super::{
-    closures, expressions,
+    closures, expressions, reference_count,
     types::{self, FUNCTION_ARGUMENT_OFFSET},
 };
 use crate::CompileError;
@@ -156,7 +156,8 @@ fn compile_create_closure(
             .chain(arguments.iter().cloned())
             .collect::<Vec<_>>(),
     );
-    let closure_pointer = instruction_builder.allocate_heap(closure.type_().clone());
+    let closure_pointer =
+        reference_count::allocate_heap(instruction_builder, closure.type_().clone())?;
     instruction_builder.store(closure, closure_pointer.clone());
 
     Ok(fmm::build::bit_cast(

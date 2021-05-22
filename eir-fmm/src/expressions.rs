@@ -106,7 +106,8 @@ pub fn compile(
             );
 
             if types::is_record_boxed(record.type_(), types) {
-                let pointer = instruction_builder.allocate_heap(unboxed.type_().clone());
+                let pointer =
+                    reference_count::allocate_heap(instruction_builder, unboxed.type_().clone())?;
 
                 instruction_builder.store(unboxed, pointer.clone());
 
@@ -320,8 +321,10 @@ fn compile_let_recursive(
     variables: &HashMap<String, fmm::build::TypedExpression>,
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> Result<fmm::build::TypedExpression, CompileError> {
-    let closure_pointer =
-        instruction_builder.allocate_heap(types::compile_sized_closure(let_.definition(), types));
+    let closure_pointer = reference_count::allocate_heap(
+        instruction_builder,
+        types::compile_sized_closure(let_.definition(), types),
+    )?;
 
     instruction_builder.store(
         closures::compile_closure_content(
