@@ -1,8 +1,12 @@
 use super::{expressions, reference_count, types, CompileError};
+use once_cell::sync::Lazy;
 use std::collections::HashMap;
 
 const DROP_FUNCTION_ARGUMENT_NAME: &str = "_closure";
 const DROP_FUNCTION_ARGUMENT_TYPE: fmm::types::Primitive = fmm::types::Primitive::PointerInteger;
+
+static DUMMY_FUNCTION_TYPE: Lazy<eir::types::Function> =
+    Lazy::new(|| eir::types::Function::new(eir::types::Type::Number, eir::types::Type::Number));
 
 pub fn compile_load_entry_pointer(
     builder: &fmm::build::InstructionBuilder,
@@ -64,7 +68,6 @@ pub fn compile_drop_function(
 ) -> Result<fmm::build::TypedExpression, CompileError> {
     Ok(compile_drop_function_with_builder(
         module_builder,
-        definition,
         types,
         |builder, environment_pointer| -> Result<_, CompileError> {
             let environment = builder.load(fmm::build::bit_cast(
@@ -93,7 +96,6 @@ pub fn compile_normal_thunk_drop_function(
 ) -> Result<fmm::build::TypedExpression, CompileError> {
     Ok(compile_drop_function_with_builder(
         module_builder,
-        definition,
         types,
         |builder, environment_pointer| -> Result<_, CompileError> {
             reference_count::drop_expression(
@@ -114,9 +116,53 @@ pub fn compile_normal_thunk_drop_function(
     )?)
 }
 
+pub fn compile_drop_function_for_partially_applied_closure(
+    module_builder: &fmm::build::ModuleBuilder,
+    closure_pointer_type: &fmm::types::Type,
+    argument_types: &[(&fmm::types::Type, &eir::types::Type)],
+    types: &HashMap<String, eir::types::RecordBody>,
+) -> Result<fmm::build::TypedExpression, CompileError> {
+    Ok(compile_drop_function_with_builder(
+        module_builder,
+        types,
+        |builder, environment_pointer| -> Result<_, CompileError> {
+            let environment = builder.load(fmm::build::bit_cast(
+                fmm::types::Pointer::new(fmm::types::Record::new(
+                    vec![closure_pointer_type.clone()]
+                        .into_iter()
+                        .chain(
+                            argument_types
+                                .iter()
+                                .map(|(fmm_type, _)| fmm_type)
+                                .cloned()
+                                .cloned(),
+                        )
+                        .collect(),
+                )),
+                environment_pointer.clone(),
+            ))?;
+
+            reference_count::drop_function(
+                &builder,
+                &builder.deconstruct_record(environment.clone(), 0)?,
+            )?;
+
+            for (index, (_, eir_type)) in argument_types.iter().enumerate() {
+                reference_count::drop_expression(
+                    &builder,
+                    &builder.deconstruct_record(environment.clone(), index + 1)?,
+                    eir_type,
+                    types,
+                )?;
+            }
+
+            Ok(())
+        },
+    )?)
+}
+
 fn compile_drop_function_with_builder(
     module_builder: &fmm::build::ModuleBuilder,
-    definition: &eir::ir::Definition,
     types: &HashMap<String, eir::types::RecordBody>,
     compile_body: impl Fn(
         &fmm::build::InstructionBuilder,
@@ -135,7 +181,7 @@ fn compile_drop_function_with_builder(
                     &builder,
                     fmm::build::bit_cast(
                         fmm::types::Pointer::new(types::compile_unsized_closure(
-                            definition.type_(),
+                            &DUMMY_FUNCTION_TYPE,
                             types,
                         )),
                         fmm::build::variable(
