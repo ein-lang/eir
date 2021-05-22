@@ -1,6 +1,7 @@
-use super::super::types;
-use super::{super::error::CompileError, record_utilities};
-use super::{expressions, pointers};
+use super::{
+    super::{error::CompileError, types},
+    expressions, pointers, record_utilities,
+};
 use std::collections::HashMap;
 
 const ARGUMENT_NAME: &str = "_record";

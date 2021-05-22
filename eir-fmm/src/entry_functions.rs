@@ -313,11 +313,10 @@ fn compile_thunk_value_pointer(
     definition: &eir::ir::Definition,
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> Result<fmm::build::TypedExpression, CompileError> {
-    Ok(instruction_builder
-        .union_address(
-            compile_payload_pointer(instruction_builder, definition, types)?,
-            1,
-        )?)
+    Ok(instruction_builder.union_address(
+        compile_payload_pointer(instruction_builder, definition, types)?,
+        1,
+    )?)
 }
 
 fn compile_payload_pointer(

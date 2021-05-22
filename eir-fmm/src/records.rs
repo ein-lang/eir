@@ -1,5 +1,4 @@
-use crate::error::CompileError;
-use crate::types;
+use crate::{error::CompileError, types};
 use std::collections::HashMap;
 
 pub fn get_record_element(

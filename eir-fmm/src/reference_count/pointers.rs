@@ -1,5 +1,7 @@
-use super::super::error::CompileError;
-use super::heap::{self, COUNTER_TYPE};
+use super::{
+    super::error::CompileError,
+    heap::{self, COUNTER_TYPE},
+};
 
 pub fn clone_pointer(
     builder: &fmm::build::InstructionBuilder,

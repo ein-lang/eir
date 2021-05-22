@@ -1,6 +1,4 @@
-use crate::error::CompileError;
-use crate::reference_count;
-use crate::types;
+use crate::{error::CompileError, reference_count, types};
 use std::collections::HashMap;
 
 pub const TYPE_INFORMATION_CLONE_FUNCTION_ELEMENT_INDEX: usize = 0;

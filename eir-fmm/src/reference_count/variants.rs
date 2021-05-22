@@ -1,6 +1,4 @@
-use super::super::error::CompileError;
-use super::expressions;
-use super::pointers;
+use super::{super::error::CompileError, expressions, pointers};
 use crate::types;
 use std::collections::HashMap;
 
