@@ -259,7 +259,6 @@ fn compile_normal_body(
     )
 }
 
-// TODO Move to the closures module.
 fn compile_entry_function_pointer(
     instruction_builder: &fmm::build::InstructionBuilder,
     definition: &eir::ir::Definition,
@@ -277,14 +276,15 @@ fn compile_entry_function_pointer(
     .into())
 }
 
-// TODO Move to the closures module.
 fn compile_drop_function_pointer(
     instruction_builder: &fmm::build::InstructionBuilder,
     definition: &eir::ir::Definition,
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
-    Ok(instruction_builder
-        .record_address(compile_closure_pointer(definition.type_(), types)?, 1)?)
+    Ok(closures::compile_drop_function_pointer(
+        instruction_builder,
+        compile_closure_pointer(definition.type_(), types)?,
+    )?)
 }
 
 fn compile_arguments(

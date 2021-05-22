@@ -24,11 +24,18 @@ pub fn compile_load_entry_function(
     builder.atomic_load(compile_entry_function_pointer(builder, closure_pointer)?)
 }
 
+pub fn compile_drop_function_pointer(
+    builder: &fmm::build::InstructionBuilder,
+    closure_pointer: impl Into<fmm::build::TypedExpression>,
+) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
+    builder.record_address(closure_pointer, 1)
+}
+
 pub fn compile_load_drop_function(
     builder: &fmm::build::InstructionBuilder,
     closure_pointer: impl Into<fmm::build::TypedExpression>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
-    builder.load(builder.record_address(closure_pointer, 1)?)
+    builder.load(compile_drop_function_pointer(builder, closure_pointer)?)
 }
 
 pub fn compile_load_arity(
