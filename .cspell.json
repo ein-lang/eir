@@ -13,6 +13,7 @@
     "cmpxchg",
     "codecov",
     "concat",
+    "hasher",
     "idempotently",
     "intrinsics",
     "llvm",

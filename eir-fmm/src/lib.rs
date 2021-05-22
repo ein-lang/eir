@@ -7,8 +7,11 @@ mod expressions;
 mod foreign_declarations;
 mod foreign_definitions;
 mod function_applications;
+mod records;
+mod reference_count;
 mod type_information;
 mod types;
+mod variants;
 
 use declarations::compile_declaration;
 use definitions::compile_definition;
@@ -31,7 +34,12 @@ pub fn compile(module: &eir::ir::Module) -> Result<fmm::ir::Module, CompileError
         .collect();
 
     for type_ in &eir::analysis::collect_variant_types(&module) {
-        compile_type_information_global_variable(&module_builder, type_)?;
+        compile_type_information_global_variable(&module_builder, type_, &types)?;
+    }
+
+    for definition in module.type_definitions() {
+        reference_count::compile_record_clone_function(&module_builder, definition, &types)?;
+        reference_count::compile_record_drop_function(&module_builder, definition, &types)?;
     }
 
     for declaration in module.foreign_declarations() {
@@ -42,7 +50,7 @@ pub fn compile(module: &eir::ir::Module) -> Result<fmm::ir::Module, CompileError
         compile_declaration(&module_builder, declaration, &types);
     }
 
-    let global_variables = compile_global_variables(&module, &types);
+    let global_variables = compile_global_variables(&module, &types)?;
 
     for definition in module.definitions() {
         compile_definition(&module_builder, definition, &global_variables, &types)?;
@@ -82,7 +90,7 @@ pub fn compile(module: &eir::ir::Module) -> Result<fmm::ir::Module, CompileError
 fn compile_global_variables(
     module: &eir::ir::Module,
     types: &HashMap<String, eir::types::RecordBody>,
-) -> HashMap<String, fmm::build::TypedExpression> {
+) -> Result<HashMap<String, fmm::build::TypedExpression>, CompileError> {
     module
         .foreign_declarations()
         .iter()
@@ -126,7 +134,8 @@ fn compile_global_variables(
                 .into(),
             )
         }))
-        .collect()
+        .map(|(name, expression)| Ok((name, reference_count::compile_tagged_pointer(&expression)?)))
+        .collect::<Result<_, _>>()
 }
 
 #[cfg(test)]

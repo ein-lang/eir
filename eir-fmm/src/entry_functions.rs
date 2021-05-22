@@ -1,14 +1,15 @@
-use crate::{expressions, types};
+use super::error::CompileError;
+use crate::{closures, expressions, reference_count, types};
 use std::collections::HashMap;
 
-const ENVIRONMENT_NAME: &str = "_env";
+const CLOSURE_NAME: &str = "_closure";
 
 pub fn compile(
     module_builder: &fmm::build::ModuleBuilder,
     definition: &eir::ir::Definition,
     variables: &HashMap<String, fmm::build::TypedExpression>,
     types: &HashMap<String, eir::types::RecordBody>,
-) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
+) -> Result<fmm::build::TypedExpression, CompileError> {
     Ok(if definition.is_thunk() {
         compile_thunk(module_builder, definition, variables, types)?
     } else {
@@ -21,7 +22,7 @@ fn compile_non_thunk(
     definition: &eir::ir::Definition,
     variables: &HashMap<String, fmm::build::TypedExpression>,
     types: &HashMap<String, eir::types::RecordBody>,
-) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
+) -> Result<fmm::build::TypedExpression, CompileError> {
     module_builder.define_anonymous_function(
         compile_arguments(definition, types),
         |instruction_builder| {
@@ -43,8 +44,8 @@ fn compile_thunk(
     definition: &eir::ir::Definition,
     variables: &HashMap<String, fmm::build::TypedExpression>,
     types: &HashMap<String, eir::types::RecordBody>,
-) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
-    compile_first_thunk_entry(
+) -> Result<fmm::build::TypedExpression, CompileError> {
+    compile_initial_thunk_entry(
         module_builder,
         definition,
         compile_normal_thunk_entry(module_builder, definition, types)?,
@@ -60,7 +61,14 @@ fn compile_body(
     definition: &eir::ir::Definition,
     variables: &HashMap<String, fmm::build::TypedExpression>,
     types: &HashMap<String, eir::types::RecordBody>,
-) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
+) -> Result<fmm::build::TypedExpression, CompileError> {
+    let payload_pointer = compile_payload_pointer(instruction_builder, definition, types)?;
+    let environment_pointer = if definition.is_thunk() {
+        instruction_builder.union_address(payload_pointer, 0)?
+    } else {
+        payload_pointer
+    };
+
     expressions::compile(
         module_builder,
         instruction_builder,
@@ -73,25 +81,26 @@ fn compile_body(
                     .environment()
                     .iter()
                     .enumerate()
-                    .map(|(index, free_variable)| {
-                        Ok((
-                            free_variable.name().into(),
-                            instruction_builder.load(instruction_builder.record_address(
-                                fmm::build::bit_cast(
-                                    fmm::types::Pointer::new(types::compile_environment(
-                                        definition, types,
-                                    )),
-                                    compile_environment_pointer(),
-                                ),
-                                index,
-                            )?)?,
-                        ))
+                    .map(|(index, free_variable)| -> Result<_, CompileError> {
+                        let value = instruction_builder.load(
+                            instruction_builder
+                                .record_address(environment_pointer.clone(), index)?,
+                        )?;
+
+                        reference_count::clone_expression(
+                            instruction_builder,
+                            &value,
+                            free_variable.type_(),
+                            types,
+                        )?;
+
+                        Ok((free_variable.name().into(), value))
                     })
                     .collect::<Result<Vec<_>, _>>()?,
             )
             .chain(vec![(
                 definition.name().into(),
-                compile_closure_pointer(instruction_builder, definition, types)?,
+                compile_closure_pointer(definition.type_(), types)?,
             )])
             .chain(definition.arguments().iter().map(|argument| {
                 (
@@ -104,14 +113,14 @@ fn compile_body(
     )
 }
 
-fn compile_first_thunk_entry(
+fn compile_initial_thunk_entry(
     module_builder: &fmm::build::ModuleBuilder,
     definition: &eir::ir::Definition,
     normal_entry_function: fmm::build::TypedExpression,
     lock_entry_function: fmm::build::TypedExpression,
     variables: &HashMap<String, fmm::build::TypedExpression>,
     types: &HashMap<String, eir::types::RecordBody>,
-) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
+) -> Result<fmm::build::TypedExpression, CompileError> {
     let entry_function_name = module_builder.generate_name();
     let entry_function_type = types::compile_entry_function_from_definition(definition, types);
     let arguments = compile_arguments(definition, types);
@@ -120,17 +129,16 @@ fn compile_first_thunk_entry(
         &entry_function_name,
         arguments.clone(),
         |instruction_builder| {
+            let entry_function_pointer =
+                compile_entry_function_pointer(&instruction_builder, definition, types)?;
+
             instruction_builder.if_(
                 instruction_builder.compare_and_swap(
-                    compile_entry_function_pointer_pointer(
-                        &instruction_builder,
-                        definition,
-                        types,
-                    )?,
+                    entry_function_pointer.clone(),
                     fmm::build::variable(&entry_function_name, entry_function_type.clone()),
                     lock_entry_function.clone(),
                 ),
-                |instruction_builder| {
+                |instruction_builder| -> Result<_, CompileError> {
                     let value = compile_body(
                         module_builder,
                         &instruction_builder,
@@ -141,21 +149,21 @@ fn compile_first_thunk_entry(
 
                     instruction_builder.store(
                         value.clone(),
-                        fmm::build::bit_cast(
-                            fmm::types::Pointer::new(types::compile(
-                                definition.result_type(),
-                                types,
-                            )),
-                            compile_environment_pointer(),
-                        ),
+                        compile_thunk_value_pointer(&instruction_builder, definition, types)?,
                     );
-                    instruction_builder.atomic_store(
-                        normal_entry_function.clone(),
-                        compile_entry_function_pointer_pointer(
-                            &instruction_builder,
+
+                    instruction_builder.store(
+                        closures::compile_normal_thunk_drop_function(
+                            module_builder,
                             definition,
                             types,
                         )?,
+                        compile_drop_function_pointer(&instruction_builder, definition, types)?,
+                    );
+
+                    instruction_builder.atomic_store(
+                        normal_entry_function.clone(),
+                        entry_function_pointer.clone(),
                     );
 
                     Ok(instruction_builder.return_(value))
@@ -163,13 +171,11 @@ fn compile_first_thunk_entry(
                 |instruction_builder| {
                     Ok(instruction_builder.return_(
                         instruction_builder.call(
-                            instruction_builder.atomic_load(
-                                compile_entry_function_pointer_pointer(
-                                    &instruction_builder,
-                                    definition,
-                                    types,
-                                )?,
-                            )?,
+                            instruction_builder.atomic_load(compile_entry_function_pointer(
+                                &instruction_builder,
+                                definition,
+                                types,
+                            )?)?,
                             arguments
                                 .iter()
                                 .map(|argument| {
@@ -193,7 +199,7 @@ fn compile_normal_thunk_entry(
     module_builder: &fmm::build::ModuleBuilder,
     definition: &eir::ir::Definition,
     types: &HashMap<String, eir::types::RecordBody>,
-) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
+) -> Result<fmm::build::TypedExpression, CompileError> {
     module_builder.define_anonymous_function(
         compile_arguments(definition, types),
         |instruction_builder| compile_normal_body(&instruction_builder, definition, types),
@@ -206,7 +212,7 @@ fn compile_locked_thunk_entry(
     module_builder: &fmm::build::ModuleBuilder,
     definition: &eir::ir::Definition,
     types: &HashMap<String, eir::types::RecordBody>,
-) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
+) -> Result<fmm::build::TypedExpression, CompileError> {
     let entry_function_name = module_builder.generate_name();
 
     module_builder.define_function(
@@ -218,7 +224,7 @@ fn compile_locked_thunk_entry(
                     fmm::ir::ComparisonOperator::Equal,
                     fmm::build::bit_cast(
                         fmm::types::Primitive::PointerInteger,
-                        instruction_builder.atomic_load(compile_entry_function_pointer_pointer(
+                        instruction_builder.atomic_load(compile_entry_function_pointer(
                             &instruction_builder,
                             definition,
                             types,
@@ -249,63 +255,42 @@ fn compile_normal_body(
     instruction_builder: &fmm::build::InstructionBuilder,
     definition: &eir::ir::Definition,
     types: &HashMap<String, eir::types::RecordBody>,
-) -> Result<fmm::ir::Block, fmm::build::BuildError> {
+) -> Result<fmm::ir::Block, CompileError> {
     Ok(
-        instruction_builder.return_(instruction_builder.load(fmm::build::bit_cast(
-            fmm::types::Pointer::new(types::compile(definition.result_type(), types)),
-            compile_environment_pointer(),
-        ))?),
+        instruction_builder.return_(instruction_builder.load(compile_thunk_value_pointer(
+            instruction_builder,
+            definition,
+            types,
+        )?)?),
     )
 }
 
-fn compile_entry_function_pointer_pointer(
+fn compile_entry_function_pointer(
     instruction_builder: &fmm::build::InstructionBuilder,
     definition: &eir::ir::Definition,
     types: &HashMap<String, eir::types::RecordBody>,
-) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
+) -> Result<fmm::build::TypedExpression, CompileError> {
     Ok(fmm::build::bit_cast(
         fmm::types::Pointer::new(types::compile_entry_function_from_definition(
             definition, types,
         )),
-        instruction_builder.record_address(
-            compile_closure_pointer(instruction_builder, definition, types)?,
-            0,
+        closures::compile_entry_function_pointer(
+            instruction_builder,
+            compile_closure_pointer(definition.type_(), types)?,
         )?,
     )
     .into())
 }
 
-fn compile_closure_pointer(
+fn compile_drop_function_pointer(
     instruction_builder: &fmm::build::InstructionBuilder,
     definition: &eir::ir::Definition,
     types: &HashMap<String, eir::types::RecordBody>,
-) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
-    let closure_type = types::compile_unsized_closure(definition.type_(), types);
-
-    let closure_pointer = instruction_builder.allocate_stack(closure_type.clone());
-    let offset = fmm::build::arithmetic_operation(
-        fmm::ir::ArithmeticOperator::Subtract,
-        fmm::build::bit_cast(
-            fmm::types::Primitive::PointerInteger,
-            closure_pointer.clone(),
-        ),
-        fmm::build::bit_cast(
-            fmm::types::Primitive::PointerInteger,
-            instruction_builder.record_address(closure_pointer, 2)?,
-        ),
-    )?;
-
-    Ok(fmm::build::bit_cast(
-        fmm::types::Pointer::new(closure_type),
-        instruction_builder.pointer_address(
-            fmm::build::bit_cast(
-                fmm::types::Pointer::new(fmm::types::Primitive::Integer8),
-                compile_environment_pointer(),
-            ),
-            offset,
-        )?,
+) -> Result<fmm::build::TypedExpression, CompileError> {
+    closures::compile_drop_function_pointer(
+        instruction_builder,
+        compile_closure_pointer(definition.type_(), types)?,
     )
-    .into())
 }
 
 fn compile_arguments(
@@ -313,8 +298,8 @@ fn compile_arguments(
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> Vec<fmm::ir::Argument> {
     vec![fmm::ir::Argument::new(
-        ENVIRONMENT_NAME,
-        fmm::types::Pointer::new(types::compile_unsized_environment()),
+        CLOSURE_NAME,
+        types::compile_untyped_closure_pointer(),
     )]
     .into_iter()
     .chain(definition.arguments().iter().map(|argument| {
@@ -323,9 +308,42 @@ fn compile_arguments(
     .collect()
 }
 
-fn compile_environment_pointer() -> fmm::build::TypedExpression {
-    fmm::build::variable(
-        ENVIRONMENT_NAME,
-        fmm::types::Pointer::new(types::compile_unsized_environment()),
+fn compile_thunk_value_pointer(
+    instruction_builder: &fmm::build::InstructionBuilder,
+    definition: &eir::ir::Definition,
+    types: &HashMap<String, eir::types::RecordBody>,
+) -> Result<fmm::build::TypedExpression, CompileError> {
+    Ok(instruction_builder.union_address(
+        compile_payload_pointer(instruction_builder, definition, types)?,
+        1,
+    )?)
+}
+
+fn compile_payload_pointer(
+    instruction_builder: &fmm::build::InstructionBuilder,
+    definition: &eir::ir::Definition,
+    types: &HashMap<String, eir::types::RecordBody>,
+) -> Result<fmm::build::TypedExpression, CompileError> {
+    closures::compile_environment_pointer(
+        instruction_builder,
+        fmm::build::bit_cast(
+            fmm::types::Pointer::new(types::compile_sized_closure(definition, types)),
+            compile_untyped_closure_pointer(),
+        ),
     )
+}
+
+fn compile_closure_pointer(
+    function_type: &eir::types::Function,
+    types: &HashMap<String, eir::types::RecordBody>,
+) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
+    Ok(fmm::build::bit_cast(
+        fmm::types::Pointer::new(types::compile_unsized_closure(function_type, types)),
+        compile_untyped_closure_pointer(),
+    )
+    .into())
+}
+
+fn compile_untyped_closure_pointer() -> fmm::build::TypedExpression {
+    fmm::build::variable(CLOSURE_NAME, types::compile_untyped_closure_pointer())
 }

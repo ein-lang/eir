@@ -1,4 +1,4 @@
-use crate::{function_applications, types};
+use crate::{function_applications, types, CompileError};
 use std::collections::HashMap;
 
 pub fn compile_foreign_definition(
@@ -7,7 +7,7 @@ pub fn compile_foreign_definition(
     function_type: &eir::types::Function,
     global_variable: &fmm::build::TypedExpression,
     types: &HashMap<String, eir::types::RecordBody>,
-) -> Result<(), fmm::build::BuildError> {
+) -> Result<(), CompileError> {
     // TODO Support a target calling convention.
     let foreign_function_type =
         types::compile_foreign_function(function_type, eir::ir::CallingConvention::Source, types);
@@ -21,7 +21,7 @@ pub fn compile_foreign_definition(
     module_builder.define_function(
         definition.foreign_name(),
         arguments.clone(),
-        |instruction_builder| {
+        |instruction_builder| -> Result<_, CompileError> {
             Ok(instruction_builder.return_(function_applications::compile(
                 module_builder,
                 &instruction_builder,
@@ -30,6 +30,8 @@ pub fn compile_foreign_definition(
                     .iter()
                     .map(|argument| fmm::build::variable(argument.name(), argument.type_().clone()))
                     .collect::<Vec<_>>(),
+                &function_type.arguments().into_iter().collect::<Vec<_>>(),
+                types,
             )?))
         },
         foreign_function_type.result().clone(),

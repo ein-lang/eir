@@ -29,7 +29,7 @@ pub fn compile_string() -> fmm::types::Record {
     ])
 }
 
-fn compile_variant() -> fmm::types::Record {
+pub fn compile_variant() -> fmm::types::Record {
     fmm::types::Record::new(vec![
         compile_variant_tag().into(),
         compile_variant_payload().into(),
@@ -37,9 +37,21 @@ fn compile_variant() -> fmm::types::Record {
 }
 
 pub fn compile_variant_tag() -> fmm::types::Pointer {
-    // TODO Add GC functions.
     fmm::types::Pointer::new(fmm::types::Record::new(vec![
-        fmm::types::Primitive::Integer8.into(),
+        // clone function
+        fmm::types::Function::new(
+            vec![compile_variant_payload().into()],
+            fmm::build::VOID_TYPE.clone(),
+            fmm::types::CallingConvention::Target,
+        )
+        .into(),
+        // drop function
+        fmm::types::Function::new(
+            vec![compile_variant_payload().into()],
+            fmm::build::VOID_TYPE.clone(),
+            fmm::types::CallingConvention::Target,
+        )
+        .into(),
     ]))
 }
 
@@ -125,6 +137,7 @@ pub fn compile_raw_closure(
 ) -> fmm::types::Record {
     fmm::types::Record::new(vec![
         entry_function.into(),
+        compile_closure_drop_function().into(),
         compile_arity().into(),
         environment.into(),
     ])
@@ -173,6 +186,7 @@ pub fn compile_curried_entry_function(
     }
 }
 
+// TODO Rename this compile_entry_function.
 pub fn compile_entry_function_from_definition(
     definition: &eir::ir::Definition,
     types: &HashMap<String, eir::types::RecordBody>,
@@ -187,19 +201,24 @@ pub fn compile_entry_function_from_definition(
     )
 }
 
-pub fn compile_entry_function<'a>(
+fn compile_entry_function<'a>(
     arguments: impl IntoIterator<Item = &'a eir::types::Type>,
     result: &eir::types::Type,
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> fmm::types::Function {
     fmm::types::Function::new(
-        vec![fmm::types::Pointer::new(compile_unsized_environment()).into()]
+        vec![compile_untyped_closure_pointer().into()]
             .into_iter()
             .chain(arguments.into_iter().map(|type_| compile(type_, types)))
             .collect(),
         compile(result, types),
         fmm::types::CallingConvention::Source,
     )
+}
+
+// We can't type this strongly as F-- doesn't support recursive types.
+pub fn compile_untyped_closure_pointer() -> fmm::types::Pointer {
+    fmm::types::Pointer::new(fmm::types::Record::new(vec![]))
 }
 
 pub fn compile_foreign_function(
@@ -225,6 +244,15 @@ fn compile_calling_convention(
         eir::ir::CallingConvention::Source => fmm::types::CallingConvention::Source,
         eir::ir::CallingConvention::Target => fmm::types::CallingConvention::Target,
     }
+}
+
+pub fn compile_closure_drop_function() -> fmm::types::Function {
+    // The argument is a closure pointer.
+    fmm::types::Function::new(
+        vec![fmm::types::Primitive::PointerInteger.into()],
+        fmm::build::VOID_TYPE.clone(),
+        fmm::types::CallingConvention::Target,
+    )
 }
 
 pub fn compile_arity() -> fmm::types::Primitive {

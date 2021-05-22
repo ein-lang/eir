@@ -85,6 +85,13 @@ fn check_expression(
         }
         Expression::Boolean(_) => Type::Boolean,
         Expression::Case(case) => check_case(case, variables, types)?,
+        Expression::CloneVariables(clone) => {
+            for (variable, type_) in clone.variables() {
+                check_equality(&check_variable(&Variable::new(variable), variables)?, type_)?;
+            }
+
+            check_expression(clone.expression(), variables)?
+        }
         Expression::ComparisonOperation(operation) => {
             check_equality(
                 &check_expression(operation.lhs(), variables)?,
@@ -96,6 +103,13 @@ fn check_expression(
             )?;
 
             Type::Boolean
+        }
+        Expression::DropVariables(drop) => {
+            for (variable, type_) in drop.variables() {
+                check_equality(&check_variable(&Variable::new(variable), variables)?, type_)?;
+            }
+
+            check_expression(drop.expression(), variables)?
         }
         Expression::FunctionApplication(application) => {
             let function_type = check_expression(application.function(), variables)?
