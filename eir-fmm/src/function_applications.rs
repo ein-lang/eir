@@ -86,8 +86,8 @@ fn compile_direct_call(
     instruction_builder: &fmm::build::InstructionBuilder,
     closure_pointer: fmm::build::TypedExpression,
     arguments: &[fmm::build::TypedExpression],
-) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
-    instruction_builder.call(
+) -> Result<fmm::build::TypedExpression, CompileError> {
+    Ok(instruction_builder.call(
         fmm::build::bit_cast(
             types::compile_curried_entry_function(
                 get_entry_function_type(&closure_pointer),
@@ -101,7 +101,7 @@ fn compile_direct_call(
         .into_iter()
         .chain(arguments.iter().cloned())
         .collect(),
-    )
+    )?)
 }
 
 fn compile_create_closure(

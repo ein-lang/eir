@@ -269,7 +269,7 @@ fn compile_entry_function_pointer(
     instruction_builder: &fmm::build::InstructionBuilder,
     definition: &eir::ir::Definition,
     types: &HashMap<String, eir::types::RecordBody>,
-) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
+) -> Result<fmm::build::TypedExpression, CompileError> {
     Ok(fmm::build::bit_cast(
         fmm::types::Pointer::new(types::compile_entry_function_from_definition(
             definition, types,
@@ -286,7 +286,7 @@ fn compile_drop_function_pointer(
     instruction_builder: &fmm::build::InstructionBuilder,
     definition: &eir::ir::Definition,
     types: &HashMap<String, eir::types::RecordBody>,
-) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
+) -> Result<fmm::build::TypedExpression, CompileError> {
     Ok(closures::compile_drop_function_pointer(
         instruction_builder,
         compile_closure_pointer(definition.type_(), types)?,

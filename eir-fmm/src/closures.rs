@@ -11,45 +11,57 @@ static DUMMY_FUNCTION_TYPE: Lazy<eir::types::Function> =
 pub fn compile_entry_function_pointer(
     builder: &fmm::build::InstructionBuilder,
     closure_pointer: impl Into<fmm::build::TypedExpression>,
-) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
-    builder.record_address(closure_pointer, 0)
+) -> Result<fmm::build::TypedExpression, CompileError> {
+    Ok(builder.record_address(
+        reference_count::compile_untagged_pointer(&closure_pointer.into())?,
+        0,
+    )?)
 }
 
 pub fn compile_load_entry_function(
     builder: &fmm::build::InstructionBuilder,
     closure_pointer: impl Into<fmm::build::TypedExpression>,
-) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
+) -> Result<fmm::build::TypedExpression, CompileError> {
     // Entry functions of thunks need to be loaded atomically
     // to make thunk update thread-safe.
-    builder.atomic_load(compile_entry_function_pointer(builder, closure_pointer)?)
+    Ok(builder.atomic_load(compile_entry_function_pointer(builder, closure_pointer)?)?)
 }
 
 pub fn compile_drop_function_pointer(
     builder: &fmm::build::InstructionBuilder,
     closure_pointer: impl Into<fmm::build::TypedExpression>,
-) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
-    builder.record_address(closure_pointer, 1)
+) -> Result<fmm::build::TypedExpression, CompileError> {
+    Ok(builder.record_address(
+        reference_count::compile_untagged_pointer(&closure_pointer.into())?,
+        1,
+    )?)
 }
 
 pub fn compile_load_drop_function(
     builder: &fmm::build::InstructionBuilder,
     closure_pointer: impl Into<fmm::build::TypedExpression>,
-) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
-    builder.load(compile_drop_function_pointer(builder, closure_pointer)?)
+) -> Result<fmm::build::TypedExpression, CompileError> {
+    Ok(builder.load(compile_drop_function_pointer(builder, closure_pointer)?)?)
 }
 
 pub fn compile_load_arity(
     builder: &fmm::build::InstructionBuilder,
     closure_pointer: impl Into<fmm::build::TypedExpression>,
-) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
-    builder.load(builder.record_address(closure_pointer, 2)?)
+) -> Result<fmm::build::TypedExpression, CompileError> {
+    Ok(builder.load(builder.record_address(
+        reference_count::compile_untagged_pointer(&closure_pointer.into())?,
+        2,
+    )?)?)
 }
 
 pub fn compile_environment_pointer(
     builder: &fmm::build::InstructionBuilder,
     closure_pointer: impl Into<fmm::build::TypedExpression>,
-) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
-    builder.record_address(closure_pointer, 3)
+) -> Result<fmm::build::TypedExpression, CompileError> {
+    Ok(builder.record_address(
+        reference_count::compile_untagged_pointer(&closure_pointer.into())?,
+        3,
+    )?)
 }
 
 pub fn compile_closure_content(
