@@ -1,4 +1,8 @@
-use super::{closures, expressions, types};
+use super::{
+    closures, expressions,
+    types::{self, FUNCTION_ARGUMENT_OFFSET},
+};
+use crate::CompileError;
 use std::collections::HashMap;
 
 pub fn compile(
@@ -8,7 +12,7 @@ pub fn compile(
     arguments: &[fmm::build::TypedExpression],
     argument_types: &[&eir::types::Type],
     types: &HashMap<String, eir::types::RecordBody>,
-) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
+) -> Result<fmm::build::TypedExpression, CompileError> {
     compile_with_min_arity(
         module_builder,
         instruction_builder,
@@ -28,7 +32,7 @@ fn compile_with_min_arity(
     min_arity: usize,
     argument_types: &[&eir::types::Type],
     types: &HashMap<String, eir::types::RecordBody>,
-) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
+) -> Result<fmm::build::TypedExpression, CompileError> {
     Ok(if arguments.is_empty() {
         closure_pointer
     } else if arguments.len() < min_arity {
@@ -37,6 +41,8 @@ fn compile_with_min_arity(
             instruction_builder,
             closure_pointer,
             arguments,
+            argument_types,
+            types,
         )?
     } else if types::get_arity(get_entry_function_type(&closure_pointer)) == min_arity {
         compile_direct_call(instruction_builder, closure_pointer, arguments)?
@@ -47,7 +53,7 @@ fn compile_with_min_arity(
                 closures::compile_load_arity(instruction_builder, closure_pointer.clone())?,
                 expressions::compile_arity(min_arity),
             )?,
-            |instruction_builder| {
+            |instruction_builder| -> Result<_, CompileError> {
                 Ok(instruction_builder.branch(compile(
                     module_builder,
                     &instruction_builder,
@@ -104,7 +110,9 @@ fn compile_create_closure(
     instruction_builder: &fmm::build::InstructionBuilder,
     closure_pointer: fmm::build::TypedExpression,
     arguments: &[fmm::build::TypedExpression],
-) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
+    argument_types: &[&eir::types::Type],
+    types: &HashMap<String, eir::types::RecordBody>,
+) -> Result<fmm::build::TypedExpression, CompileError> {
     let entry_function_type = get_entry_function_type(&closure_pointer);
 
     let target_entry_function_type = fmm::types::Function::new(
@@ -131,15 +139,18 @@ fn compile_create_closure(
                 .iter()
                 .map(|argument| argument.type_())
                 .collect::<Vec<_>>(),
+            argument_types,
+            types,
         )?,
-        compile_partially_applied_drop_function(
+        closures::compile_drop_function_for_partially_applied_closure(
             module_builder,
-            &target_entry_function_type,
             &closure_pointer.type_(),
             &arguments
                 .iter()
                 .map(|argument| argument.type_())
+                .zip(argument_types.iter().cloned())
                 .collect::<Vec<_>>(),
+            types,
         )?,
         vec![closure_pointer]
             .into_iter()
@@ -164,7 +175,9 @@ fn compile_partially_applied_entry_function(
     entry_function_type: &fmm::types::Function,
     closure_pointer_type: &fmm::types::Type,
     argument_types: &[&fmm::types::Type],
-) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
+    eir_argument_types: &[&eir::types::Type],
+    types: &HashMap<String, eir::types::RecordBody>,
+) -> Result<fmm::build::TypedExpression, CompileError> {
     let curried_entry_function_type =
         types::compile_curried_entry_function(&entry_function_type, 1);
     let arguments = curried_entry_function_type
@@ -190,8 +203,8 @@ fn compile_partially_applied_entry_function(
             let arguments = (0..argument_types.len())
                 .map(|index| instruction_builder.deconstruct_record(environment.clone(), index + 1))
                 .chain(vec![Ok(fmm::build::variable(
-                    arguments[1].name(),
-                    arguments[1].type_().clone(),
+                    arguments[FUNCTION_ARGUMENT_OFFSET].name(),
+                    arguments[FUNCTION_ARGUMENT_OFFSET].type_().clone(),
                 ))])
                 .collect::<Result<Vec<_>, _>>()?;
 
@@ -208,7 +221,7 @@ fn compile_partially_applied_entry_function(
                             )?,
                             expressions::compile_arity(arguments.len()),
                         )?,
-                        |instruction_builder| {
+                        |instruction_builder| -> Result<_, CompileError> {
                             Ok(instruction_builder.branch(compile_direct_call(
                                 &instruction_builder,
                                 closure_pointer.clone(),
@@ -221,6 +234,8 @@ fn compile_partially_applied_entry_function(
                                 &instruction_builder,
                                 closure_pointer.clone(),
                                 &arguments,
+                                eir_argument_types,
+                                types,
                             )?))
                         },
                     )?
@@ -230,15 +245,6 @@ fn compile_partially_applied_entry_function(
         curried_entry_function_type.result().clone(),
         fmm::types::CallingConvention::Source,
     )
-}
-
-fn compile_partially_applied_drop_function(
-    module_builder: &fmm::build::ModuleBuilder,
-    entry_function_type: &fmm::types::Function,
-    closure_pointer_type: &fmm::types::Type,
-    argument_types: &[&fmm::types::Type],
-) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
-    todo!()
 }
 
 fn get_entry_function_type(closure_pointer: &fmm::build::TypedExpression) -> &fmm::types::Function {
