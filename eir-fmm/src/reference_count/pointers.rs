@@ -34,7 +34,7 @@ pub fn drop_pointer(
                     get_counter_pointer(&builder, expression)?,
                     fmm::ir::Primitive::PointerInteger(1),
                 )?,
-                fmm::ir::Primitive::PointerInteger(0),
+                fmm::ir::Primitive::PointerInteger(heap::INITIAL_COUNTER as i64),
             )?,
             |builder| -> Result<_, CompileError> {
                 drop_content(&builder)?;
