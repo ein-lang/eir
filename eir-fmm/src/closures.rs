@@ -89,7 +89,7 @@ pub fn compile_drop_function(
     definition: &eir::ir::Definition,
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> Result<fmm::build::TypedExpression, CompileError> {
-    Ok(compile_drop_function_with_builder(
+    compile_drop_function_with_builder(
         module_builder,
         types,
         |builder, environment_pointer| -> Result<_, CompileError> {
@@ -109,7 +109,7 @@ pub fn compile_drop_function(
 
             Ok(())
         },
-    )?)
+    )
 }
 
 pub fn compile_normal_thunk_drop_function(
@@ -117,7 +117,7 @@ pub fn compile_normal_thunk_drop_function(
     definition: &eir::ir::Definition,
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> Result<fmm::build::TypedExpression, CompileError> {
-    Ok(compile_drop_function_with_builder(
+    compile_drop_function_with_builder(
         module_builder,
         types,
         |builder, environment_pointer| -> Result<_, CompileError> {
@@ -136,7 +136,7 @@ pub fn compile_normal_thunk_drop_function(
 
             Ok(())
         },
-    )?)
+    )
 }
 
 pub fn compile_drop_function_for_partially_applied_closure(
@@ -145,7 +145,7 @@ pub fn compile_drop_function_for_partially_applied_closure(
     argument_types: &[(&fmm::types::Type, &eir::types::Type)],
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> Result<fmm::build::TypedExpression, CompileError> {
-    Ok(compile_drop_function_with_builder(
+    compile_drop_function_with_builder(
         module_builder,
         types,
         |builder, environment_pointer| -> Result<_, CompileError> {
@@ -181,7 +181,7 @@ pub fn compile_drop_function_for_partially_applied_closure(
 
             Ok(())
         },
-    )?)
+    )
 }
 
 fn compile_drop_function_with_builder(
@@ -192,7 +192,7 @@ fn compile_drop_function_with_builder(
         &fmm::build::TypedExpression,
     ) -> Result<(), CompileError>,
 ) -> Result<fmm::build::TypedExpression, CompileError> {
-    Ok(module_builder.define_anonymous_function(
+    module_builder.define_anonymous_function(
         vec![fmm::ir::Argument::new(
             DROP_FUNCTION_ARGUMENT_NAME,
             DROP_FUNCTION_ARGUMENT_TYPE,
@@ -219,5 +219,5 @@ fn compile_drop_function_with_builder(
         },
         fmm::build::VOID_TYPE.clone(),
         fmm::types::CallingConvention::Target,
-    )?)
+    )
 }

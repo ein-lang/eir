@@ -66,7 +66,7 @@ fn compile_body(
     let environment_pointer = if definition.is_thunk() {
         instruction_builder.union_address(payload_pointer, 0)?
     } else {
-        payload_pointer.into()
+        payload_pointer
     };
 
     expressions::compile(
@@ -287,10 +287,10 @@ fn compile_drop_function_pointer(
     definition: &eir::ir::Definition,
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> Result<fmm::build::TypedExpression, CompileError> {
-    Ok(closures::compile_drop_function_pointer(
+    closures::compile_drop_function_pointer(
         instruction_builder,
         compile_closure_pointer(definition.type_(), types)?,
-    )?)
+    )
 }
 
 fn compile_arguments(
@@ -317,8 +317,7 @@ fn compile_thunk_value_pointer(
         .union_address(
             compile_payload_pointer(instruction_builder, definition, types)?,
             1,
-        )?
-        .into())
+        )?)
 }
 
 fn compile_payload_pointer(
@@ -326,13 +325,13 @@ fn compile_payload_pointer(
     definition: &eir::ir::Definition,
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> Result<fmm::build::TypedExpression, CompileError> {
-    Ok(closures::compile_environment_pointer(
+    closures::compile_environment_pointer(
         instruction_builder,
         fmm::build::bit_cast(
             fmm::types::Pointer::new(types::compile_sized_closure(definition, types)),
             compile_untyped_closure_pointer(),
         ),
-    )?)
+    )
 }
 
 fn compile_closure_pointer(

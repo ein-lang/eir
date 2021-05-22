@@ -15,8 +15,8 @@ pub fn compile_type_information_global_variable(
     module_builder.define_variable(
         types::compile_type_id(type_),
         fmm::build::record(vec![
-            reference_count::compile_variant_clone_function(module_builder, type_, types)?.into(),
-            reference_count::compile_variant_drop_function(module_builder, type_, types)?.into(),
+            reference_count::compile_variant_clone_function(module_builder, type_, types)?,
+            reference_count::compile_variant_drop_function(module_builder, type_, types)?,
         ]),
         false,
         fmm::ir::Linkage::Weak,

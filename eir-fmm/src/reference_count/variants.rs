@@ -9,7 +9,7 @@ pub fn compile_variant_clone_function(
     type_: &eir::types::Type,
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> Result<fmm::build::TypedExpression, CompileError> {
-    Ok(module_builder.define_function(
+    module_builder.define_function(
         format!("variant_clone_{}", types::compile_type_id(type_)),
         vec![fmm::ir::Argument::new(
             "_payload",
@@ -34,7 +34,7 @@ pub fn compile_variant_clone_function(
         fmm::build::VOID_TYPE.clone(),
         fmm::types::CallingConvention::Target,
         fmm::ir::Linkage::Weak,
-    )?)
+    )
 }
 
 pub fn compile_variant_drop_function(
@@ -42,7 +42,7 @@ pub fn compile_variant_drop_function(
     type_: &eir::types::Type,
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> Result<fmm::build::TypedExpression, CompileError> {
-    Ok(module_builder.define_function(
+    module_builder.define_function(
         format!("variant_drop_{}", types::compile_type_id(type_)),
         vec![fmm::ir::Argument::new(
             "_payload",
@@ -78,5 +78,5 @@ pub fn compile_variant_drop_function(
         fmm::build::VOID_TYPE.clone(),
         fmm::types::CallingConvention::Target,
         fmm::ir::Linkage::Weak,
-    )?)
+    )
 }
