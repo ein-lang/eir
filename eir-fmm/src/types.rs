@@ -241,7 +241,7 @@ fn compile_calling_convention(
     }
 }
 
-fn compile_closure_drop_function() -> fmm::types::Function {
+pub fn compile_closure_drop_function() -> fmm::types::Function {
     // The argument is a closure pointer.
     fmm::types::Function::new(
         vec![fmm::types::Primitive::PointerInteger.into()],
