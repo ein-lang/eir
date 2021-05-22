@@ -63,7 +63,7 @@ pub fn compile_untagged_pointer(
     .into())
 }
 
-pub fn if_heap_pointer(
+fn if_heap_pointer(
     builder: &fmm::build::InstructionBuilder,
     pointer: &fmm::build::TypedExpression,
     then: impl Fn(&fmm::build::InstructionBuilder) -> Result<(), CompileError>,
@@ -107,7 +107,7 @@ fn is_heap_pointer(
     .into())
 }
 
-pub fn get_counter_pointer(
+fn get_counter_pointer(
     builder: &fmm::build::InstructionBuilder,
     heap_pointer: &fmm::build::TypedExpression,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
