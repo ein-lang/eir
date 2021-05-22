@@ -1,10 +1,13 @@
 use super::{closures, expressions, types};
+use std::collections::HashMap;
 
 pub fn compile(
     module_builder: &fmm::build::ModuleBuilder,
     instruction_builder: &fmm::build::InstructionBuilder,
     closure_pointer: fmm::build::TypedExpression,
     arguments: &[fmm::build::TypedExpression],
+    argument_types: &[&eir::types::Type],
+    types: &HashMap<String, eir::types::RecordBody>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
     compile_with_min_arity(
         module_builder,
@@ -12,6 +15,8 @@ pub fn compile(
         closure_pointer,
         arguments,
         1,
+        argument_types,
+        types,
     )
 }
 
@@ -21,6 +26,8 @@ fn compile_with_min_arity(
     closure_pointer: fmm::build::TypedExpression,
     arguments: &[fmm::build::TypedExpression],
     min_arity: usize,
+    argument_types: &[&eir::types::Type],
+    types: &HashMap<String, eir::types::RecordBody>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
     Ok(if arguments.is_empty() {
         closure_pointer
@@ -50,6 +57,8 @@ fn compile_with_min_arity(
                         &arguments[..min_arity],
                     )?,
                     &arguments[min_arity..],
+                    &argument_types[min_arity..],
+                    types,
                 )?))
             },
             |instruction_builder| {
@@ -59,6 +68,8 @@ fn compile_with_min_arity(
                     closure_pointer.clone(),
                     arguments,
                     min_arity + 1,
+                    argument_types,
+                    types,
                 )?))
             },
         )?

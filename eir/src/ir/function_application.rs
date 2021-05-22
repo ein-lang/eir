@@ -1,5 +1,5 @@
 use super::expression::Expression;
-use crate::types;
+use crate::types::{self, Type};
 use std::sync::Arc;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -56,6 +56,14 @@ impl FunctionApplication {
         arguments.reverse();
 
         arguments
+    }
+
+    pub fn argument_types(&self) -> impl IntoIterator<Item = &Type> {
+        if let Expression::FunctionApplication(application) = self.function.as_ref() {
+            application.argument_types().into_iter().collect::<Vec<_>>()
+        } else {
+            self.type_().arguments().into_iter().collect::<Vec<_>>()
+        }
     }
 }
 

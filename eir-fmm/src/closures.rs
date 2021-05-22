@@ -61,6 +61,7 @@ pub fn compile_closure_content(
     .into()
 }
 
+// TODO Accept environment of free variables instead of definitions.
 pub fn compile_drop_function(
     module_builder: &fmm::build::ModuleBuilder,
     definition: &eir::ir::Definition,

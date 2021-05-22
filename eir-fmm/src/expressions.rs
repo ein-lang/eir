@@ -78,7 +78,9 @@ pub fn compile(
                 .arguments()
                 .into_iter()
                 .map(|argument| compile(argument, variables))
-                .collect::<Result<Vec<_>, _>>()?,
+                .collect::<Result<Vec<_>, CompileError>>()?,
+            &application.argument_types().into_iter().collect::<Vec<_>>(),
+            types,
         )?,
         eir::ir::Expression::If(if_) => {
             compile_if(module_builder, instruction_builder, if_, variables, types)?
