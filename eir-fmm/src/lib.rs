@@ -50,7 +50,7 @@ pub fn compile(module: &eir::ir::Module) -> Result<fmm::ir::Module, CompileError
         compile_declaration(&module_builder, declaration, &types);
     }
 
-    let global_variables = compile_global_variables(&module, &types);
+    let global_variables = compile_global_variables(&module, &types)?;
 
     for definition in module.definitions() {
         compile_definition(&module_builder, definition, &global_variables, &types)?;
@@ -90,7 +90,7 @@ pub fn compile(module: &eir::ir::Module) -> Result<fmm::ir::Module, CompileError
 fn compile_global_variables(
     module: &eir::ir::Module,
     types: &HashMap<String, eir::types::RecordBody>,
-) -> HashMap<String, fmm::build::TypedExpression> {
+) -> Result<HashMap<String, fmm::build::TypedExpression>, CompileError> {
     module
         .foreign_declarations()
         .iter()
@@ -134,7 +134,8 @@ fn compile_global_variables(
                 .into(),
             )
         }))
-        .collect()
+        .map(|(name, expression)| Ok((name, reference_count::compile_tagged_pointer(&expression)?)))
+        .collect::<Result<_, _>>()
 }
 
 #[cfg(test)]

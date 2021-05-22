@@ -56,6 +56,20 @@ pub fn drop_pointer(
     Ok(())
 }
 
+pub fn compile_tagged_pointer(
+    pointer: &fmm::build::TypedExpression,
+) -> Result<fmm::build::TypedExpression, CompileError> {
+    Ok(fmm::build::bit_cast(
+        pointer.type_().clone(),
+        fmm::build::bitwise_operation(
+            fmm::ir::BitwiseOperator::Or,
+            fmm::build::bit_cast(fmm::types::Primitive::PointerInteger, pointer.clone()),
+            fmm::ir::Primitive::PointerInteger(1),
+        )?,
+    )
+    .into())
+}
+
 pub fn compile_untagged_pointer(
     pointer: &fmm::build::TypedExpression,
 ) -> Result<fmm::build::TypedExpression, CompileError> {
