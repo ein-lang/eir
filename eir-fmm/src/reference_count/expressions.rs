@@ -53,9 +53,11 @@ pub fn drop_expression(
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> Result<(), CompileError> {
     match type_ {
-        eir::types::Type::ByteString => {
-            pointers::drop_pointer(builder, &builder.deconstruct_record(expression.clone(), 0)?)?
-        }
+        eir::types::Type::ByteString => pointers::drop_pointer(
+            builder,
+            &builder.deconstruct_record(expression.clone(), 0)?,
+            |_| Ok(()),
+        )?,
         eir::types::Type::Function(_) => functions::drop_function(builder, expression)?,
         eir::types::Type::Record(record) => {
             builder.call(

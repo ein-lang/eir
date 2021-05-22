@@ -52,7 +52,18 @@ pub fn compile_variant_drop_function(
             let payload = fmm::build::variable("_payload", types::compile_variant_payload());
 
             if crate::variants::is_payload_boxed(type_)? {
-                pointers::drop_pointer(&builder, &payload)?;
+                pointers::drop_pointer(&builder, &payload, |builder| {
+                    expressions::drop_expression(
+                        &builder,
+                        &crate::variants::compile_unboxed_payload(
+                            &builder, &payload, type_, types,
+                        )?,
+                        type_,
+                        types,
+                    )?;
+
+                    Ok(())
+                })?;
             } else {
                 expressions::drop_expression(
                     &builder,

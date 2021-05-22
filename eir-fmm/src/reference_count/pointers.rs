@@ -20,6 +20,7 @@ pub fn clone_pointer(
 pub fn drop_pointer(
     builder: &fmm::build::InstructionBuilder,
     expression: &fmm::build::TypedExpression,
+    drop_content: impl Fn(&fmm::build::InstructionBuilder) -> Result<(), CompileError>,
 ) -> Result<(), CompileError> {
     if_heap_pointer(builder, expression, |builder| {
         builder.if_(
@@ -33,6 +34,8 @@ pub fn drop_pointer(
                 fmm::ir::Primitive::PointerInteger(0),
             )?,
             |builder| -> Result<_, CompileError> {
+                drop_content(&builder)?;
+
                 builder.free_heap(fmm::build::bit_cast(
                     fmm::types::Pointer::new(fmm::types::Primitive::Integer8),
                     expression.clone(),
