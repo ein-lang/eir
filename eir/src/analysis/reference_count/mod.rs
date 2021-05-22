@@ -20,6 +20,8 @@ pub fn count_references(module: &Module) -> Result<Module, ReferenceCountError> 
 }
 
 fn convert_definition(definition: &Definition) -> Result<Definition, ReferenceCountError> {
+    // Backend is expected to clone a function itself and its free variables at the very beginning
+    // of the function.
     let owned_variables = vec![(definition.name().into(), definition.type_().clone().into())]
         .into_iter()
         .chain(
