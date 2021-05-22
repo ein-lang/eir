@@ -1,5 +1,5 @@
 use super::error::CompileError;
-use crate::{closures, expressions, types};
+use crate::{closures, expressions, reference_count, types};
 use std::collections::HashMap;
 
 const CLOSURE_NAME: &str = "_closure";
@@ -82,13 +82,19 @@ fn compile_body(
                     .iter()
                     .enumerate()
                     .map(|(index, free_variable)| -> Result<_, CompileError> {
-                        Ok((
-                            free_variable.name().into(),
-                            instruction_builder.load(
-                                instruction_builder
-                                    .record_address(environment_pointer.clone(), index)?,
-                            )?,
-                        ))
+                        let value = instruction_builder.load(
+                            instruction_builder
+                                .record_address(environment_pointer.clone(), index)?,
+                        )?;
+
+                        reference_count::clone_expression(
+                            instruction_builder,
+                            &value,
+                            free_variable.type_(),
+                            types,
+                        )?;
+
+                        Ok((free_variable.name().into(), value))
                     })
                     .collect::<Result<Vec<_>, _>>()?,
             )
