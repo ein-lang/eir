@@ -1,6 +1,6 @@
 use super::super::types;
-use super::expressions;
 use super::{super::error::CompileError, record_utilities};
+use super::{expressions, pointers};
 use std::collections::HashMap;
 
 pub fn compile_record_clone_function(
@@ -15,19 +15,25 @@ pub fn compile_record_clone_function(
         record_utilities::get_record_clone_function_name(definition.name()),
         vec![fmm::ir::Argument::new("record", fmm_record_type.clone())],
         |builder| -> Result<_, CompileError> {
-            for (index, type_) in definition.type_().elements().iter().enumerate() {
-                expressions::clone_expression(
-                    &builder,
-                    &crate::records::get_record_element(
+            let argument = fmm::build::variable("record", fmm_record_type.clone());
+
+            if types::is_record_boxed(&record_type, types) {
+                pointers::clone_pointer(&builder, &argument)?;
+            } else {
+                for (index, type_) in definition.type_().elements().iter().enumerate() {
+                    expressions::clone_expression(
                         &builder,
-                        &fmm::build::variable("record", fmm_record_type.clone()),
-                        &record_type,
-                        index,
+                        &crate::records::get_record_element(
+                            &builder,
+                            &argument,
+                            &record_type,
+                            index,
+                            types,
+                        )?,
+                        type_,
                         types,
-                    )?,
-                    type_,
-                    types,
-                )?;
+                    )?;
+                }
             }
 
             Ok(builder.return_(fmm::build::VOID_VALUE.clone()))
