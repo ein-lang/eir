@@ -8,13 +8,20 @@ const DROP_FUNCTION_ARGUMENT_TYPE: fmm::types::Primitive = fmm::types::Primitive
 static DUMMY_FUNCTION_TYPE: Lazy<eir::types::Function> =
     Lazy::new(|| eir::types::Function::new(eir::types::Type::Number, eir::types::Type::Number));
 
+pub fn compile_entry_function_pointer(
+    builder: &fmm::build::InstructionBuilder,
+    closure_pointer: impl Into<fmm::build::TypedExpression>,
+) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
+    builder.record_address(closure_pointer, 0)
+}
+
 pub fn compile_load_entry_function(
     builder: &fmm::build::InstructionBuilder,
     closure_pointer: impl Into<fmm::build::TypedExpression>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
     // Entry functions of thunks need to be loaded atomically
     // to make thunk update thread-safe.
-    builder.atomic_load(builder.record_address(closure_pointer, 0)?)
+    builder.atomic_load(compile_entry_function_pointer(builder, closure_pointer)?)
 }
 
 pub fn compile_load_drop_function(

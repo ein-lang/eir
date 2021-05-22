@@ -269,8 +269,10 @@ fn compile_entry_function_pointer(
         fmm::types::Pointer::new(types::compile_entry_function_from_definition(
             definition, types,
         )),
-        instruction_builder
-            .record_address(compile_closure_pointer(definition.type_(), types)?, 0)?,
+        closures::compile_entry_function_pointer(
+            instruction_builder,
+            compile_closure_pointer(definition.type_(), types)?,
+        )?,
     )
     .into())
 }
