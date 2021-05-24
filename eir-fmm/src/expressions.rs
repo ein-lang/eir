@@ -139,8 +139,7 @@ pub fn compile(
                     ),
                 )
                 .into(),
-            )?
-            .into(),
+            )?,
             fmm::ir::Primitive::PointerInteger(string.value().len() as i64).into(),
         ])
         .into(),
