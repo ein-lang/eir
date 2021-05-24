@@ -18,6 +18,7 @@ pub fn compile_type_information_global_variable(
         ]),
         false,
         fmm::ir::Linkage::Weak,
+        None,
     );
 
     Ok(())
