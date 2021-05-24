@@ -6,6 +6,8 @@ use std::{error::Error, fmt::Display};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum TypeCheckError {
+    DuplicateFunctionNames(String),
+    DuplicateTypeNames(String),
     ElementIndexOutOfBounds(RecordElement),
     ForeignDefinitionNotFound(ForeignDefinition),
     FunctionExpected(Expression),
