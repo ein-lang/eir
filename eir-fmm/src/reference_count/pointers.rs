@@ -75,9 +75,9 @@ pub fn compile_untagged_pointer(
     Ok(fmm::build::bit_cast(
         pointer.type_().clone(),
         fmm::build::bitwise_operation(
-            fmm::ir::BitwiseOperator::Xor,
+            fmm::ir::BitwiseOperator::And,
             fmm::build::bit_cast(fmm::types::Primitive::PointerInteger, pointer.clone()),
-            fmm::ir::Primitive::PointerInteger(1),
+            fmm::build::bitwise_not_operation(fmm::ir::Primitive::PointerInteger(1))?,
         )?,
     )
     .into())

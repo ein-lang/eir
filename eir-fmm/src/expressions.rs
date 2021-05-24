@@ -136,6 +136,7 @@ pub fn compile(
                                 .collect(),
                         ),
                         false,
+                        reference_count::MINIMUM_ALIGNMENT,
                     ),
                 )
                 .into(),
