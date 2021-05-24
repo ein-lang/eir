@@ -124,20 +124,22 @@ pub fn compile(
             types,
         )?,
         eir::ir::Expression::ByteString(string) => fmm::build::record(vec![
-            fmm::build::bit_cast(
-                fmm::types::Pointer::new(fmm::types::Primitive::Integer8),
-                module_builder.define_anonymous_variable(
-                    fmm::build::record(
-                        string
-                            .value()
-                            .iter()
-                            .map(|&byte| fmm::ir::Primitive::Integer8(byte).into())
-                            .collect(),
+            reference_count::compile_tagged_pointer(
+                &fmm::build::bit_cast(
+                    fmm::types::Pointer::new(fmm::types::Primitive::Integer8),
+                    module_builder.define_anonymous_variable(
+                        fmm::build::record(
+                            string
+                                .value()
+                                .iter()
+                                .map(|&byte| fmm::ir::Primitive::Integer8(byte).into())
+                                .collect(),
+                        ),
+                        false,
                     ),
-                    false,
-                ),
-            )
-            .into(),
+                )
+                .into(),
+            )?,
             fmm::ir::Primitive::PointerInteger(string.value().len() as i64).into(),
         ])
         .into(),
