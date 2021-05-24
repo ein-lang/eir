@@ -1,4 +1,5 @@
 mod error;
+mod names;
 
 use crate::{
     ir::*,
@@ -8,6 +9,8 @@ pub use error::TypeCheckError;
 use std::collections::*;
 
 pub fn check_types(module: &Module) -> Result<(), TypeCheckError> {
+    names::check_names(module)?;
+
     let types = module
         .type_definitions()
         .iter()
@@ -894,5 +897,28 @@ mod tests {
 
             assert_eq!(check_types(&module), Ok(()));
         }
+    }
+
+    #[test]
+    fn check_duplicate_function_names() {
+        let module = create_module_from_definitions(vec![
+            Definition::new(
+                "f",
+                vec![Argument::new("x", Type::Number)],
+                Variable::new("x"),
+                Type::Number,
+            ),
+            Definition::new(
+                "f",
+                vec![Argument::new("x", Type::Number)],
+                Variable::new("x"),
+                Type::Number,
+            ),
+        ]);
+
+        assert_eq!(
+            check_types(&module),
+            Err(TypeCheckError::DuplicateFunctionNames("f".into()))
+        );
     }
 }
