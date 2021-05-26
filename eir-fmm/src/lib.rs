@@ -1144,4 +1144,46 @@ mod tests {
             ]));
         }
     }
+
+    mod reference_count {
+        use super::*;
+
+        #[test]
+        fn clone_and_drop_strings() {
+            compile_module(&create_module_with_definitions(vec![
+                eir::ir::Definition::new(
+                    "f",
+                    vec![
+                        eir::ir::Argument::new("x", eir::types::Type::ByteString),
+                        eir::ir::Argument::new("y", eir::types::Type::ByteString),
+                    ],
+                    eir::ir::Expression::Number(42.0),
+                    eir::types::Type::Number,
+                ),
+                eir::ir::Definition::new(
+                    "g",
+                    vec![eir::ir::Argument::new("x", eir::types::Type::ByteString)],
+                    eir::ir::FunctionApplication::new(
+                        eir::types::Function::new(
+                            eir::types::Type::ByteString,
+                            eir::types::Type::Number,
+                        ),
+                        eir::ir::FunctionApplication::new(
+                            eir::types::Function::new(
+                                eir::types::Type::ByteString,
+                                eir::types::Function::new(
+                                    eir::types::Type::ByteString,
+                                    eir::types::Type::Number,
+                                ),
+                            ),
+                            eir::ir::Variable::new("f"),
+                            eir::ir::Variable::new("x"),
+                        ),
+                        eir::ir::Variable::new("x"),
+                    ),
+                    eir::types::Type::Number,
+                ),
+            ]));
+        }
+    }
 }
