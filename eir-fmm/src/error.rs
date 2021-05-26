@@ -7,6 +7,7 @@ use std::{
 pub enum CompileError {
     FmmBuild(fmm::build::BuildError),
     NestedVariant,
+    ReferenceCount(eir::analysis::ReferenceCountError),
     TypeCheck(eir::analysis::TypeCheckError),
 }
 
@@ -21,6 +22,12 @@ impl Error for CompileError {}
 impl From<fmm::build::BuildError> for CompileError {
     fn from(error: fmm::build::BuildError) -> Self {
         Self::FmmBuild(error)
+    }
+}
+
+impl From<eir::analysis::ReferenceCountError> for CompileError {
+    fn from(error: eir::analysis::ReferenceCountError) -> Self {
+        Self::ReferenceCount(error)
     }
 }
 

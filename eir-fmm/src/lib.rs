@@ -25,6 +25,7 @@ pub fn compile(module: &eir::ir::Module) -> Result<fmm::ir::Module, CompileError
     eir::analysis::check_types(module)?;
 
     let module = eir::analysis::infer_environment(module);
+    let module = eir::analysis::count_references(&module)?;
 
     let module_builder = fmm::build::ModuleBuilder::new();
     let types = module
