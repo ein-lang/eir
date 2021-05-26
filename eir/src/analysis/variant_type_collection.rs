@@ -72,7 +72,7 @@ fn collect_from_case(case: &Case) -> HashSet<Type> {
         })
         .chain(
             case.default_alternative()
-                .map(collect_from_expression)
+                .map(|alternative| collect_from_expression(alternative.expression()))
                 .unwrap_or_default(),
         )
         .collect()

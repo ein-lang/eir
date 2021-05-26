@@ -217,18 +217,22 @@ fn compile_alternatives(
     instruction_builder: &fmm::build::InstructionBuilder,
     argument: fmm::build::TypedExpression,
     alternatives: &[eir::ir::Alternative],
-    default_alternative: Option<&eir::ir::Expression>,
+    default_alternative: Option<&eir::ir::DefaultAlternative>,
     variables: &HashMap<String, fmm::build::TypedExpression>,
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> Result<Option<fmm::build::TypedExpression>, CompileError> {
     Ok(match alternatives {
         [] => default_alternative
-            .map(|default_alternative| {
+            .map(|alternative| {
                 compile(
                     module_builder,
                     instruction_builder,
-                    default_alternative,
-                    variables,
+                    alternative.expression(),
+                    &variables
+                        .clone()
+                        .into_iter()
+                        .chain(vec![(alternative.name().into(), argument)])
+                        .collect(),
                     types,
                 )
             })
