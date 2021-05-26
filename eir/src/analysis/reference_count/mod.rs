@@ -73,11 +73,21 @@ fn convert_expression(
         }
         Expression::Case(case) => {
             let (default_alternative, default_alternative_moved_variables) =
-                if let Some(expression) = case.default_alternative() {
-                    let (expression, moved_variables) =
-                        convert_expression(expression, owned_variables, moved_variables)?;
+                if let Some(alternative) = case.default_alternative() {
+                    let (expression, moved_variables) = convert_expression(
+                        alternative.expression(),
+                        &owned_variables
+                            .clone()
+                            .into_iter()
+                            .chain(vec![(alternative.name().into(), Type::Variant)])
+                            .collect(),
+                        moved_variables,
+                    )?;
 
-                    (Some(expression), moved_variables)
+                    (
+                        Some(DefaultAlternative::new(alternative.name(), expression)),
+                        moved_variables,
+                    )
                 } else {
                     (None, moved_variables.clone())
                 };
@@ -111,12 +121,25 @@ fn convert_expression(
                 .collect::<Result<Vec<_>, _>>()?;
 
             let all_moved_variables = default_alternative_moved_variables
-                .clone()
-                .into_iter()
+                .iter()
+                .cloned()
+                .filter(|variable| {
+                    if let Some(alternative) = case.default_alternative() {
+                        variable != alternative.name()
+                    } else {
+                        true
+                    }
+                })
                 .chain(
                     alternative_tuples
                         .iter()
-                        .flat_map(|(_, moved_variables)| moved_variables.clone()),
+                        .flat_map(|(alternative, moved_variables)| {
+                            moved_variables
+                                .iter()
+                                .cloned()
+                                .filter(|variable| variable != alternative.name())
+                                .collect::<HashSet<String>>()
+                        }),
                 )
                 .collect();
 
@@ -135,22 +158,43 @@ fn convert_expression(
                                 drop_variables(
                                     alternative.expression().clone(),
                                     all_moved_variables
+                                        .clone()
+                                        .into_iter()
+                                        .chain(vec![alternative.name().into()])
+                                        .collect::<HashSet<_>>()
                                         .difference(&moved_variables)
                                         .cloned()
                                         .collect(),
-                                    owned_variables,
+                                    &owned_variables
+                                        .clone()
+                                        .into_iter()
+                                        .chain(vec![(
+                                            alternative.name().into(),
+                                            alternative.type_().clone(),
+                                        )])
+                                        .collect(),
                                 ),
                             )
                         })
                         .collect(),
-                    default_alternative.map(|expression| {
-                        drop_variables(
-                            expression,
-                            all_moved_variables
-                                .difference(&default_alternative_moved_variables)
-                                .cloned()
-                                .collect(),
-                            owned_variables,
+                    default_alternative.map(|alternative| {
+                        DefaultAlternative::new(
+                            alternative.name(),
+                            drop_variables(
+                                alternative.expression().clone(),
+                                all_moved_variables
+                                    .into_iter()
+                                    .chain(vec![alternative.name().into()])
+                                    .collect::<HashSet<_>>()
+                                    .difference(&default_alternative_moved_variables)
+                                    .cloned()
+                                    .collect(),
+                                &owned_variables
+                                    .clone()
+                                    .into_iter()
+                                    .chain(vec![(alternative.name().into(), Type::Variant)])
+                                    .collect(),
+                            ),
                         )
                     }),
                 )
@@ -1041,6 +1085,120 @@ mod tests {
                         42.0
                     ),
                     Type::Number
+                ),
+            );
+        }
+    }
+
+    mod if_ {
+        use super::*;
+
+        #[test]
+        fn convert_if() {
+            assert_eq!(
+                convert_expression(
+                    &If::new(Variable::new("x"), Variable::new("y"), Variable::new("z")).into(),
+                    &vec![
+                        ("x".into(), Type::Number),
+                        ("y".into(), Type::Number),
+                        ("z".into(), Type::Number),
+                    ]
+                    .into_iter()
+                    .collect(),
+                    &Default::default()
+                )
+                .unwrap(),
+                (
+                    If::new(
+                        Variable::new("x"),
+                        DropVariables::new(
+                            vec![("z".into(), Type::Number)].into_iter().collect(),
+                            Variable::new("y")
+                        ),
+                        DropVariables::new(
+                            vec![("y".into(), Type::Number)].into_iter().collect(),
+                            Variable::new("z")
+                        )
+                    )
+                    .into(),
+                    vec!["x".into(), "y".into(), "z".into()]
+                        .into_iter()
+                        .collect()
+                ),
+            );
+        }
+    }
+
+    mod case {
+        use super::*;
+
+        #[test]
+        fn convert_case_with_default_alternative() {
+            assert_eq!(
+                convert_expression(
+                    &Case::new(
+                        Variable::new("x"),
+                        vec![],
+                        Some(DefaultAlternative::new("x", 42.0))
+                    )
+                    .into(),
+                    &vec![("x".into(), Type::Variant)].into_iter().collect(),
+                    &Default::default()
+                )
+                .unwrap(),
+                (
+                    Case::new(
+                        Variable::new("x"),
+                        vec![],
+                        Some(DefaultAlternative::new(
+                            "x",
+                            DropVariables::new(
+                                vec![("x".into(), Type::Variant)].into_iter().collect(),
+                                42.0
+                            )
+                        ))
+                    )
+                    .into(),
+                    vec!["x".into()].into_iter().collect()
+                ),
+            );
+        }
+
+        #[test]
+        fn convert_case_with_alternatives() {
+            assert_eq!(
+                convert_expression(
+                    &Case::new(
+                        Variable::new("x"),
+                        vec![
+                            Alternative::new(Type::Number, "x", Variable::new("x")),
+                            Alternative::new(Type::Boolean, "x", 42.0)
+                        ],
+                        None
+                    )
+                    .into(),
+                    &vec![("x".into(), Type::Variant)].into_iter().collect(),
+                    &Default::default()
+                )
+                .unwrap(),
+                (
+                    Case::new(
+                        Variable::new("x"),
+                        vec![
+                            Alternative::new(Type::Number, "x", Variable::new("x")),
+                            Alternative::new(
+                                Type::Boolean,
+                                "x",
+                                DropVariables::new(
+                                    vec![("x".into(), Type::Boolean)].into_iter().collect(),
+                                    42.0
+                                )
+                            )
+                        ],
+                        None
+                    )
+                    .into(),
+                    vec!["x".into()].into_iter().collect()
                 ),
             );
         }

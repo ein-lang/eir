@@ -125,7 +125,7 @@ fn infer_in_case(case: &Case, variables: &HashMap<String, Type>) -> Case {
             .map(|alternative| infer_in_alternative(alternative, variables))
             .collect(),
         case.default_alternative()
-            .map(|expression| infer_in_expression(expression, variables)),
+            .map(|alternative| infer_in_default_alternative(alternative, variables)),
     )
 }
 
@@ -140,7 +140,21 @@ fn infer_in_alternative(
     Alternative::new(
         alternative.type_().clone(),
         alternative.name(),
-        infer_in_expression(alternative.expression(), &&variables),
+        infer_in_expression(alternative.expression(), &variables),
+    )
+}
+
+fn infer_in_default_alternative(
+    alternative: &DefaultAlternative,
+    variables: &HashMap<String, Type>,
+) -> DefaultAlternative {
+    let mut variables = variables.clone();
+
+    variables.insert(alternative.name().into(), Type::Variant);
+
+    DefaultAlternative::new(
+        alternative.name(),
+        infer_in_expression(alternative.expression(), &variables),
     )
 }
 

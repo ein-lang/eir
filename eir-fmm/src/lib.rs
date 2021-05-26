@@ -27,6 +27,8 @@ pub fn compile(module: &eir::ir::Module) -> Result<fmm::ir::Module, CompileError
     let module = eir::analysis::infer_environment(module);
     let module = eir::analysis::count_references(&module)?;
 
+    eir::analysis::check_types(&module)?;
+
     let module_builder = fmm::build::ModuleBuilder::new();
     let types = module
         .type_definitions()
@@ -1184,6 +1186,37 @@ mod tests {
                     eir::types::Type::Number,
                 ),
             ]));
+        }
+
+        #[test]
+        fn drop_variable_captured_in_other_alternative_in_case() {
+            compile_module(&create_module_with_type_definitions(
+                vec![eir::ir::TypeDefinition::new(
+                    "a",
+                    eir::types::RecordBody::new(vec![]),
+                )],
+                vec![eir::ir::Definition::new(
+                    "f",
+                    vec![eir::ir::Argument::new("x", eir::types::Type::Variant)],
+                    eir::ir::Case::new(
+                        eir::ir::Variable::new("x"),
+                        vec![
+                            eir::ir::Alternative::new(
+                                eir::types::Type::ByteString,
+                                "x",
+                                eir::ir::Variable::new("x"),
+                            ),
+                            eir::ir::Alternative::new(
+                                eir::types::Record::new("a"),
+                                "x",
+                                eir::ir::ByteString::new(vec![]),
+                            ),
+                        ],
+                        None,
+                    ),
+                    eir::types::Type::ByteString,
+                )],
+            ));
         }
     }
 }

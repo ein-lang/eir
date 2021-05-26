@@ -66,7 +66,12 @@ fn find_in_case(case: &Case) -> HashSet<String> {
         .chain(
             case.default_alternative()
                 .into_iter()
-                .flat_map(find_in_expression),
+                .flat_map(|alternative| {
+                    find_in_expression(alternative.expression())
+                        .into_iter()
+                        .filter(|variable| variable != alternative.name())
+                        .collect::<HashSet<_>>()
+                }),
         )
         .collect()
 }

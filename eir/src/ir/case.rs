@@ -1,23 +1,25 @@
-use super::{alternative::Alternative, expression::Expression};
+use super::{
+    alternative::Alternative, default_alternative::DefaultAlternative, expression::Expression,
+};
 use std::sync::Arc;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Case {
     argument: Arc<Expression>,
     alternatives: Vec<Alternative>,
-    default_alternative: Option<Arc<Expression>>,
+    default_alternative: Option<DefaultAlternative>,
 }
 
 impl Case {
     pub fn new(
         argument: impl Into<Expression>,
         alternatives: Vec<Alternative>,
-        default_alternative: Option<Expression>,
+        default_alternative: Option<DefaultAlternative>,
     ) -> Self {
         Self {
             argument: Arc::new(argument.into()),
             alternatives,
-            default_alternative: default_alternative.map(|expression| expression.into()),
+            default_alternative,
         }
     }
 
@@ -29,9 +31,7 @@ impl Case {
         &self.alternatives
     }
 
-    pub fn default_alternative(&self) -> Option<&Expression> {
-        self.default_alternative
-            .as_ref()
-            .map(|expression| expression.as_ref())
+    pub fn default_alternative(&self) -> Option<&DefaultAlternative> {
+        self.default_alternative.as_ref()
     }
 }

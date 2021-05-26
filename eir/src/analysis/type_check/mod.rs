@@ -244,8 +244,12 @@ fn check_case(
         }
     }
 
-    if let Some(expression) = case.default_alternative() {
-        let alternative_type = check_expression(expression, &variables)?;
+    if let Some(alternative) = case.default_alternative() {
+        let mut variables = variables.clone();
+
+        variables.insert(alternative.name(), Type::Variant);
+
+        let alternative_type = check_expression(alternative.expression(), &variables)?;
 
         if let Some(expression_type) = &expression_type {
             check_equality(&alternative_type, expression_type)?;
@@ -539,7 +543,11 @@ mod tests {
                 check_types(&create_module_from_definitions(vec![Definition::new(
                     "f",
                     vec![Argument::new("x", Type::Variant)],
-                    Case::new(Variable::new("x"), vec![], Some(42.0.into()),),
+                    Case::new(
+                        Variable::new("x"),
+                        vec![],
+                        Some(DefaultAlternative::new("x", 42.0))
+                    ),
                     Type::Number,
                 )])),
                 Ok(())
