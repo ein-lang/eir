@@ -58,7 +58,7 @@ fn convert_definition(definition: &Definition) -> Result<Definition, ReferenceCo
 // The basic rules are listed below.
 //
 // - Every input of expressions is moved including conditions of if expressions and records of record
-// element operations.
+//   element operations.
 // - The returned values of functions are moved.
 // - Newly bound variables in let expressions are dropped if they are not moved in their expressions.
 fn convert_expression(
