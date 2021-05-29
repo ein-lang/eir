@@ -88,7 +88,6 @@ fn if_heap_pointer(
     pointer: &fmm::build::TypedExpression,
     then: impl Fn(&fmm::build::InstructionBuilder) -> Result<(), CompileError>,
 ) -> Result<(), CompileError> {
-    // TODO Remove a null pointer check?
     builder.if_(
         fmm::build::comparison_operation(
             fmm::ir::ComparisonOperator::NotEqual,
