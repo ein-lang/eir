@@ -197,7 +197,10 @@ fn compile_partially_applied_entry_function(
                         .chain(argument_types.iter().cloned().cloned())
                         .collect(),
                 )),
-                fmm::build::variable(arguments[0].name(), arguments[0].type_().clone()),
+                closures::compile_environment_pointer(
+                    &instruction_builder,
+                    fmm::build::variable(arguments[0].name(), arguments[0].type_().clone()),
+                )?,
             ))?;
             let closure_pointer = instruction_builder.deconstruct_record(environment.clone(), 0)?;
             let arguments = (0..argument_types.len())
