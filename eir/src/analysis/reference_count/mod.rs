@@ -54,6 +54,13 @@ fn convert_definition(definition: &Definition) -> Result<Definition, ReferenceCo
     ))
 }
 
+// Here, we convert expressions tracking moved variables and cloning variables moved already.
+// The basic rules are listed below.
+//
+// - The returned values of functions are moved.
+// - Every input of expressions is moved including conditions of if expressions and records of record
+//   element operations.
+// - Newly bound variables in let expressions are dropped if they are not moved in their expressions.
 fn convert_expression(
     expression: &Expression,
     owned_variables: &HashMap<String, Type>,
