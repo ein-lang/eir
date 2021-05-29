@@ -138,7 +138,7 @@ pub fn compile(
             reference_count::drop_expression(
                 instruction_builder,
                 &record,
-                &record_type.clone().into(),
+                &record_type.into(),
                 types,
             )?;
 
