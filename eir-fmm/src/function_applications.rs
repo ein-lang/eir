@@ -190,18 +190,21 @@ fn compile_partially_applied_entry_function(
     module_builder.define_anonymous_function(
         arguments.clone(),
         |instruction_builder| {
-            let environment = instruction_builder.load(fmm::build::bit_cast(
-                fmm::types::Pointer::new(fmm::types::Record::new(
-                    vec![closure_pointer_type.clone()]
-                        .into_iter()
-                        .chain(argument_types.iter().cloned().cloned())
-                        .collect(),
-                )),
-                closures::compile_environment_pointer(
-                    &instruction_builder,
+            let environment = instruction_builder.load(closures::compile_environment_pointer(
+                &instruction_builder,
+                fmm::build::bit_cast(
+                    fmm::types::Pointer::new(types::compile_raw_closure(
+                        entry_function_type.clone(),
+                        fmm::types::Record::new(
+                            vec![closure_pointer_type.clone()]
+                                .into_iter()
+                                .chain(argument_types.iter().cloned().cloned())
+                                .collect(),
+                        ),
+                    )),
                     fmm::build::variable(arguments[0].name(), arguments[0].type_().clone()),
-                )?,
-            ))?;
+                ),
+            )?)?;
             let closure_pointer = instruction_builder.deconstruct_record(environment.clone(), 0)?;
             let arguments = (0..argument_types.len())
                 .map(|index| instruction_builder.deconstruct_record(environment.clone(), index + 1))
