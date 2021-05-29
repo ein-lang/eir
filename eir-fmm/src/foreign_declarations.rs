@@ -31,8 +31,8 @@ fn compile_entry_function(
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
     let arguments = vec![fmm::ir::Argument::new(
-        "_env",
-        fmm::types::Pointer::new(types::compile_unsized_environment()),
+        "_closure",
+        types::compile_untyped_closure_pointer(),
     )]
     .into_iter()
     .chain(
