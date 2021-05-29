@@ -256,13 +256,20 @@ fn compile_normal_body(
     definition: &eir::ir::Definition,
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> Result<fmm::ir::Block, CompileError> {
-    Ok(
-        instruction_builder.return_(instruction_builder.load(compile_thunk_value_pointer(
-            instruction_builder,
-            definition,
-            types,
-        )?)?),
-    )
+    let value = instruction_builder.load(compile_thunk_value_pointer(
+        instruction_builder,
+        definition,
+        types,
+    )?)?;
+
+    reference_count::clone_expression(
+        instruction_builder,
+        &value,
+        definition.result_type(),
+        types,
+    )?;
+
+    Ok(instruction_builder.return_(value))
 }
 
 fn compile_entry_function_pointer(
