@@ -116,13 +116,34 @@ pub fn compile(
                 unboxed.into()
             }
         }
-        eir::ir::Expression::RecordElement(element) => records::get_record_element(
-            instruction_builder,
-            &compile(element.record(), variables)?,
-            element.type_(),
-            element.index(),
-            types,
-        )?,
+        eir::ir::Expression::RecordElement(element) => {
+            let record_type = element.type_().clone();
+            let element_index = element.index();
+
+            let record = compile(element.record(), variables)?;
+            let element = records::get_record_element(
+                instruction_builder,
+                &record,
+                element.type_(),
+                element.index(),
+                types,
+            )?;
+
+            reference_count::clone_expression(
+                instruction_builder,
+                &element,
+                &types[record_type.name()].elements()[element_index],
+                types,
+            )?;
+            reference_count::drop_expression(
+                instruction_builder,
+                &record,
+                &record_type.clone().into(),
+                types,
+            )?;
+
+            element
+        }
         eir::ir::Expression::ByteString(string) => fmm::build::record(vec![
             reference_count::compile_tagged_pointer(
                 &fmm::build::bit_cast(
