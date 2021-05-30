@@ -135,7 +135,7 @@ fn convert_expression(
                 })
                 .collect::<Result<Vec<_>, _>>()?;
 
-            let all_moved_variables = default_alternative_moved_variables
+            let alternative_moved_variables = default_alternative_moved_variables
                 .iter()
                 .cloned()
                 .filter(|variable| {
@@ -164,7 +164,7 @@ fn convert_expression(
                 &moved_variables
                     .iter()
                     .cloned()
-                    .chain(all_moved_variables.clone())
+                    .chain(alternative_moved_variables.clone())
                     .collect(),
             )?;
 
@@ -179,7 +179,7 @@ fn convert_expression(
                                 alternative.name(),
                                 drop_variables(
                                     alternative.expression().clone(),
-                                    all_moved_variables
+                                    alternative_moved_variables
                                         .clone()
                                         .into_iter()
                                         .chain(vec![alternative.name().into()])
@@ -204,7 +204,7 @@ fn convert_expression(
                             alternative.name(),
                             drop_variables(
                                 alternative.expression().clone(),
-                                all_moved_variables
+                                alternative_moved_variables
                                     .into_iter()
                                     .chain(vec![alternative.name().into()])
                                     .collect::<HashSet<_>>()
