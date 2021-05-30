@@ -21,7 +21,7 @@ pub fn compile_variant_clone_function(
             } else {
                 expressions::clone_expression(
                     &builder,
-                    &crate::variants::compile_unboxed_payload(&builder, &payload, type_, types)?,
+                    &compile_payload(&builder, &payload, type_, types)?,
                     type_,
                     types,
                 )?;
@@ -53,9 +53,7 @@ pub fn compile_variant_drop_function(
                 pointers::drop_pointer(&builder, &payload, |builder| {
                     expressions::drop_expression(
                         &builder,
-                        &crate::variants::compile_unboxed_payload(
-                            &builder, &payload, type_, types,
-                        )?,
+                        &compile_payload(&builder, &payload, type_, types)?,
                         type_,
                         types,
                     )?;
@@ -65,7 +63,7 @@ pub fn compile_variant_drop_function(
             } else {
                 expressions::drop_expression(
                     &builder,
-                    &crate::variants::compile_unboxed_payload(&builder, &payload, type_, types)?,
+                    &compile_payload(&builder, &payload, type_, types)?,
                     type_,
                     types,
                 )?;
@@ -77,4 +75,24 @@ pub fn compile_variant_drop_function(
         fmm::types::CallingConvention::Target,
         fmm::ir::Linkage::Weak,
     )
+}
+
+fn compile_payload(
+    builder: &fmm::build::InstructionBuilder,
+    payload: &fmm::build::TypedExpression,
+    type_: &eir::types::Type,
+    types: &HashMap<String, eir::types::RecordBody>,
+) -> Result<fmm::build::TypedExpression, CompileError> {
+    Ok(if crate::variants::is_payload_boxed(type_)? {
+        builder.load(fmm::build::bit_cast(
+            fmm::types::Pointer::new(types::compile(type_, types)),
+            payload.clone(),
+        ))?
+    } else {
+        crate::variants::compile_union_bit_cast(
+            builder,
+            types::compile(type_, types),
+            payload.clone(),
+        )?
+    })
 }

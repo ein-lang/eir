@@ -36,6 +36,7 @@ pub fn compile_unboxed_payload(
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> Result<fmm::build::TypedExpression, CompileError> {
     Ok(if is_payload_boxed(type_)? {
+        // Do small optimization of moving payload directly instead of cloning a payload and dropping a variant.
         let pointer = fmm::build::bit_cast(
             fmm::types::Pointer::new(types::compile(type_, types)),
             payload.clone(),
@@ -61,7 +62,7 @@ pub fn is_payload_boxed(type_: &eir::types::Type) -> Result<bool, CompileError> 
     }
 }
 
-fn compile_union_bit_cast(
+pub fn compile_union_bit_cast(
     builder: &fmm::build::InstructionBuilder,
     to_type: impl Into<fmm::types::Type>,
     argument: impl Into<fmm::build::TypedExpression>,
