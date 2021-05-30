@@ -292,15 +292,28 @@ fn convert_expression(
                 .into_iter()
                 .chain(vec![(let_.name().into(), let_.type_().clone())])
                 .collect();
-            let (expression, expression_moved_variables) =
-                convert_expression(let_.expression(), &let_owned_variables, moved_variables)?;
-            let (bound_expression, moved_variables) = convert_expression(
-                let_.bound_expression(),
-                &owned_variables,
-                &expression_moved_variables
+            let (expression, expression_moved_variables) = convert_expression(
+                let_.expression(),
+                &let_owned_variables,
+                &moved_variables
                     .iter()
                     .cloned()
                     .filter(|variable| variable != let_.name())
+                    .collect(),
+            )?;
+            let (bound_expression, moved_variables) = convert_expression(
+                let_.bound_expression(),
+                &owned_variables,
+                &moved_variables
+                    .clone()
+                    .into_iter()
+                    .chain(
+                        expression_moved_variables
+                            .clone()
+                            .iter()
+                            .cloned()
+                            .filter(|variable| variable != let_.name()),
+                    )
                     .collect(),
             )?;
 
@@ -758,6 +771,45 @@ mod tests {
                     .into(),
                     vec!["y".into()].into_iter().collect()
                 ),
+            );
+        }
+
+        #[test]
+        fn convert_nested_let() {
+            assert_eq!(
+                convert_expression(
+                    &Let::new(
+                        "y",
+                        Type::Number,
+                        Let::new("x", Type::Number, Variable::new("x"), Variable::new("x")),
+                        Variable::new("x")
+                    )
+                    .into(),
+                    &vec![("x".into(), Type::Number)].into_iter().collect(),
+                    &Default::default()
+                )
+                .unwrap(),
+                (
+                    Let::new(
+                        "y",
+                        Type::Number,
+                        Let::new(
+                            "x",
+                            Type::Number,
+                            CloneVariables::new(
+                                vec![("x".into(), Type::Number)].into_iter().collect(),
+                                Variable::new("x")
+                            ),
+                            Variable::new("x")
+                        ),
+                        DropVariables::new(
+                            vec![("y".into(), Type::Number)].into_iter().collect(),
+                            Variable::new("x")
+                        )
+                    )
+                    .into(),
+                    vec!["x".into()].into_iter().collect()
+                )
             );
         }
     }
