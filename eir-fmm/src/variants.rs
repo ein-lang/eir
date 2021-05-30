@@ -62,7 +62,7 @@ pub fn is_payload_boxed(type_: &eir::types::Type) -> Result<bool, CompileError> 
     }
 }
 
-fn compile_union_bit_cast(
+pub fn compile_union_bit_cast(
     builder: &fmm::build::InstructionBuilder,
     to_type: impl Into<fmm::types::Type>,
     argument: impl Into<fmm::build::TypedExpression>,
