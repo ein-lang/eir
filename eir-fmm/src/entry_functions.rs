@@ -98,10 +98,13 @@ fn compile_body(
                     })
                     .collect::<Result<Vec<_>, _>>()?,
             )
-            .chain(vec![(
-                definition.name().into(),
-                compile_closure_pointer(definition.type_(), types)?,
-            )])
+            .chain(vec![(definition.name().into(), {
+                let closure_pointer = compile_closure_pointer(definition.type_(), types)?;
+
+                reference_count::clone_function(instruction_builder, &closure_pointer)?;
+
+                closure_pointer
+            })])
             .chain(definition.arguments().iter().map(|argument| {
                 (
                     argument.name().into(),
