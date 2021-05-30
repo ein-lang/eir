@@ -23,7 +23,8 @@ fn compile_non_thunk(
     variables: &HashMap<String, fmm::build::TypedExpression>,
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> Result<fmm::build::TypedExpression, CompileError> {
-    module_builder.define_anonymous_function(
+    module_builder.define_function(
+        generate_function_entry_name(definition),
         compile_arguments(definition, types),
         |instruction_builder| {
             Ok(instruction_builder.return_(compile_body(
@@ -36,6 +37,7 @@ fn compile_non_thunk(
         },
         types::compile(definition.result_type(), types),
         fmm::types::CallingConvention::Source,
+        fmm::ir::Linkage::Internal,
     )
 }
 
@@ -124,7 +126,7 @@ fn compile_initial_thunk_entry(
     variables: &HashMap<String, fmm::build::TypedExpression>,
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> Result<fmm::build::TypedExpression, CompileError> {
-    let entry_function_name = module_builder.generate_name();
+    let entry_function_name = generate_thunk_entry_name(definition, "abnormal");
     let entry_function_type = types::compile_entry_function_from_definition(definition, types);
     let arguments = compile_arguments(definition, types);
 
@@ -210,11 +212,13 @@ fn compile_normal_thunk_entry(
     definition: &eir::ir::Definition,
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> Result<fmm::build::TypedExpression, CompileError> {
-    module_builder.define_anonymous_function(
+    module_builder.define_function(
+        generate_thunk_entry_name(definition, "normal"),
         compile_arguments(definition, types),
         |instruction_builder| compile_normal_body(&instruction_builder, definition, types),
         types::compile(definition.result_type(), types),
         fmm::types::CallingConvention::Source,
+        fmm::ir::Linkage::Internal,
     )
 }
 
@@ -223,7 +227,7 @@ fn compile_locked_thunk_entry(
     definition: &eir::ir::Definition,
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> Result<fmm::build::TypedExpression, CompileError> {
-    let entry_function_name = module_builder.generate_name();
+    let entry_function_name = generate_thunk_entry_name(definition, "locked");
 
     module_builder.define_function(
         &entry_function_name,
@@ -363,4 +367,12 @@ fn compile_closure_pointer(
 
 fn compile_untyped_closure_pointer() -> fmm::build::TypedExpression {
     fmm::build::variable(CLOSURE_NAME, types::compile_untyped_closure_pointer())
+}
+
+fn generate_function_entry_name(definition: &eir::ir::Definition) -> String {
+    format!("{}.entry", definition.name())
+}
+
+fn generate_thunk_entry_name(definition: &eir::ir::Definition, suffix: &str) -> String {
+    format!("{}.thunk.{}", definition.name(), suffix)
 }
