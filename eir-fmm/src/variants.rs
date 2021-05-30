@@ -36,10 +36,15 @@ pub fn compile_unboxed_payload(
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> Result<fmm::build::TypedExpression, CompileError> {
     Ok(if is_payload_boxed(type_)? {
-        builder.load(fmm::build::bit_cast(
+        let pointer = fmm::build::bit_cast(
             fmm::types::Pointer::new(types::compile(type_, types)),
             payload.clone(),
-        ))?
+        );
+        let value = builder.load(pointer.clone())?;
+
+        reference_count::drop_pointer(builder, &pointer.into(), |_| Ok(()))?;
+
+        value
     } else {
         compile_union_bit_cast(builder, types::compile(type_, types), payload.clone())?
     })
