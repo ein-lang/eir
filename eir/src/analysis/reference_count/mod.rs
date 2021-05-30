@@ -88,7 +88,11 @@ fn convert_expression(
                             .into_iter()
                             .chain(vec![(alternative.name().into(), Type::Variant)])
                             .collect(),
-                        moved_variables,
+                        &moved_variables
+                            .clone()
+                            .into_iter()
+                            .filter(|variable| variable != alternative.name())
+                            .collect(),
                     )?;
 
                     (
@@ -113,7 +117,11 @@ fn convert_expression(
                                 alternative.type_().clone(),
                             )])
                             .collect(),
-                        moved_variables,
+                        &moved_variables
+                            .clone()
+                            .into_iter()
+                            .filter(|variable| variable != alternative.name())
+                            .collect(),
                     )?;
 
                     Ok((
@@ -148,10 +156,17 @@ fn convert_expression(
                                 .collect::<HashSet<String>>()
                         }),
                 )
-                .collect();
+                .collect::<HashSet<_>>();
 
-            let (argument, moved_variables) =
-                convert_expression(case.argument(), owned_variables, &all_moved_variables)?;
+            let (argument, moved_variables) = convert_expression(
+                case.argument(),
+                owned_variables,
+                &moved_variables
+                    .iter()
+                    .cloned()
+                    .chain(all_moved_variables.clone())
+                    .collect(),
+            )?;
 
             (
                 Case::new(
@@ -1138,6 +1153,7 @@ mod tests {
 
     mod case {
         use super::*;
+        use pretty_assertions::assert_eq;
 
         #[test]
         fn convert_case_with_default_alternative() {
@@ -1203,6 +1219,87 @@ mod tests {
                             )
                         ],
                         None
+                    )
+                    .into(),
+                    vec!["x".into()].into_iter().collect()
+                ),
+            );
+        }
+
+        #[test]
+        fn convert_case_with_alternatives_and_default_alternative() {
+            assert_eq!(
+                convert_expression(
+                    &Case::new(
+                        Variable::new("x"),
+                        vec![Alternative::new(Type::ByteString, "x", 42.0)],
+                        Some(DefaultAlternative::new("x", 42.0))
+                    )
+                    .into(),
+                    &vec![("x".into(), Type::Variant)].into_iter().collect(),
+                    &Default::default()
+                )
+                .unwrap(),
+                (
+                    Case::new(
+                        Variable::new("x"),
+                        vec![Alternative::new(
+                            Type::ByteString,
+                            "x",
+                            DropVariables::new(
+                                vec![("x".into(), Type::ByteString)].into_iter().collect(),
+                                42.0
+                            )
+                        )],
+                        Some(DefaultAlternative::new(
+                            "x",
+                            DropVariables::new(
+                                vec![("x".into(), Type::Variant)].into_iter().collect(),
+                                42.0
+                            )
+                        ))
+                    )
+                    .into(),
+                    vec!["x".into()].into_iter().collect()
+                ),
+            );
+        }
+
+        #[test]
+        fn convert_case_with_moved_argument() {
+            assert_eq!(
+                convert_expression(
+                    &Case::new(
+                        Variable::new("x"),
+                        vec![Alternative::new(Type::ByteString, "x", 42.0)],
+                        Some(DefaultAlternative::new("x", 42.0))
+                    )
+                    .into(),
+                    &vec![("x".into(), Type::Variant)].into_iter().collect(),
+                    &vec!["x".into()].into_iter().collect(),
+                )
+                .unwrap(),
+                (
+                    Case::new(
+                        CloneVariables::new(
+                            vec![("x".into(), Type::Variant)].into_iter().collect(),
+                            Variable::new("x")
+                        ),
+                        vec![Alternative::new(
+                            Type::ByteString,
+                            "x",
+                            DropVariables::new(
+                                vec![("x".into(), Type::ByteString)].into_iter().collect(),
+                                42.0
+                            )
+                        )],
+                        Some(DefaultAlternative::new(
+                            "x",
+                            DropVariables::new(
+                                vec![("x".into(), Type::Variant)].into_iter().collect(),
+                                42.0
+                            )
+                        ))
                     )
                     .into(),
                     vec!["x".into()].into_iter().collect()
