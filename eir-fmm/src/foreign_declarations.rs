@@ -53,7 +53,8 @@ fn compile_entry_function(
         types,
     );
 
-    module_builder.define_anonymous_function(
+    module_builder.define_function(
+        format!("{}.foreign.entry", declaration.name()),
         arguments.clone(),
         |instruction_builder| {
             Ok(instruction_builder.return_(
@@ -74,5 +75,6 @@ fn compile_entry_function(
         },
         foreign_function_type.result().clone(),
         fmm::types::CallingConvention::Source,
+        fmm::ir::Linkage::Internal,
     )
 }
