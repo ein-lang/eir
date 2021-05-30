@@ -150,6 +150,13 @@ fn compile_initial_thunk_entry(
                         types,
                     )?;
 
+                    reference_count::clone_expression(
+                        &instruction_builder,
+                        &value,
+                        definition.result_type(),
+                        types,
+                    )?;
+
                     instruction_builder.store(
                         value.clone(),
                         compile_thunk_value_pointer(&instruction_builder, definition, types)?,
