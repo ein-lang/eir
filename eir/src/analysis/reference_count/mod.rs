@@ -345,7 +345,7 @@ fn convert_expression(
                     let_.definition().type_().clone().into(),
                 )])
                 .collect();
-            let (expression, moved_variables) = convert_expression(
+            let (expression, expression_moved_variables) = convert_expression(
                 let_.expression(),
                 &let_owned_variables,
                 &moved_variables
@@ -354,6 +354,17 @@ fn convert_expression(
                     .filter(|variable| variable != let_.definition().name())
                     .collect(),
             )?;
+            let moved_variables = moved_variables
+                .clone()
+                .into_iter()
+                .chain(
+                    expression_moved_variables
+                        .clone()
+                        .iter()
+                        .cloned()
+                        .filter(|variable| variable != let_.definition().name()),
+                )
+                .collect();
             let cloned_variables = let_
                 .definition()
                 .environment()
@@ -364,33 +375,32 @@ fn convert_expression(
                 .cloned()
                 .collect::<HashSet<_>>();
 
-            let let_ = LetRecursive::new(
-                convert_definition(let_.definition())?,
-                if moved_variables.contains(let_.definition().name()) {
-                    expression
-                } else {
-                    drop_variables(
-                        expression,
-                        vec![let_.definition().name().into()].into_iter().collect(),
-                        &let_owned_variables,
-                    )
-                },
-            );
-
-            let moved_variables = moved_variables
-                .into_iter()
-                .filter(|variable| variable != let_.definition().name())
-                .chain(
-                    let_.definition()
-                        .environment()
-                        .iter()
-                        .map(|argument| argument.name().into()),
-                )
-                .collect::<HashSet<String>>();
-
             (
-                clone_variables(let_, cloned_variables, owned_variables),
-                moved_variables,
+                clone_variables(
+                    LetRecursive::new(
+                        convert_definition(let_.definition())?,
+                        if expression_moved_variables.contains(let_.definition().name()) {
+                            expression
+                        } else {
+                            drop_variables(
+                                expression,
+                                vec![let_.definition().name().into()].into_iter().collect(),
+                                &let_owned_variables,
+                            )
+                        },
+                    ),
+                    cloned_variables,
+                    owned_variables,
+                ),
+                moved_variables
+                    .into_iter()
+                    .chain(
+                        let_.definition()
+                            .environment()
+                            .iter()
+                            .map(|argument| argument.name().into()),
+                    )
+                    .collect::<HashSet<String>>(),
             )
         }
         Expression::Record(record) => {
@@ -1163,6 +1173,58 @@ mod tests {
                     )
                     .into(),
                     vec!["f".into()].into_iter().collect()
+                )
+            );
+        }
+
+        #[test]
+        fn convert_with_moved_free_variable() {
+            assert_eq!(
+                convert_expression(
+                    &LetRecursive::new(
+                        Definition::with_environment(
+                            "x",
+                            vec![Argument::new("x", Type::Number)],
+                            vec![Argument::new("y", Type::Number)],
+                            42.0,
+                            Type::Number
+                        ),
+                        42.0
+                    )
+                    .into(),
+                    &vec![("x".into(), Type::Number)].into_iter().collect(),
+                    &vec!["x".into()].into_iter().collect()
+                )
+                .unwrap(),
+                (
+                    CloneVariables::new(
+                        vec![("x".into(), Type::Number)].into_iter().collect(),
+                        LetRecursive::new(
+                            Definition::with_environment(
+                                "x",
+                                vec![Argument::new("x", Type::Number)],
+                                vec![Argument::new("y", Type::Number)],
+                                DropVariables::new(
+                                    vec![("y".into(), Type::Number), ("x".into(), Type::Number)]
+                                        .into_iter()
+                                        .collect(),
+                                    42.0,
+                                ),
+                                Type::Number
+                            ),
+                            DropVariables::new(
+                                vec![(
+                                    "x".into(),
+                                    types::Function::new(Type::Number, Type::Number).into()
+                                )]
+                                .into_iter()
+                                .collect(),
+                                42.0,
+                            )
+                        )
+                    )
+                    .into(),
+                    vec!["x".into()].into_iter().collect()
                 )
             );
         }
