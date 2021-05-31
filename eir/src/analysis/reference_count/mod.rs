@@ -309,7 +309,6 @@ fn convert_expression(
                     .into_iter()
                     .chain(
                         expression_moved_variables
-                            .clone()
                             .iter()
                             .cloned()
                             .filter(|variable| variable != let_.name()),
@@ -359,7 +358,6 @@ fn convert_expression(
                 .into_iter()
                 .chain(
                     expression_moved_variables
-                        .clone()
                         .iter()
                         .cloned()
                         .filter(|variable| variable != let_.definition().name()),
@@ -1165,7 +1163,7 @@ mod tests {
                             )
                         ),
                         DropVariables::new(
-                            vec![("g".into(), function_type.clone().into())]
+                            vec![("g".into(), function_type.into())]
                                 .into_iter()
                                 .collect(),
                             Variable::new("f")
