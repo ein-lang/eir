@@ -345,19 +345,23 @@ fn convert_expression(
                     let_.definition().type_().clone().into(),
                 )])
                 .collect();
-            let (expression, moved_variables) =
-                convert_expression(let_.expression(), &let_owned_variables, &moved_variables)?;
+            let (expression, moved_variables) = convert_expression(
+                let_.expression(),
+                &let_owned_variables,
+                &moved_variables
+                    .iter()
+                    .cloned()
+                    .filter(|variable| variable != let_.definition().name())
+                    .collect(),
+            )?;
             let cloned_variables = let_
                 .definition()
                 .environment()
                 .iter()
-                .filter_map(|argument| {
-                    if should_clone_variable(argument.name(), owned_variables, &moved_variables) {
-                        Some(argument.name().into())
-                    } else {
-                        None
-                    }
-                })
+                .map(|argument| argument.name().into())
+                .collect::<HashSet<_>>()
+                .intersection(&moved_variables)
+                .cloned()
                 .collect::<HashSet<_>>();
 
             let let_ = LetRecursive::new(
@@ -1092,6 +1096,74 @@ mod tests {
                     .into(),
                     vec!["y".into()].into_iter().collect()
                 ),
+            );
+        }
+
+        #[test]
+        fn convert_let_recursive_in_let() {
+            let function_type = types::Function::new(Type::Number, Type::Number);
+
+            assert_eq!(
+                convert_expression(
+                    &Let::new(
+                        "g",
+                        function_type.clone(),
+                        LetRecursive::new(
+                            Definition::with_environment(
+                                "f",
+                                vec![Argument::new("f", Type::Number)],
+                                vec![Argument::new("x", Type::Number)],
+                                FunctionApplication::new(
+                                    function_type.clone(),
+                                    Variable::new("f"),
+                                    Variable::new("x")
+                                ),
+                                Type::Number
+                            ),
+                            Variable::new("f")
+                        ),
+                        Variable::new("f")
+                    )
+                    .into(),
+                    &vec![("f".into(), function_type.clone().into())]
+                        .into_iter()
+                        .collect(),
+                    &Default::default()
+                )
+                .unwrap(),
+                (
+                    Let::new(
+                        "g",
+                        function_type.clone(),
+                        CloneVariables::new(
+                            vec![("f".into(), function_type.clone().into())]
+                                .into_iter()
+                                .collect(),
+                            LetRecursive::new(
+                                Definition::with_environment(
+                                    "f",
+                                    vec![Argument::new("f", Type::Number)],
+                                    vec![Argument::new("x", Type::Number)],
+                                    FunctionApplication::new(
+                                        function_type.clone(),
+                                        Variable::new("f"),
+                                        Variable::new("x")
+                                    ),
+                                    Type::Number
+                                ),
+                                Variable::new("f")
+                            )
+                        ),
+                        DropVariables::new(
+                            vec![("g".into(), function_type.clone().into())]
+                                .into_iter()
+                                .collect(),
+                            Variable::new("f")
+                        )
+                    )
+                    .into(),
+                    vec!["f".into()].into_iter().collect()
+                )
             );
         }
     }
