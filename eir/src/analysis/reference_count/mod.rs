@@ -1490,5 +1490,83 @@ mod tests {
                 ),
             );
         }
+
+        #[test]
+        fn convert_case_in_let() {
+            assert_eq!(
+                convert_expression(
+                    &Let::new(
+                        "y",
+                        Type::Variant,
+                        Case::new(
+                            Variable::new("x"),
+                            vec![],
+                            Some(DefaultAlternative::new("x", Variable::new("x")))
+                        ),
+                        Variable::new("x")
+                    )
+                    .into(),
+                    &vec![("x".into(), Type::Variant)].into_iter().collect(),
+                    &Default::default()
+                )
+                .unwrap(),
+                (
+                    Let::new(
+                        "y",
+                        Type::Variant,
+                        Case::new(
+                            CloneVariables::new(
+                                vec![("x".into(), Type::Variant)].into_iter().collect(),
+                                Variable::new("x")
+                            ),
+                            vec![],
+                            Some(DefaultAlternative::new("x", Variable::new("x")))
+                        ),
+                        DropVariables::new(
+                            vec![("y".into(), Type::Variant)].into_iter().collect(),
+                            Variable::new("x")
+                        )
+                    )
+                    .into(),
+                    vec!["x".into()].into_iter().collect()
+                )
+            );
+        }
+
+        #[test]
+        fn convert_case_in_let_with_shadowed_variable() {
+            assert_eq!(
+                convert_expression(
+                    &Let::new(
+                        "x",
+                        Type::Variant,
+                        Case::new(
+                            Variable::new("x"),
+                            vec![],
+                            Some(DefaultAlternative::new("x", Variable::new("x")))
+                        ),
+                        Variable::new("x")
+                    )
+                    .into(),
+                    &vec![("x".into(), Type::Variant)].into_iter().collect(),
+                    &Default::default()
+                )
+                .unwrap(),
+                (
+                    Let::new(
+                        "x",
+                        Type::Variant,
+                        Case::new(
+                            Variable::new("x"),
+                            vec![],
+                            Some(DefaultAlternative::new("x", Variable::new("x")))
+                        ),
+                        Variable::new("x"),
+                    )
+                    .into(),
+                    vec!["x".into()].into_iter().collect()
+                )
+            );
+        }
     }
 }
