@@ -32,9 +32,9 @@ checksum = "cf1de2fe8c75bc145a2f577add951f8134889b4795d47466a54a5c846d691693"
 
 [[package]]
 name = "cc"
-version = "1.0.67"
+version = "1.0.68"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e3c69b077ad434294d3ce9f1f6143a2a4b89a8a2d54ef813d85003a4fd1137fd"
+checksum = "4a72c244c1ff497a746a7e1fb3d14bd08420ecda70c8f25c7112f2781652d787"
 
 [[package]]
 name = "cfg-if"
@@ -93,7 +93,7 @@ checksum = "37ab347416e802de484e4d03c7316c48f1ecb56574dfd4a46a80f173ce1de04d"
 [[package]]
 name = "fmm"
 version = "0.1.0"
-source = "git+https://github.com/raviqqe/fmm?branch=main#378a89fa840e77cdf6600694adf3cd5726eb9ee3"
+source = "git+https://github.com/raviqqe/fmm?branch=main#7a847b8d4c819f3db399b0a805c337132672046a"
 dependencies = [
  "once_cell",
  "petgraph",
@@ -102,7 +102,7 @@ dependencies = [
 [[package]]
 name = "fmm-c"
 version = "0.1.0"
-source = "git+https://github.com/raviqqe/fmm?branch=main#378a89fa840e77cdf6600694adf3cd5726eb9ee3"
+source = "git+https://github.com/raviqqe/fmm?branch=main#7a847b8d4c819f3db399b0a805c337132672046a"
 dependencies = [
  "fmm",
  "tempfile",
@@ -111,7 +111,7 @@ dependencies = [
 [[package]]
 name = "fmm-llvm"
 version = "0.1.0"
-source = "git+https://github.com/raviqqe/fmm?branch=main#378a89fa840e77cdf6600694adf3cd5726eb9ee3"
+source = "git+https://github.com/raviqqe/fmm?branch=main#7a847b8d4c819f3db399b0a805c337132672046a"
 dependencies = [
  "fmm",
  "inkwell",
@@ -149,7 +149,7 @@ dependencies = [
 [[package]]
 name = "inkwell"
 version = "0.1.0"
-source = "git+https://github.com/TheDan64/inkwell?branch=master#20614c6499be0d911f68855917e1e6e11a3392d7"
+source = "git+https://github.com/TheDan64/inkwell?branch=master#7df64d4e17a87b5c8433390e8c6e40fd8f9a7a9c"
 dependencies = [
  "either",
  "inkwell_internals",
@@ -163,7 +163,7 @@ dependencies = [
 [[package]]
 name = "inkwell_internals"
 version = "0.3.0"
-source = "git+https://github.com/TheDan64/inkwell?branch=master#20614c6499be0d911f68855917e1e6e11a3392d7"
+source = "git+https://github.com/TheDan64/inkwell?branch=master#7df64d4e17a87b5c8433390e8c6e40fd8f9a7a9c"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -187,9 +187,9 @@ checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
 name = "libc"
-version = "0.2.94"
+version = "0.2.95"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "18794a8ad5b29321f790b55d93dfba91e125cb1a9edbd4f8e3150acc771c1a5e"
+checksum = "789da6d93f1b866ffe175afc5322a4d76c038605a1c3319bb57b06967ca98a36"
 
 [[package]]
 name = "llvm-sys"
