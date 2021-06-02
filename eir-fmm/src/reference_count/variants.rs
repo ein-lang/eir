@@ -27,9 +27,9 @@ pub fn compile_variant_clone_function(
                 )?;
             }
 
-            Ok(builder.return_(fmm::build::VOID_VALUE.clone()))
+            Ok(builder.return_(fmm::ir::VOID_VALUE.clone()))
         },
-        fmm::build::VOID_TYPE.clone(),
+        fmm::types::VOID_TYPE.clone(),
         fmm::types::CallingConvention::Target,
         fmm::ir::Linkage::Weak,
     )
@@ -69,9 +69,9 @@ pub fn compile_variant_drop_function(
                 )?;
             }
 
-            Ok(builder.return_(fmm::build::VOID_VALUE.clone()))
+            Ok(builder.return_(fmm::ir::VOID_VALUE.clone()))
         },
-        fmm::build::VOID_TYPE.clone(),
+        fmm::types::VOID_TYPE.clone(),
         fmm::types::CallingConvention::Target,
         fmm::ir::Linkage::Weak,
     )

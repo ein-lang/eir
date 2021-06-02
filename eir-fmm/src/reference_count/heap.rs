@@ -7,10 +7,10 @@ pub fn allocate_heap(
     builder: &fmm::build::InstructionBuilder,
     type_: impl Into<fmm::types::Type>,
 ) -> Result<fmm::build::TypedExpression, CompileError> {
-    let pointer = builder.allocate_heap(fmm::types::Record::new(vec![
+    let pointer = builder.allocate_heap(fmm::build::size_of(fmm::types::Record::new(vec![
         COUNT_TYPE.into(),
         type_.into(),
-    ]));
+    ])));
 
     builder.store(
         fmm::ir::Primitive::PointerInteger(INITIAL_COUNT as i64),
@@ -30,7 +30,7 @@ pub fn free_heap(
             pointer,
         ),
         fmm::ir::Primitive::PointerInteger(-1),
-    )?)?;
+    )?);
 
     Ok(())
 }
