@@ -215,9 +215,9 @@ fn compile_drop_function_with_builder(
                 )?,
             )?;
 
-            Ok(builder.return_(fmm::build::VOID_VALUE.clone()))
+            Ok(builder.return_(fmm::ir::VOID_VALUE.clone()))
         },
-        fmm::build::VOID_TYPE.clone(),
+        fmm::types::VOID_TYPE.clone(),
         fmm::types::CallingConvention::Target,
     )
 }

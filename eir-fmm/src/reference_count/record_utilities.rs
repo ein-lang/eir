@@ -15,7 +15,7 @@ pub fn compile_record_rc_function_type(
 ) -> fmm::types::Function {
     fmm::types::Function::new(
         vec![types::compile_record(record, types)],
-        fmm::build::VOID_TYPE.clone(),
+        fmm::types::VOID_TYPE.clone(),
         fmm::types::CallingConvention::Target,
     )
 }
