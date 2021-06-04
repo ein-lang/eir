@@ -22,11 +22,11 @@ pub fn compile(
     }
 }
 
-pub fn compile_string() -> fmm::types::Record {
-    fmm::types::Record::new(vec![
-        fmm::types::Pointer::new(fmm::types::Primitive::Integer8).into(),
+pub fn compile_string() -> fmm::types::Pointer {
+    fmm::types::Pointer::new(fmm::types::Record::new(vec![
         fmm::types::Primitive::PointerInteger.into(),
-    ])
+        fmm::types::Primitive::Integer8.into(),
+    ]))
 }
 
 pub fn compile_variant() -> fmm::types::Record {

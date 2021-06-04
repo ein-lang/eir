@@ -12,5 +12,3 @@ pub use heap::*;
 pub use pointers::{compile_tagged_pointer, compile_untagged_pointer, drop_pointer};
 pub use records::*;
 pub use variants::*;
-
-pub const MINIMUM_ALIGNMENT: usize = 8;
