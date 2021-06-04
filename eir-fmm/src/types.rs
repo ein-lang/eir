@@ -59,7 +59,6 @@ pub fn compile_variant_payload() -> fmm::types::Primitive {
     fmm::types::Primitive::Integer64
 }
 
-// TODO Optimize ID representation.
 pub fn compile_type_id(type_: &eir::types::Type) -> String {
     format!("{:?}", type_)
 }
