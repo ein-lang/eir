@@ -18,7 +18,7 @@ pub fn compile_variant_clone_function(
 
             expressions::clone_expression(
                 &builder,
-                &compile_payload(&builder, &payload, type_, types)?,
+                &crate::variants::compile_unboxed_payload(&builder, &payload, type_, types)?,
                 type_,
                 types,
             )?;
@@ -47,7 +47,7 @@ pub fn compile_variant_drop_function(
 
             expressions::drop_expression(
                 &builder,
-                &compile_payload(&builder, &payload, type_, types)?,
+                &crate::variants::compile_unboxed_payload(&builder, &payload, type_, types)?,
                 type_,
                 types,
             )?;
@@ -58,17 +58,4 @@ pub fn compile_variant_drop_function(
         fmm::types::CallingConvention::Target,
         fmm::ir::Linkage::Weak,
     )
-}
-
-fn compile_payload(
-    builder: &fmm::build::InstructionBuilder,
-    payload: &fmm::build::TypedExpression,
-    type_: &eir::types::Type,
-    types: &HashMap<String, eir::types::RecordBody>,
-) -> Result<fmm::build::TypedExpression, CompileError> {
-    Ok(crate::variants::compile_union_bit_cast(
-        builder,
-        types::compile(type_, types),
-        payload.clone(),
-    )?)
 }
