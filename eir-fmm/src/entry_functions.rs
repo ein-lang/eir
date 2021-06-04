@@ -280,9 +280,7 @@ fn compile_entry_function_pointer(
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> Result<fmm::build::TypedExpression, CompileError> {
     Ok(fmm::build::bit_cast(
-        fmm::types::Pointer::new(types::compile_entry_function(
-            definition, types,
-        )),
+        fmm::types::Pointer::new(types::compile_entry_function(definition, types)),
         closures::compile_entry_function_pointer(compile_closure_pointer(
             definition.type_(),
             types,
