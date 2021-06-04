@@ -132,13 +132,12 @@ fn compile_initial_thunk_entry(
             let entry_function_pointer = compile_entry_function_pointer(definition, types)?;
 
             instruction_builder.if_(
-                // TODO Optimize atomic ordering.
                 instruction_builder.compare_and_swap(
                     entry_function_pointer.clone(),
                     fmm::build::variable(&entry_function_name, entry_function_type.clone()),
                     lock_entry_function.clone(),
-                    fmm::ir::AtomicOrdering::SequentiallyConsistent,
-                    fmm::ir::AtomicOrdering::SequentiallyConsistent,
+                    fmm::ir::AtomicOrdering::Acquire,
+                    fmm::ir::AtomicOrdering::Relaxed,
                 ),
                 |instruction_builder| -> Result<_, CompileError> {
                     let value = compile_body(
