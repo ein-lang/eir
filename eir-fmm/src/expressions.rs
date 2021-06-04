@@ -166,8 +166,7 @@ pub fn compile(
                 ),
             )
             .into(),
-        )?
-        .into(),
+        )?,
         eir::ir::Expression::Variable(variable) => variables[variable.name()].clone(),
         eir::ir::Expression::Variant(variant) => fmm::build::record(vec![
             variants::compile_tag(variant.type_()),
