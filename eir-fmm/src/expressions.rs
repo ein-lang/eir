@@ -171,7 +171,6 @@ pub fn compile(
             variants::compile_boxed_payload(
                 instruction_builder,
                 &compile(variant.payload(), variables)?,
-                variant.type_(),
             )?,
         ])
         .into(),

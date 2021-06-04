@@ -1,4 +1,4 @@
-use super::{super::error::CompileError, expressions, pointers};
+use super::{super::error::CompileError, expressions};
 use crate::types;
 use std::collections::HashMap;
 
@@ -16,16 +16,12 @@ pub fn compile_variant_clone_function(
         |builder| -> Result<_, CompileError> {
             let payload = fmm::build::variable("_payload", types::compile_variant_payload());
 
-            if crate::variants::is_payload_boxed(type_)? {
-                pointers::clone_pointer(&builder, &payload)?;
-            } else {
-                expressions::clone_expression(
-                    &builder,
-                    &compile_payload(&builder, &payload, type_, types)?,
-                    type_,
-                    types,
-                )?;
-            }
+            expressions::clone_expression(
+                &builder,
+                &compile_payload(&builder, &payload, type_, types)?,
+                type_,
+                types,
+            )?;
 
             Ok(builder.return_(fmm::ir::VOID_VALUE.clone()))
         },
@@ -49,25 +45,12 @@ pub fn compile_variant_drop_function(
         |builder| -> Result<_, CompileError> {
             let payload = fmm::build::variable("_payload", types::compile_variant_payload());
 
-            if crate::variants::is_payload_boxed(type_)? {
-                pointers::drop_pointer(&builder, &payload, |builder| {
-                    expressions::drop_expression(
-                        &builder,
-                        &compile_payload(&builder, &payload, type_, types)?,
-                        type_,
-                        types,
-                    )?;
-
-                    Ok(())
-                })?;
-            } else {
-                expressions::drop_expression(
-                    &builder,
-                    &compile_payload(&builder, &payload, type_, types)?,
-                    type_,
-                    types,
-                )?;
-            }
+            expressions::drop_expression(
+                &builder,
+                &compile_payload(&builder, &payload, type_, types)?,
+                type_,
+                types,
+            )?;
 
             Ok(builder.return_(fmm::ir::VOID_VALUE.clone()))
         },
@@ -83,16 +66,9 @@ fn compile_payload(
     type_: &eir::types::Type,
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> Result<fmm::build::TypedExpression, CompileError> {
-    Ok(if crate::variants::is_payload_boxed(type_)? {
-        builder.load(fmm::build::bit_cast(
-            fmm::types::Pointer::new(types::compile(type_, types)),
-            payload.clone(),
-        ))?
-    } else {
-        crate::variants::compile_union_bit_cast(
-            builder,
-            types::compile(type_, types),
-            payload.clone(),
-        )?
-    })
+    Ok(crate::variants::compile_union_bit_cast(
+        builder,
+        types::compile(type_, types),
+        payload.clone(),
+    )?)
 }
