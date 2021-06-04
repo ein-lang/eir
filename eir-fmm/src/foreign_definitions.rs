@@ -9,6 +9,7 @@ pub fn compile_foreign_definition(
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> Result<(), CompileError> {
     // TODO Support a target calling convention.
+    // Blocked by https://github.com/raviqqe/fmm/issues/88
     let foreign_function_type =
         types::compile_foreign_function(function_type, eir::ir::CallingConvention::Source, types);
     let arguments = foreign_function_type
