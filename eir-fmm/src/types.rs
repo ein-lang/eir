@@ -100,7 +100,7 @@ pub fn compile_sized_closure(
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> fmm::types::Record {
     compile_raw_closure(
-        compile_entry_function_from_definition(definition, types),
+        compile_entry_function(definition, types),
         compile_closure_payload(definition, types),
     )
 }
@@ -125,7 +125,11 @@ pub fn compile_unsized_closure(
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> fmm::types::Record {
     compile_raw_closure(
-        compile_entry_function(function.arguments(), function.last_result(), types),
+        compile_entry_function_from_arguments_and_result(
+            function.arguments(),
+            function.last_result(),
+            types,
+        ),
         compile_unsized_environment(),
     )
 }
@@ -185,12 +189,11 @@ pub fn compile_curried_entry_function(
     }
 }
 
-// TODO Rename this compile_entry_function.
-pub fn compile_entry_function_from_definition(
+pub fn compile_entry_function(
     definition: &eir::ir::Definition,
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> fmm::types::Function {
-    compile_entry_function(
+    compile_entry_function_from_arguments_and_result(
         definition
             .arguments()
             .iter()
@@ -200,7 +203,7 @@ pub fn compile_entry_function_from_definition(
     )
 }
 
-fn compile_entry_function<'a>(
+fn compile_entry_function_from_arguments_and_result<'a>(
     arguments: impl IntoIterator<Item = &'a eir::types::Type>,
     result: &eir::types::Type,
     types: &HashMap<String, eir::types::RecordBody>,
