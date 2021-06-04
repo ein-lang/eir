@@ -7,8 +7,9 @@ pub fn clone_pointer(
     if_heap_pointer(builder, expression, |builder| {
         builder.atomic_operation(
             fmm::ir::AtomicOperator::Add,
-            get_counter_pointer(&builder, expression)?,
+            get_counter_pointer(expression)?,
             fmm::ir::Primitive::PointerInteger(1),
+            fmm::ir::AtomicOrdering::Relaxed,
         )?;
 
         Ok(())
@@ -28,12 +29,15 @@ pub fn drop_pointer(
                 fmm::ir::ComparisonOperator::Equal,
                 builder.atomic_operation(
                     fmm::ir::AtomicOperator::Subtract,
-                    get_counter_pointer(&builder, expression)?,
+                    get_counter_pointer(expression)?,
                     fmm::ir::Primitive::PointerInteger(1),
+                    fmm::ir::AtomicOrdering::Release,
                 )?,
                 fmm::ir::Primitive::PointerInteger(heap::INITIAL_COUNT as i64),
             )?,
             |builder| -> Result<_, CompileError> {
+                builder.fence(fmm::ir::AtomicOrdering::Acquire);
+
                 drop_content(&builder)?;
 
                 heap::free_heap(
@@ -127,14 +131,14 @@ fn is_heap_pointer(
 }
 
 fn get_counter_pointer(
-    builder: &fmm::build::InstructionBuilder,
     heap_pointer: &fmm::build::TypedExpression,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
-    builder.pointer_address(
+    Ok(fmm::build::pointer_address(
         fmm::build::bit_cast(
             fmm::types::Pointer::new(heap::COUNT_TYPE),
             heap_pointer.clone(),
         ),
         fmm::ir::Primitive::PointerInteger(-1),
-    )
+    )?
+    .into())
 }

@@ -203,7 +203,6 @@ fn compile_partially_applied_entry_function(
                 fmm::build::variable(arguments[0].name(), arguments[0].type_().clone()),
             );
             let environment = instruction_builder.load(closures::compile_environment_pointer(
-                &instruction_builder,
                 partially_applied_closure_pointer.clone(),
             )?)?;
             let closure_pointer = instruction_builder.deconstruct_record(environment.clone(), 0)?;

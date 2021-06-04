@@ -9,13 +9,13 @@ static DUMMY_FUNCTION_TYPE: Lazy<eir::types::Function> =
     Lazy::new(|| eir::types::Function::new(eir::types::Type::Number, eir::types::Type::Number));
 
 pub fn compile_entry_function_pointer(
-    builder: &fmm::build::InstructionBuilder,
     closure_pointer: impl Into<fmm::build::TypedExpression>,
 ) -> Result<fmm::build::TypedExpression, CompileError> {
-    Ok(builder.record_address(
+    Ok(fmm::build::record_address(
         reference_count::compile_untagged_pointer(&closure_pointer.into())?,
         0,
-    )?)
+    )?
+    .into())
 }
 
 pub fn compile_load_entry_function(
@@ -24,44 +24,47 @@ pub fn compile_load_entry_function(
 ) -> Result<fmm::build::TypedExpression, CompileError> {
     // Entry functions of thunks need to be loaded atomically
     // to make thunk update thread-safe.
-    Ok(builder.atomic_load(compile_entry_function_pointer(builder, closure_pointer)?)?)
+    Ok(builder.atomic_load(
+        compile_entry_function_pointer(closure_pointer)?,
+        fmm::ir::AtomicOrdering::Acquire,
+    )?)
 }
 
 pub fn compile_drop_function_pointer(
-    builder: &fmm::build::InstructionBuilder,
     closure_pointer: impl Into<fmm::build::TypedExpression>,
 ) -> Result<fmm::build::TypedExpression, CompileError> {
-    Ok(builder.record_address(
+    Ok(fmm::build::record_address(
         reference_count::compile_untagged_pointer(&closure_pointer.into())?,
         1,
-    )?)
+    )?
+    .into())
 }
 
 pub fn compile_load_drop_function(
     builder: &fmm::build::InstructionBuilder,
     closure_pointer: impl Into<fmm::build::TypedExpression>,
 ) -> Result<fmm::build::TypedExpression, CompileError> {
-    Ok(builder.load(compile_drop_function_pointer(builder, closure_pointer)?)?)
+    Ok(builder.load(compile_drop_function_pointer(closure_pointer)?)?)
 }
 
 pub fn compile_load_arity(
     builder: &fmm::build::InstructionBuilder,
     closure_pointer: impl Into<fmm::build::TypedExpression>,
 ) -> Result<fmm::build::TypedExpression, CompileError> {
-    Ok(builder.load(builder.record_address(
+    Ok(builder.load(fmm::build::record_address(
         reference_count::compile_untagged_pointer(&closure_pointer.into())?,
         2,
     )?)?)
 }
 
 pub fn compile_environment_pointer(
-    builder: &fmm::build::InstructionBuilder,
     closure_pointer: impl Into<fmm::build::TypedExpression>,
 ) -> Result<fmm::build::TypedExpression, CompileError> {
-    Ok(builder.record_address(
+    Ok(fmm::build::record_address(
         reference_count::compile_untagged_pointer(&closure_pointer.into())?,
         3,
-    )?)
+    )?
+    .into())
 }
 
 pub fn compile_closure_content(
@@ -83,7 +86,6 @@ pub fn compile_closure_content(
     .into()
 }
 
-// TODO Accept environment of free variables instead of definitions.
 pub fn compile_drop_function(
     module_builder: &fmm::build::ModuleBuilder,
     definition: &eir::ir::Definition,
@@ -123,7 +125,7 @@ pub fn compile_normal_thunk_drop_function(
         |builder, environment_pointer| -> Result<_, CompileError> {
             reference_count::drop_expression(
                 &builder,
-                &builder.load(builder.union_address(
+                &builder.load(fmm::build::union_address(
                     fmm::build::bit_cast(
                         fmm::types::Pointer::new(types::compile_closure_payload(definition, types)),
                         environment_pointer.clone(),
@@ -200,19 +202,13 @@ fn compile_drop_function_with_builder(
         |builder| -> Result<_, CompileError> {
             compile_body(
                 &builder,
-                &compile_environment_pointer(
-                    &builder,
-                    fmm::build::bit_cast(
-                        fmm::types::Pointer::new(types::compile_unsized_closure(
-                            &DUMMY_FUNCTION_TYPE,
-                            types,
-                        )),
-                        fmm::build::variable(
-                            DROP_FUNCTION_ARGUMENT_NAME,
-                            DROP_FUNCTION_ARGUMENT_TYPE,
-                        ),
-                    ),
-                )?,
+                &compile_environment_pointer(fmm::build::bit_cast(
+                    fmm::types::Pointer::new(types::compile_unsized_closure(
+                        &DUMMY_FUNCTION_TYPE,
+                        types,
+                    )),
+                    fmm::build::variable(DROP_FUNCTION_ARGUMENT_NAME, DROP_FUNCTION_ARGUMENT_TYPE),
+                ))?,
             )?;
 
             Ok(builder.return_(fmm::ir::VOID_VALUE.clone()))

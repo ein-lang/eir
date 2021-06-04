@@ -9,7 +9,6 @@ pub fn compile_type_information_global_variable(
     type_: &eir::types::Type,
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> Result<(), CompileError> {
-    // TODO Define GC functions.
     module_builder.define_variable(
         types::compile_type_id(type_),
         fmm::build::record(vec![
