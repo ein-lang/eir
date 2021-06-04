@@ -21,10 +21,10 @@ pub fn allocate_heap(
 
     builder.store(
         fmm::ir::Primitive::PointerInteger(INITIAL_COUNT as i64),
-        builder.record_address(pointer.clone(), 0)?,
+        fmm::build::record_address(pointer.clone(), 0)?,
     );
 
-    Ok(builder.record_address(pointer, 1)?)
+    Ok(fmm::build::record_address(pointer, 1)?.into())
 }
 
 pub fn free_heap(
@@ -33,7 +33,7 @@ pub fn free_heap(
 ) -> Result<(), CompileError> {
     builder.free_heap(fmm::build::bit_cast(
         fmm::types::GENERIC_POINTER_TYPE.clone(),
-        builder.pointer_address(
+        fmm::build::pointer_address(
             fmm::build::bit_cast(
                 fmm::types::Pointer::new(fmm::types::Primitive::PointerInteger),
                 pointer,

@@ -64,7 +64,7 @@ fn compile_body(
 ) -> Result<fmm::build::TypedExpression, CompileError> {
     let payload_pointer = compile_payload_pointer(instruction_builder, definition, types)?;
     let environment_pointer = if definition.is_thunk() {
-        instruction_builder.union_address(payload_pointer, 0)?
+        fmm::build::union_address(payload_pointer, 0)?.into()
     } else {
         payload_pointer
     };
@@ -82,10 +82,10 @@ fn compile_body(
                     .iter()
                     .enumerate()
                     .map(|(index, free_variable)| -> Result<_, CompileError> {
-                        let value = instruction_builder.load(
-                            instruction_builder
-                                .record_address(environment_pointer.clone(), index)?,
-                        )?;
+                        let value = instruction_builder.load(fmm::build::record_address(
+                            environment_pointer.clone(),
+                            index,
+                        )?)?;
 
                         reference_count::clone_expression(
                             instruction_builder,
@@ -133,10 +133,13 @@ fn compile_initial_thunk_entry(
                 compile_entry_function_pointer(&instruction_builder, definition, types)?;
 
             instruction_builder.if_(
+                // TODO Optimize atomic ordering.
                 instruction_builder.compare_and_swap(
                     entry_function_pointer.clone(),
                     fmm::build::variable(&entry_function_name, entry_function_type.clone()),
                     lock_entry_function.clone(),
+                    fmm::ir::AtomicOrdering::SequentiallyConsistent,
+                    fmm::ir::AtomicOrdering::SequentiallyConsistent,
                 ),
                 |instruction_builder| -> Result<_, CompileError> {
                     let value = compile_body(
@@ -171,6 +174,7 @@ fn compile_initial_thunk_entry(
                     instruction_builder.atomic_store(
                         normal_entry_function.clone(),
                         entry_function_pointer.clone(),
+                        fmm::ir::AtomicOrdering::Release,
                     );
 
                     Ok(instruction_builder.return_(value))
@@ -178,11 +182,14 @@ fn compile_initial_thunk_entry(
                 |instruction_builder| {
                     Ok(instruction_builder.return_(
                         instruction_builder.call(
-                            instruction_builder.atomic_load(compile_entry_function_pointer(
-                                &instruction_builder,
-                                definition,
-                                types,
-                            )?)?,
+                            instruction_builder.atomic_load(
+                                compile_entry_function_pointer(
+                                    &instruction_builder,
+                                    definition,
+                                    types,
+                                )?,
+                                fmm::ir::AtomicOrdering::Acquire,
+                            )?,
                             arguments
                                 .iter()
                                 .map(|argument| {
@@ -231,11 +238,14 @@ fn compile_locked_thunk_entry(
                     fmm::ir::ComparisonOperator::Equal,
                     fmm::build::bit_cast(
                         fmm::types::Primitive::PointerInteger,
-                        instruction_builder.atomic_load(compile_entry_function_pointer(
-                            &instruction_builder,
-                            definition,
-                            types,
-                        )?)?,
+                        instruction_builder.atomic_load(
+                            compile_entry_function_pointer(
+                                &instruction_builder,
+                                definition,
+                                types,
+                            )?,
+                            fmm::ir::AtomicOrdering::Acquire,
+                        )?,
                     ),
                     fmm::build::bit_cast(
                         fmm::types::Primitive::PointerInteger,
@@ -327,10 +337,11 @@ fn compile_thunk_value_pointer(
     definition: &eir::ir::Definition,
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> Result<fmm::build::TypedExpression, CompileError> {
-    Ok(instruction_builder.union_address(
+    Ok(fmm::build::union_address(
         compile_payload_pointer(instruction_builder, definition, types)?,
         1,
-    )?)
+    )?
+    .into())
 }
 
 fn compile_payload_pointer(
