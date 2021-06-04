@@ -32,7 +32,7 @@ pub fn compile_unboxed_payload(
     )?)
 }
 
-pub fn compile_union_bit_cast(
+fn compile_union_bit_cast(
     builder: &fmm::build::InstructionBuilder,
     to_type: impl Into<fmm::types::Type>,
     argument: impl Into<fmm::build::TypedExpression>,
