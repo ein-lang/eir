@@ -93,7 +93,7 @@ checksum = "37ab347416e802de484e4d03c7316c48f1ecb56574dfd4a46a80f173ce1de04d"
 [[package]]
 name = "fmm"
 version = "0.1.0"
-source = "git+https://github.com/raviqqe/fmm?branch=main#bd3d9d13ded44e651e242f52e4c70e62a8aedd6c"
+source = "git+https://github.com/raviqqe/fmm?branch=main#a8899bea9e00039622996441bb42a8ddc0b2f24e"
 dependencies = [
  "once_cell",
  "petgraph",
@@ -102,7 +102,7 @@ dependencies = [
 [[package]]
 name = "fmm-c"
 version = "0.1.0"
-source = "git+https://github.com/raviqqe/fmm?branch=main#bd3d9d13ded44e651e242f52e4c70e62a8aedd6c"
+source = "git+https://github.com/raviqqe/fmm?branch=main#a8899bea9e00039622996441bb42a8ddc0b2f24e"
 dependencies = [
  "fmm",
  "tempfile",
@@ -111,7 +111,7 @@ dependencies = [
 [[package]]
 name = "fmm-llvm"
 version = "0.1.0"
-source = "git+https://github.com/raviqqe/fmm?branch=main#bd3d9d13ded44e651e242f52e4c70e62a8aedd6c"
+source = "git+https://github.com/raviqqe/fmm?branch=main#a8899bea9e00039622996441bb42a8ddc0b2f24e"
 dependencies = [
  "fmm",
  "inkwell",
@@ -149,7 +149,7 @@ dependencies = [
 [[package]]
 name = "inkwell"
 version = "0.1.0"
-source = "git+https://github.com/TheDan64/inkwell?branch=master#7df64d4e17a87b5c8433390e8c6e40fd8f9a7a9c"
+source = "git+https://github.com/TheDan64/inkwell?branch=master#db59ef3b444c2ae64939193cb95429af945cd0c8"
 dependencies = [
  "either",
  "inkwell_internals",
@@ -163,7 +163,7 @@ dependencies = [
 [[package]]
 name = "inkwell_internals"
 version = "0.3.0"
-source = "git+https://github.com/TheDan64/inkwell?branch=master#7df64d4e17a87b5c8433390e8c6e40fd8f9a7a9c"
+source = "git+https://github.com/TheDan64/inkwell?branch=master#db59ef3b444c2ae64939193cb95429af945cd0c8"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -193,9 +193,9 @@ checksum = "789da6d93f1b866ffe175afc5322a4d76c038605a1c3319bb57b06967ca98a36"
 
 [[package]]
 name = "llvm-sys"
-version = "110.0.1"
+version = "120.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "21ede189444b8c78907e5d36da5dabcf153170fcff9c1dba48afc4b33c7e19f0"
+checksum = "7b883556196140c6b6e7a18b19236b9a699c8611aad2e48a0a6403cf1123945a"
 dependencies = [
  "cc",
  "lazy_static",
