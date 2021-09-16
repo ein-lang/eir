@@ -116,7 +116,7 @@ fn compile_global_variables(
                     declaration.name(),
                     fmm::types::Pointer::new(types::compile_unsized_closure(
                         declaration.type_(),
-                        &types,
+                        types,
                     )),
                 ),
             )
@@ -127,7 +127,7 @@ fn compile_global_variables(
                 fmm::build::bit_cast(
                     fmm::types::Pointer::new(types::compile_unsized_closure(
                         definition.type_(),
-                        &types,
+                        types,
                     )),
                     fmm::build::variable(
                         definition.name(),
@@ -158,7 +158,7 @@ mod tests {
         fmm::analysis::check_types(module).unwrap();
 
         fmm_llvm::compile_to_object(
-            &module,
+            module,
             &fmm_llvm::InstructionConfiguration {
                 allocate_function_name: "allocate_heap".into(),
                 reallocate_function_name: "reallocate_heap".into(),

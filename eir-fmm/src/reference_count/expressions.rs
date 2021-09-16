@@ -14,7 +14,7 @@ pub fn clone_expression(
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> Result<(), CompileError> {
     match type_ {
-        eir::types::Type::ByteString => pointers::clone_pointer(builder, &expression)?,
+        eir::types::Type::ByteString => pointers::clone_pointer(builder, expression)?,
         eir::types::Type::Function(_) => functions::clone_function(builder, expression)?,
         eir::types::Type::Record(record) => {
             builder.call(

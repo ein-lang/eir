@@ -69,7 +69,7 @@ fn convert_expression(
     Ok(match expression {
         Expression::ArithmeticOperation(operation) => {
             let (rhs, moved_variables) =
-                convert_expression(operation.rhs(), owned_variables, &moved_variables)?;
+                convert_expression(operation.rhs(), owned_variables, moved_variables)?;
             let (lhs, moved_variables) =
                 convert_expression(operation.lhs(), owned_variables, &moved_variables)?;
 
@@ -226,7 +226,7 @@ fn convert_expression(
         }
         Expression::ComparisonOperation(operation) => {
             let (rhs, moved_variables) =
-                convert_expression(operation.rhs(), owned_variables, &moved_variables)?;
+                convert_expression(operation.rhs(), owned_variables, moved_variables)?;
             let (lhs, moved_variables) =
                 convert_expression(operation.lhs(), owned_variables, &moved_variables)?;
 
@@ -302,7 +302,7 @@ fn convert_expression(
             )?;
             let (bound_expression, moved_variables) = convert_expression(
                 let_.bound_expression(),
-                &owned_variables,
+                owned_variables,
                 &moved_variables
                     .clone()
                     .into_iter()
