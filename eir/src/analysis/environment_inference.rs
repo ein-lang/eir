@@ -218,7 +218,7 @@ fn infer_in_let(let_: &Let, variables: &HashMap<String, Type>) -> Let {
 
 fn infer_in_let_recursive(let_: &LetRecursive, variables: &HashMap<String, Type>) -> LetRecursive {
     LetRecursive::new(
-        infer_in_local_definition(let_.definition(), &variables),
+        infer_in_local_definition(let_.definition(), variables),
         infer_in_expression(
             let_.expression(),
             &variables

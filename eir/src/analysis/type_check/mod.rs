@@ -153,7 +153,7 @@ fn check_expression(
                 )])
                 .collect();
 
-            check_definition(let_.definition(), &variables, &types)?;
+            check_definition(let_.definition(), &variables, types)?;
             check_expression(let_.expression(), &variables)?
         }
         Expression::Let(let_) => {
@@ -178,7 +178,7 @@ fn check_expression(
             }
 
             for (element, element_type) in record.elements().iter().zip(record_type.elements()) {
-                check_equality(&check_expression(element, variables)?, &element_type)?;
+                check_equality(&check_expression(element, variables)?, element_type)?;
             }
 
             record.type_().clone().into()
