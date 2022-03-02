@@ -274,7 +274,7 @@ fn get_entry_function_type(closure_pointer: &fmm::build::TypedExpression) -> &fm
         .element()
         .to_record()
         .unwrap()
-        .elements()[0]
+        .fields()[0]
         .to_function()
         .unwrap()
 }
