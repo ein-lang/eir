@@ -42,14 +42,14 @@ pub fn compile_variant_tag() -> fmm::types::Pointer {
         // clone function
         fmm::types::Function::new(
             vec![compile_variant_payload().into()],
-            fmm::types::VOID_TYPE.clone(),
+            fmm::types::void_type(),
             fmm::types::CallingConvention::Target,
         )
         .into(),
         // drop function
         fmm::types::Function::new(
             vec![compile_variant_payload().into()],
-            fmm::types::VOID_TYPE.clone(),
+            fmm::types::void_type(),
             fmm::types::CallingConvention::Target,
         )
         .into(),
@@ -253,7 +253,7 @@ pub fn compile_closure_drop_function() -> fmm::types::Function {
     // The argument is a closure pointer.
     fmm::types::Function::new(
         vec![fmm::types::Primitive::PointerInteger.into()],
-        fmm::types::VOID_TYPE.clone(),
+        fmm::types::void_type(),
         fmm::types::CallingConvention::Target,
     )
 }
