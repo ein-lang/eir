@@ -48,9 +48,9 @@ pub fn drop_pointer(
                     ),
                 )?;
 
-                Ok(builder.branch(fmm::ir::VOID_VALUE.clone()))
+                Ok(builder.branch(fmm::ir::void_value()))
             },
-            |builder| Ok(builder.branch(fmm::ir::VOID_VALUE.clone())),
+            |builder| Ok(builder.branch(fmm::ir::void_value())),
         )?;
 
         Ok(())
@@ -103,13 +103,13 @@ fn if_heap_pointer(
                 is_heap_pointer(pointer)?,
                 |builder| -> Result<_, CompileError> {
                     then(&builder)?;
-                    Ok(builder.branch(fmm::ir::VOID_VALUE.clone()))
+                    Ok(builder.branch(fmm::ir::void_value()))
                 },
-                |builder| Ok(builder.branch(fmm::ir::VOID_VALUE.clone())),
+                |builder| Ok(builder.branch(fmm::ir::void_value())),
             )?;
-            Ok(builder.branch(fmm::ir::VOID_VALUE.clone()))
+            Ok(builder.branch(fmm::ir::void_value()))
         },
-        |builder| Ok(builder.branch(fmm::ir::VOID_VALUE.clone())),
+        |builder| Ok(builder.branch(fmm::ir::void_value())),
     )?;
 
     Ok(())

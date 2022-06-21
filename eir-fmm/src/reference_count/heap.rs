@@ -32,7 +32,7 @@ pub fn free_heap(
     pointer: impl Into<fmm::build::TypedExpression>,
 ) -> Result<(), CompileError> {
     builder.free_heap(fmm::build::bit_cast(
-        fmm::types::GENERIC_POINTER_TYPE.clone(),
+        fmm::types::generic_pointer_type(),
         fmm::build::pointer_address(
             fmm::build::bit_cast(
                 fmm::types::Pointer::new(fmm::types::Primitive::PointerInteger),

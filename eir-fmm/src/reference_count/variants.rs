@@ -23,9 +23,9 @@ pub fn compile_variant_clone_function(
                 types,
             )?;
 
-            Ok(builder.return_(fmm::ir::VOID_VALUE.clone()))
+            Ok(builder.return_(fmm::ir::void_value()))
         },
-        fmm::types::VOID_TYPE.clone(),
+        fmm::types::void_type(),
         fmm::types::CallingConvention::Target,
         fmm::ir::Linkage::Weak,
     )
@@ -52,9 +52,9 @@ pub fn compile_variant_drop_function(
                 types,
             )?;
 
-            Ok(builder.return_(fmm::ir::VOID_VALUE.clone()))
+            Ok(builder.return_(fmm::ir::void_value()))
         },
-        fmm::types::VOID_TYPE.clone(),
+        fmm::types::void_type(),
         fmm::types::CallingConvention::Target,
         fmm::ir::Linkage::Weak,
     )
