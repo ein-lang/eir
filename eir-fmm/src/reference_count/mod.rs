@@ -14,7 +14,7 @@ pub use record::*;
 pub use variant::*;
 
 pub(self) fn reference_count_function_definition_options() -> fmm::ir::FunctionDefinitionOptions {
-    return fmm::ir::FunctionDefinitionOptions::new()
+    fmm::ir::FunctionDefinitionOptions::new()
         .set_calling_convention(fmm::types::CallingConvention::Target)
-        .set_linkage(fmm::ir::Linkage::Weak);
+        .set_linkage(fmm::ir::Linkage::Weak)
 }

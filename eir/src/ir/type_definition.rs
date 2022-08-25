@@ -1,6 +1,6 @@
 use crate::types;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TypeDefinition {
     name: String,
     type_: types::RecordBody,
