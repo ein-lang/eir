@@ -1,6 +1,6 @@
 use super::error::CompileError;
 use crate::{
-    closures, entry_functions, function_applications, records, reference_count, types, variants,
+    closure, entry_function, function_application, records, reference_count, types, variant,
 };
 use std::collections::HashMap;
 
@@ -70,7 +70,7 @@ pub fn compile(
 
             compile(drop.expression(), variables)?
         }
-        eir::ir::Expression::FunctionApplication(application) => function_applications::compile(
+        eir::ir::Expression::FunctionApplication(application) => function_application::compile(
             module_builder,
             instruction_builder,
             compile(application.first_function(), variables)?,
@@ -166,8 +166,7 @@ pub fn compile(
                                 )
                                 .collect(),
                             ),
-                            false,
-                            None,
+                            fmm::ir::VariableDefinitionOptions::new().set_mutable(false),
                         ),
                     )
                     .into(),
@@ -176,8 +175,8 @@ pub fn compile(
         }
         eir::ir::Expression::Variable(variable) => variables[variable.name()].clone(),
         eir::ir::Expression::Variant(variant) => fmm::build::record(vec![
-            variants::compile_tag(variant.type_()),
-            variants::compile_boxed_payload(
+            variant::compile_tag(variant.type_()),
+            variant::compile_boxed_payload(
                 instruction_builder,
                 &compile(variant.payload(), variables)?,
             )?,
@@ -275,7 +274,7 @@ fn compile_alternatives(
                 ),
                 fmm::build::bit_cast(
                     fmm::types::Primitive::PointerInteger,
-                    variants::compile_tag(alternative.type_()),
+                    variant::compile_tag(alternative.type_()),
                 ),
             )?,
             |instruction_builder| -> Result<_, CompileError> {
@@ -288,7 +287,7 @@ fn compile_alternatives(
                         .into_iter()
                         .chain(vec![(
                             alternative.name().into(),
-                            variants::compile_unboxed_payload(
+                            variant::compile_unboxed_payload(
                                 &instruction_builder,
                                 &instruction_builder.deconstruct_record(argument.clone(), 1)?,
                                 alternative.type_(),
@@ -363,9 +362,9 @@ fn compile_let_recursive(
     )?;
 
     instruction_builder.store(
-        closures::compile_closure_content(
-            entry_functions::compile(module_builder, let_.definition(), variables, types)?,
-            closures::compile_drop_function(module_builder, let_.definition(), types)?,
+        closure::compile_closure_content(
+            entry_function::compile(module_builder, let_.definition(), variables, types)?,
+            closure::compile_drop_function(module_builder, let_.definition(), types)?,
             let_.definition()
                 .environment()
                 .iter()

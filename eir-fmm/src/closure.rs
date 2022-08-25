@@ -1,4 +1,4 @@
-use super::{expressions, reference_count, types, CompileError};
+use super::{expression, reference_count, types, CompileError};
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
 
@@ -77,7 +77,7 @@ pub fn compile_closure_content(
     fmm::build::record(vec![
         entry_function.clone(),
         drop_function.into(),
-        expressions::compile_arity(types::get_arity(
+        expression::compile_arity(types::get_arity(
             entry_function.type_().to_function().unwrap(),
         ))
         .into(),
@@ -199,6 +199,7 @@ fn compile_drop_function_with_builder(
             DROP_FUNCTION_ARGUMENT_NAME,
             DROP_FUNCTION_ARGUMENT_TYPE,
         )],
+        fmm::types::void_type(),
         |builder| -> Result<_, CompileError> {
             compile_body(
                 &builder,
@@ -213,7 +214,7 @@ fn compile_drop_function_with_builder(
 
             Ok(builder.return_(fmm::ir::void_value()))
         },
-        fmm::types::void_type(),
-        fmm::types::CallingConvention::Target,
+        fmm::ir::FunctionDefinitionOptions::new()
+            .set_calling_convention(fmm::types::CallingConvention::Target),
     )
 }

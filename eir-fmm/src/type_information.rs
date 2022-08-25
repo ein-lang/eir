@@ -4,7 +4,7 @@ use std::collections::HashMap;
 pub const TYPE_INFORMATION_CLONE_FUNCTION_ELEMENT_INDEX: usize = 0;
 pub const TYPE_INFORMATION_DROP_FUNCTION_ELEMENT_INDEX: usize = 1;
 
-pub fn compile_type_information_global_variable(
+pub fn compile(
     module_builder: &fmm::build::ModuleBuilder,
     type_: &eir::types::Type,
     types: &HashMap<String, eir::types::RecordBody>,
@@ -15,9 +15,7 @@ pub fn compile_type_information_global_variable(
             reference_count::compile_variant_clone_function(module_builder, type_, types)?,
             reference_count::compile_variant_drop_function(module_builder, type_, types)?,
         ]),
-        false,
-        fmm::ir::Linkage::Weak,
-        None,
+        fmm::ir::VariableDefinitionOptions::new().set_linkage(fmm::ir::Linkage::Weak),
     );
 
     Ok(())

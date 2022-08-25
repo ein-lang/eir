@@ -1,5 +1,5 @@
 use super::error::CompileError;
-use crate::{closures, expressions, reference_count, types};
+use crate::{closure, expression, reference_count, types};
 use std::collections::HashMap;
 
 const CLOSURE_NAME: &str = "_closure";
@@ -25,6 +25,7 @@ fn compile_non_thunk(
 ) -> Result<fmm::build::TypedExpression, CompileError> {
     module_builder.define_anonymous_function(
         compile_arguments(definition, types),
+        types::compile(definition.result_type(), types),
         |instruction_builder| {
             Ok(instruction_builder.return_(compile_body(
                 module_builder,
@@ -34,8 +35,8 @@ fn compile_non_thunk(
                 types,
             )?))
         },
-        types::compile(definition.result_type(), types),
-        fmm::types::CallingConvention::Source,
+        fmm::ir::FunctionDefinitionOptions::new()
+            .set_calling_convention(fmm::types::CallingConvention::Source),
     )
 }
 
@@ -69,7 +70,7 @@ fn compile_body(
         payload_pointer
     };
 
-    expressions::compile(
+    expression::compile(
         module_builder,
         instruction_builder,
         definition.body(),
@@ -128,6 +129,7 @@ fn compile_initial_thunk_entry(
     module_builder.define_function(
         &entry_function_name,
         arguments.clone(),
+        types::compile(definition.result_type(), types),
         |instruction_builder| {
             let entry_function_pointer = compile_entry_function_pointer(definition, types)?;
 
@@ -161,7 +163,7 @@ fn compile_initial_thunk_entry(
                     );
 
                     instruction_builder.store(
-                        closures::compile_normal_thunk_drop_function(
+                        closure::compile_normal_thunk_drop_function(
                             module_builder,
                             definition,
                             types,
@@ -197,9 +199,9 @@ fn compile_initial_thunk_entry(
 
             Ok(instruction_builder.unreachable())
         },
-        types::compile(definition.result_type(), types),
-        fmm::types::CallingConvention::Source,
-        fmm::ir::Linkage::Internal,
+        fmm::ir::FunctionDefinitionOptions::new()
+            .set_calling_convention(fmm::types::CallingConvention::Source)
+            .set_linkage(fmm::ir::Linkage::Internal),
     )
 }
 
@@ -210,9 +212,10 @@ fn compile_normal_thunk_entry(
 ) -> Result<fmm::build::TypedExpression, CompileError> {
     module_builder.define_anonymous_function(
         compile_arguments(definition, types),
-        |instruction_builder| compile_normal_body(&instruction_builder, definition, types),
         types::compile(definition.result_type(), types),
-        fmm::types::CallingConvention::Source,
+        |instruction_builder| compile_normal_body(&instruction_builder, definition, types),
+        fmm::ir::FunctionDefinitionOptions::new()
+            .set_calling_convention(fmm::types::CallingConvention::Source),
     )
 }
 
@@ -226,6 +229,7 @@ fn compile_locked_thunk_entry(
     module_builder.define_function(
         &entry_function_name,
         compile_arguments(definition, types),
+        types::compile(definition.result_type(), types),
         |instruction_builder| {
             instruction_builder.if_(
                 fmm::build::comparison_operation(
@@ -252,9 +256,9 @@ fn compile_locked_thunk_entry(
 
             Ok(instruction_builder.unreachable())
         },
-        types::compile(definition.result_type(), types),
-        fmm::types::CallingConvention::Source,
-        fmm::ir::Linkage::Internal,
+        fmm::ir::FunctionDefinitionOptions::new()
+            .set_calling_convention(fmm::types::CallingConvention::Source)
+            .set_linkage(fmm::ir::Linkage::Internal),
     )
 }
 
@@ -281,7 +285,7 @@ fn compile_entry_function_pointer(
 ) -> Result<fmm::build::TypedExpression, CompileError> {
     Ok(fmm::build::bit_cast(
         fmm::types::Pointer::new(types::compile_entry_function(definition, types)),
-        closures::compile_entry_function_pointer(compile_closure_pointer(
+        closure::compile_entry_function_pointer(compile_closure_pointer(
             definition.type_(),
             types,
         )?)?,
@@ -293,7 +297,7 @@ fn compile_drop_function_pointer(
     definition: &eir::ir::Definition,
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> Result<fmm::build::TypedExpression, CompileError> {
-    closures::compile_drop_function_pointer(compile_closure_pointer(definition.type_(), types)?)
+    closure::compile_drop_function_pointer(compile_closure_pointer(definition.type_(), types)?)
 }
 
 fn compile_arguments(
@@ -322,7 +326,7 @@ fn compile_payload_pointer(
     definition: &eir::ir::Definition,
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> Result<fmm::build::TypedExpression, CompileError> {
-    closures::compile_environment_pointer(fmm::build::bit_cast(
+    closure::compile_environment_pointer(fmm::build::bit_cast(
         fmm::types::Pointer::new(types::compile_sized_closure(definition, types)),
         compile_untyped_closure_pointer(),
     ))

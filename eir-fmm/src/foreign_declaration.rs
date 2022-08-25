@@ -1,5 +1,5 @@
 use crate::{
-    expressions,
+    expression,
     types::{self, FUNCTION_ARGUMENT_OFFSET},
 };
 use std::collections::HashMap;
@@ -14,12 +14,12 @@ pub fn compile_foreign_declaration(
         fmm::build::record(vec![
             compile_entry_function(module_builder, declaration, types)?,
             fmm::ir::Undefined::new(types::compile_closure_drop_function()).into(),
-            expressions::compile_arity(declaration.type_().arguments().into_iter().count()).into(),
+            expression::compile_arity(declaration.type_().arguments().into_iter().count()).into(),
             fmm::ir::Undefined::new(types::compile_unsized_environment()).into(),
         ]),
-        false,
-        fmm::ir::Linkage::Internal,
-        None,
+        fmm::ir::VariableDefinitionOptions::new()
+            .set_linkage(fmm::ir::Linkage::Internal)
+            .set_mutable(false),
     );
 
     Ok(())
@@ -55,6 +55,7 @@ fn compile_entry_function(
 
     module_builder.define_anonymous_function(
         arguments.clone(),
+        foreign_function_type.result().clone(),
         |instruction_builder| {
             Ok(instruction_builder.return_(
                 instruction_builder.call(
@@ -72,7 +73,7 @@ fn compile_entry_function(
                 )?,
             ))
         },
-        foreign_function_type.result().clone(),
-        fmm::types::CallingConvention::Source,
+        fmm::ir::FunctionDefinitionOptions::new()
+            .set_calling_convention(fmm::types::CallingConvention::Source),
     )
 }
