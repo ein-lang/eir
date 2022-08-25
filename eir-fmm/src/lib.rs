@@ -1,25 +1,20 @@
-mod closures;
-mod declarations;
-mod definitions;
-mod entry_functions;
+mod closure;
+mod entry_function;
 mod error;
-mod expressions;
-mod foreign_declarations;
-mod foreign_definitions;
-mod function_applications;
+mod expression;
+mod foreign_declaration;
+mod foreign_definition;
+mod function_application;
+mod function_declaration;
+mod function_definition;
 mod records;
 mod reference_count;
 mod type_information;
 mod types;
-mod variants;
+mod variant;
 
-use declarations::compile_declaration;
-use definitions::compile_definition;
 pub use error::CompileError;
-use foreign_declarations::compile_foreign_declaration;
-use foreign_definitions::compile_foreign_definition;
 use std::collections::HashMap;
-use type_information::compile_type_information_global_variable;
 
 pub fn compile(module: &eir::ir::Module) -> Result<fmm::ir::Module, CompileError> {
     eir::analysis::check_types(module)?;
@@ -37,7 +32,7 @@ pub fn compile(module: &eir::ir::Module) -> Result<fmm::ir::Module, CompileError
         .collect();
 
     for type_ in &eir::analysis::collect_variant_types(&module) {
-        compile_type_information_global_variable(&module_builder, type_, &types)?;
+        type_information::compile(&module_builder, type_, &types)?;
     }
 
     for definition in module.type_definitions() {
@@ -46,17 +41,17 @@ pub fn compile(module: &eir::ir::Module) -> Result<fmm::ir::Module, CompileError
     }
 
     for declaration in module.foreign_declarations() {
-        compile_foreign_declaration(&module_builder, declaration, &types)?;
+        foreign_declaration::compile_foreign_declaration(&module_builder, declaration, &types)?;
     }
 
     for declaration in module.declarations() {
-        compile_declaration(&module_builder, declaration, &types);
+        function_declaration::compile(&module_builder, declaration, &types);
     }
 
     let global_variables = compile_global_variables(&module, &types)?;
 
     for definition in module.definitions() {
-        compile_definition(&module_builder, definition, &global_variables, &types)?;
+        function_definition::compile(&module_builder, definition, &global_variables, &types)?;
     }
 
     let function_types = module
@@ -78,7 +73,7 @@ pub fn compile(module: &eir::ir::Module) -> Result<fmm::ir::Module, CompileError
         .collect::<HashMap<_, _>>();
 
     for definition in module.foreign_definitions() {
-        compile_foreign_definition(
+        foreign_definition::compile_foreign_definition(
             &module_builder,
             definition,
             function_types[definition.name()],

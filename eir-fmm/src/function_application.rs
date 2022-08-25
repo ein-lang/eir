@@ -1,5 +1,5 @@
 use super::{
-    closures, expressions, reference_count,
+    closure, expression, reference_count,
     types::{self, FUNCTION_ARGUMENT_OFFSET},
 };
 use crate::CompileError;
@@ -50,8 +50,8 @@ fn compile_with_min_arity(
         instruction_builder.if_(
             fmm::build::comparison_operation(
                 fmm::ir::ComparisonOperator::Equal,
-                closures::compile_load_arity(instruction_builder, closure_pointer.clone())?,
-                expressions::compile_arity(min_arity),
+                closure::compile_load_arity(instruction_builder, closure_pointer.clone())?,
+                expression::compile_arity(min_arity),
             )?,
             |instruction_builder| -> Result<_, CompileError> {
                 Ok(instruction_builder.branch(compile(
@@ -93,7 +93,7 @@ fn compile_direct_call(
                 get_entry_function_type(&closure_pointer),
                 arguments.len(),
             ),
-            closures::compile_load_entry_function(instruction_builder, closure_pointer.clone())?,
+            closure::compile_load_entry_function(instruction_builder, closure_pointer.clone())?,
         ),
         vec![
             fmm::build::bit_cast(types::compile_untyped_closure_pointer(), closure_pointer).into(),
@@ -129,7 +129,7 @@ fn compile_create_closure(
         fmm::types::CallingConvention::Source,
     );
 
-    let closure = closures::compile_closure_content(
+    let closure = closure::compile_closure_content(
         compile_partially_applied_entry_function(
             module_builder,
             &target_entry_function_type,
@@ -141,7 +141,7 @@ fn compile_create_closure(
             argument_types,
             types,
         )?,
-        closures::compile_drop_function_for_partially_applied_closure(
+        closure::compile_drop_function_for_partially_applied_closure(
             module_builder,
             closure_pointer.type_(),
             &arguments
@@ -202,7 +202,7 @@ fn compile_partially_applied_entry_function(
                 )),
                 fmm::build::variable(arguments[0].name(), arguments[0].type_().clone()),
             );
-            let environment = instruction_builder.load(closures::compile_environment_pointer(
+            let environment = instruction_builder.load(closure::compile_environment_pointer(
                 partially_applied_closure_pointer.clone(),
             )?)?;
             let closure_pointer = instruction_builder.deconstruct_record(environment.clone(), 0)?;
@@ -235,11 +235,11 @@ fn compile_partially_applied_entry_function(
                     instruction_builder.if_(
                         fmm::build::comparison_operation(
                             fmm::ir::ComparisonOperator::Equal,
-                            closures::compile_load_arity(
+                            closure::compile_load_arity(
                                 &instruction_builder,
                                 closure_pointer.clone(),
                             )?,
-                            expressions::compile_arity(arguments.len()),
+                            expression::compile_arity(arguments.len()),
                         )?,
                         |instruction_builder| -> Result<_, CompileError> {
                             Ok(instruction_builder.branch(compile_direct_call(

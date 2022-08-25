@@ -1,9 +1,9 @@
-use super::{super::error::CompileError, functions, pointers, record_utilities};
+use super::{super::error::CompileError, function, pointer, record_utilities};
 use crate::{
     type_information::{
         TYPE_INFORMATION_CLONE_FUNCTION_ELEMENT_INDEX, TYPE_INFORMATION_DROP_FUNCTION_ELEMENT_INDEX,
     },
-    variants::{VARIANT_PAYLOAD_ELEMENT_INDEX, VARIANT_TAG_ELEMENT_INDEX},
+    variant::{VARIANT_PAYLOAD_ELEMENT_INDEX, VARIANT_TAG_ELEMENT_INDEX},
 };
 use std::collections::HashMap;
 
@@ -14,8 +14,8 @@ pub fn clone_expression(
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> Result<(), CompileError> {
     match type_ {
-        eir::types::Type::ByteString => pointers::clone_pointer(builder, expression)?,
-        eir::types::Type::Function(_) => functions::clone_function(builder, expression)?,
+        eir::types::Type::ByteString => pointer::clone_pointer(builder, expression)?,
+        eir::types::Type::Function(_) => function::clone_function(builder, expression)?,
         eir::types::Type::Record(record) => {
             builder.call(
                 fmm::build::variable(
@@ -51,8 +51,8 @@ pub fn drop_expression(
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> Result<(), CompileError> {
     match type_ {
-        eir::types::Type::ByteString => pointers::drop_pointer(builder, expression, |_| Ok(()))?,
-        eir::types::Type::Function(_) => functions::drop_function(builder, expression)?,
+        eir::types::Type::ByteString => pointer::drop_pointer(builder, expression, |_| Ok(()))?,
+        eir::types::Type::Function(_) => function::drop_function(builder, expression)?,
         eir::types::Type::Record(record) => {
             builder.call(
                 fmm::build::variable(

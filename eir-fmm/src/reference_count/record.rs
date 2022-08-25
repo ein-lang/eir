@@ -1,6 +1,6 @@
 use super::{
     super::{error::CompileError, types},
-    expressions, pointers, record_utilities, reference_count_function_definition_options,
+    expression, pointer, record_utilities, reference_count_function_definition_options,
 };
 use std::collections::HashMap;
 
@@ -25,10 +25,10 @@ pub fn compile_record_clone_function(
             let record = fmm::build::variable(ARGUMENT_NAME, fmm_record_type.clone());
 
             if types::is_record_boxed(&record_type, types) {
-                pointers::clone_pointer(&builder, &record)?;
+                pointer::clone_pointer(&builder, &record)?;
             } else {
                 for (index, type_) in definition.type_().elements().iter().enumerate() {
-                    expressions::clone_expression(
+                    expression::clone_expression(
                         &builder,
                         &crate::records::get_record_element(
                             &builder,
@@ -70,7 +70,7 @@ pub fn compile_record_drop_function(
             let record = fmm::build::variable(ARGUMENT_NAME, fmm_record_type.clone());
 
             if types::is_record_boxed(&record_type, types) {
-                pointers::drop_pointer(&builder, &record, |builder| {
+                pointer::drop_pointer(&builder, &record, |builder| {
                     drop_record_elements(
                         builder,
                         &record,
@@ -101,7 +101,7 @@ fn drop_record_elements(
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> Result<(), CompileError> {
     for (index, type_) in record_body_type.elements().iter().enumerate() {
-        expressions::drop_expression(
+        expression::drop_expression(
             builder,
             &crate::records::get_record_element(builder, record, record_type, index, types)?,
             type_,

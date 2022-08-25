@@ -1,5 +1,5 @@
 use super::error::CompileError;
-use crate::{closures, expressions, reference_count, types};
+use crate::{closure, expression, reference_count, types};
 use std::collections::HashMap;
 
 const CLOSURE_NAME: &str = "_closure";
@@ -70,7 +70,7 @@ fn compile_body(
         payload_pointer
     };
 
-    expressions::compile(
+    expression::compile(
         module_builder,
         instruction_builder,
         definition.body(),
@@ -163,7 +163,7 @@ fn compile_initial_thunk_entry(
                     );
 
                     instruction_builder.store(
-                        closures::compile_normal_thunk_drop_function(
+                        closure::compile_normal_thunk_drop_function(
                             module_builder,
                             definition,
                             types,
@@ -285,7 +285,7 @@ fn compile_entry_function_pointer(
 ) -> Result<fmm::build::TypedExpression, CompileError> {
     Ok(fmm::build::bit_cast(
         fmm::types::Pointer::new(types::compile_entry_function(definition, types)),
-        closures::compile_entry_function_pointer(compile_closure_pointer(
+        closure::compile_entry_function_pointer(compile_closure_pointer(
             definition.type_(),
             types,
         )?)?,
@@ -297,7 +297,7 @@ fn compile_drop_function_pointer(
     definition: &eir::ir::Definition,
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> Result<fmm::build::TypedExpression, CompileError> {
-    closures::compile_drop_function_pointer(compile_closure_pointer(definition.type_(), types)?)
+    closure::compile_drop_function_pointer(compile_closure_pointer(definition.type_(), types)?)
 }
 
 fn compile_arguments(
@@ -326,7 +326,7 @@ fn compile_payload_pointer(
     definition: &eir::ir::Definition,
     types: &HashMap<String, eir::types::RecordBody>,
 ) -> Result<fmm::build::TypedExpression, CompileError> {
-    closures::compile_environment_pointer(fmm::build::bit_cast(
+    closure::compile_environment_pointer(fmm::build::bit_cast(
         fmm::types::Pointer::new(types::compile_sized_closure(definition, types)),
         compile_untyped_closure_pointer(),
     ))

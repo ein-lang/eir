@@ -1,4 +1,4 @@
-use super::{super::error::CompileError, expressions};
+use super::{super::error::CompileError, expression};
 use crate::types;
 use std::collections::HashMap;
 
@@ -17,9 +17,9 @@ pub fn compile_variant_clone_function(
         |builder| -> Result<_, CompileError> {
             let payload = fmm::build::variable("_payload", types::compile_variant_payload());
 
-            expressions::clone_expression(
+            expression::clone_expression(
                 &builder,
-                &crate::variants::compile_unboxed_payload(&builder, &payload, type_, types)?,
+                &crate::variant::compile_unboxed_payload(&builder, &payload, type_, types)?,
                 type_,
                 types,
             )?;
@@ -45,9 +45,9 @@ pub fn compile_variant_drop_function(
         |builder| -> Result<_, CompileError> {
             let payload = fmm::build::variable("_payload", types::compile_variant_payload());
 
-            expressions::drop_expression(
+            expression::drop_expression(
                 &builder,
-                &crate::variants::compile_unboxed_payload(&builder, &payload, type_, types)?,
+                &crate::variant::compile_unboxed_payload(&builder, &payload, type_, types)?,
                 type_,
                 types,
             )?;

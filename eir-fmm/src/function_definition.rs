@@ -1,8 +1,8 @@
 use super::error::CompileError;
-use crate::{closures, entry_functions, expressions, types};
+use crate::{closure, entry_function, expression, types};
 use std::collections::HashMap;
 
-pub fn compile_definition(
+pub fn compile(
     module_builder: &fmm::build::ModuleBuilder,
     definition: &eir::ir::Definition,
     global_variables: &HashMap<String, fmm::build::TypedExpression>,
@@ -11,9 +11,9 @@ pub fn compile_definition(
     module_builder.define_variable(
         definition.name(),
         fmm::build::record(vec![
-            entry_functions::compile(module_builder, definition, global_variables, types)?,
-            closures::compile_drop_function(module_builder, definition, types)?,
-            expressions::compile_arity(definition.arguments().iter().count()).into(),
+            entry_function::compile(module_builder, definition, global_variables, types)?,
+            closure::compile_drop_function(module_builder, definition, types)?,
+            expression::compile_arity(definition.arguments().iter().count()).into(),
             fmm::ir::Undefined::new(types::compile_closure_payload(definition, types)).into(),
         ]),
         fmm::ir::VariableDefinitionOptions::new()

@@ -1,7 +1,7 @@
 use super::types;
 use std::collections::HashMap;
 
-pub fn compile_declaration(
+pub fn compile(
     module_builder: &fmm::build::ModuleBuilder,
     declaration: &eir::ir::Declaration,
     types: &HashMap<String, eir::types::RecordBody>,

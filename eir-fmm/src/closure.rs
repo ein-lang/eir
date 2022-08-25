@@ -1,4 +1,4 @@
-use super::{expressions, reference_count, types, CompileError};
+use super::{expression, reference_count, types, CompileError};
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
 
@@ -77,7 +77,7 @@ pub fn compile_closure_content(
     fmm::build::record(vec![
         entry_function.clone(),
         drop_function.into(),
-        expressions::compile_arity(types::get_arity(
+        expression::compile_arity(types::get_arity(
             entry_function.type_().to_function().unwrap(),
         ))
         .into(),
