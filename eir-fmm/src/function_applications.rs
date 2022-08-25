@@ -188,6 +188,7 @@ fn compile_partially_applied_entry_function(
 
     module_builder.define_anonymous_function(
         arguments.clone(),
+        curried_entry_function_type.result().clone(),
         |instruction_builder| {
             let partially_applied_closure_pointer = fmm::build::bit_cast(
                 fmm::types::Pointer::new(types::compile_raw_closure(
@@ -261,8 +262,8 @@ fn compile_partially_applied_entry_function(
                 },
             ))
         },
-        curried_entry_function_type.result().clone(),
-        fmm::types::CallingConvention::Source,
+        fmm::ir::FunctionDefinitionOptions::new()
+            .set_calling_convention(fmm::types::CallingConvention::Source),
     )
 }
 

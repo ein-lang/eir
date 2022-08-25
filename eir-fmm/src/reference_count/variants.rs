@@ -13,6 +13,7 @@ pub fn compile_variant_clone_function(
             "_payload",
             types::compile_variant_payload(),
         )],
+        fmm::types::void_type(),
         |builder| -> Result<_, CompileError> {
             let payload = fmm::build::variable("_payload", types::compile_variant_payload());
 
@@ -25,9 +26,7 @@ pub fn compile_variant_clone_function(
 
             Ok(builder.return_(fmm::ir::void_value()))
         },
-        fmm::types::void_type(),
-        fmm::types::CallingConvention::Target,
-        fmm::ir::Linkage::Weak,
+        function_definition_options(),
     )
 }
 
@@ -42,6 +41,7 @@ pub fn compile_variant_drop_function(
             "_payload",
             types::compile_variant_payload(),
         )],
+        fmm::types::void_type(),
         |builder| -> Result<_, CompileError> {
             let payload = fmm::build::variable("_payload", types::compile_variant_payload());
 
@@ -54,8 +54,12 @@ pub fn compile_variant_drop_function(
 
             Ok(builder.return_(fmm::ir::void_value()))
         },
-        fmm::types::void_type(),
-        fmm::types::CallingConvention::Target,
-        fmm::ir::Linkage::Weak,
+        function_definition_options(),
     )
+}
+
+fn function_definition_options() -> fmm::ir::FunctionDefinitionOptions {
+    fmm::ir::FunctionDefinitionOptions::new()
+        .set_calling_convention(fmm::types::CallingConvention::Target)
+        .set_linkage(fmm::ir::Linkage::Weak)
 }

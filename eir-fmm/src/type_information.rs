@@ -15,9 +15,7 @@ pub fn compile_type_information_global_variable(
             reference_count::compile_variant_clone_function(module_builder, type_, types)?,
             reference_count::compile_variant_drop_function(module_builder, type_, types)?,
         ]),
-        false,
-        fmm::ir::Linkage::Weak,
-        None,
+        fmm::ir::VariableDefinitionOptions::new().set_linkage(fmm::ir::Linkage::Weak),
     );
 
     Ok(())

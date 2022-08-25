@@ -1,6 +1,6 @@
 use super::{
     super::{error::CompileError, types},
-    expressions, pointers, record_utilities,
+    expressions, pointers, record_utilities, reference_count_function_definition_options,
 };
 use std::collections::HashMap;
 
@@ -20,6 +20,7 @@ pub fn compile_record_clone_function(
             ARGUMENT_NAME,
             fmm_record_type.clone(),
         )],
+        fmm::types::void_type(),
         |builder| -> Result<_, CompileError> {
             let record = fmm::build::variable(ARGUMENT_NAME, fmm_record_type.clone());
 
@@ -44,9 +45,7 @@ pub fn compile_record_clone_function(
 
             Ok(builder.return_(fmm::ir::void_value()))
         },
-        fmm::types::void_type(),
-        fmm::types::CallingConvention::Target,
-        fmm::ir::Linkage::Weak,
+        reference_count_function_definition_options(),
     )?;
 
     Ok(())
@@ -66,6 +65,7 @@ pub fn compile_record_drop_function(
             ARGUMENT_NAME,
             fmm_record_type.clone(),
         )],
+        fmm::types::void_type(),
         |builder| -> Result<_, CompileError> {
             let record = fmm::build::variable(ARGUMENT_NAME, fmm_record_type.clone());
 
@@ -87,9 +87,7 @@ pub fn compile_record_drop_function(
 
             Ok(builder.return_(fmm::ir::void_value()))
         },
-        fmm::types::void_type(),
-        fmm::types::CallingConvention::Target,
-        fmm::ir::Linkage::Weak,
+        reference_count_function_definition_options(),
     )?;
 
     Ok(())

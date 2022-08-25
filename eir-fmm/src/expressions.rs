@@ -166,8 +166,7 @@ pub fn compile(
                                 )
                                 .collect(),
                             ),
-                            false,
-                            None,
+                            fmm::ir::VariableDefinitionOptions::new().set_mutable(false),
                         ),
                     )
                     .into(),

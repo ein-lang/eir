@@ -16,9 +16,9 @@ pub fn compile_definition(
             expressions::compile_arity(definition.arguments().iter().count()).into(),
             fmm::ir::Undefined::new(types::compile_closure_payload(definition, types)).into(),
         ]),
-        definition.is_thunk(),
-        fmm::ir::Linkage::External,
-        None,
+        fmm::ir::VariableDefinitionOptions::new()
+            .set_linkage(fmm::ir::Linkage::External)
+            .set_mutable(definition.is_thunk()),
     );
 
     Ok(())

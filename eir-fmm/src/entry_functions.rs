@@ -25,6 +25,7 @@ fn compile_non_thunk(
 ) -> Result<fmm::build::TypedExpression, CompileError> {
     module_builder.define_anonymous_function(
         compile_arguments(definition, types),
+        types::compile(definition.result_type(), types),
         |instruction_builder| {
             Ok(instruction_builder.return_(compile_body(
                 module_builder,
@@ -34,8 +35,8 @@ fn compile_non_thunk(
                 types,
             )?))
         },
-        types::compile(definition.result_type(), types),
-        fmm::types::CallingConvention::Source,
+        fmm::ir::FunctionDefinitionOptions::new()
+            .set_calling_convention(fmm::types::CallingConvention::Source),
     )
 }
 
@@ -128,6 +129,7 @@ fn compile_initial_thunk_entry(
     module_builder.define_function(
         &entry_function_name,
         arguments.clone(),
+        types::compile(definition.result_type(), types),
         |instruction_builder| {
             let entry_function_pointer = compile_entry_function_pointer(definition, types)?;
 
@@ -197,9 +199,9 @@ fn compile_initial_thunk_entry(
 
             Ok(instruction_builder.unreachable())
         },
-        types::compile(definition.result_type(), types),
-        fmm::types::CallingConvention::Source,
-        fmm::ir::Linkage::Internal,
+        fmm::ir::FunctionDefinitionOptions::new()
+            .set_calling_convention(fmm::types::CallingConvention::Source)
+            .set_linkage(fmm::ir::Linkage::Internal),
     )
 }
 
@@ -210,9 +212,10 @@ fn compile_normal_thunk_entry(
 ) -> Result<fmm::build::TypedExpression, CompileError> {
     module_builder.define_anonymous_function(
         compile_arguments(definition, types),
-        |instruction_builder| compile_normal_body(&instruction_builder, definition, types),
         types::compile(definition.result_type(), types),
-        fmm::types::CallingConvention::Source,
+        |instruction_builder| compile_normal_body(&instruction_builder, definition, types),
+        fmm::ir::FunctionDefinitionOptions::new()
+            .set_calling_convention(fmm::types::CallingConvention::Source),
     )
 }
 
@@ -226,6 +229,7 @@ fn compile_locked_thunk_entry(
     module_builder.define_function(
         &entry_function_name,
         compile_arguments(definition, types),
+        types::compile(definition.result_type(), types),
         |instruction_builder| {
             instruction_builder.if_(
                 fmm::build::comparison_operation(
@@ -252,9 +256,9 @@ fn compile_locked_thunk_entry(
 
             Ok(instruction_builder.unreachable())
         },
-        types::compile(definition.result_type(), types),
-        fmm::types::CallingConvention::Source,
-        fmm::ir::Linkage::Internal,
+        fmm::ir::FunctionDefinitionOptions::new()
+            .set_calling_convention(fmm::types::CallingConvention::Source)
+            .set_linkage(fmm::ir::Linkage::Internal),
     )
 }
 
