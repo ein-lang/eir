@@ -82,7 +82,7 @@ pub fn compile(module: &eir::ir::Module) -> Result<fmm::ir::Module, CompileError
         )?;
     }
 
-    Ok(module_builder.as_module())
+    Ok(module_builder.into_module())
 }
 
 fn compile_global_variables(
@@ -141,12 +141,11 @@ mod tests {
     use super::*;
 
     fn compile_module(module: &eir::ir::Module) {
-        let module = compile(module).unwrap();
+        let mut module = compile(module).unwrap();
 
         compile_final_module(&module);
-        compile_final_module(
-            &fmm::analysis::cps::transform(&module, fmm::types::Record::new(vec![])).unwrap(),
-        );
+        fmm::analysis::cps::transform(&mut module, fmm::types::Record::new(vec![])).unwrap();
+        compile_final_module(&module);
     }
 
     fn compile_final_module(module: &fmm::ir::Module) {
